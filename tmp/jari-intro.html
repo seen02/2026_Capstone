@@ -1,0 +1,50 @@
+<style>
+#jari-chair-demo{--j-bg:light-dark(#f5f5f2,#171b21);--j-ink:light-dark(#252b32,#edf2f8);--j-line:light-dark(#e7e8e5,#35404e);border:0;border-radius:20px;max-width:1240px;margin:auto}
+#jari-chair-demo .j-top{padding:20px 28px}#jari-chair-demo .j-logomark{font-size:22px;font-weight:600}#jari-chair-demo .j-shell{grid-template-columns:144px minmax(0,1fr)}
+#jari-chair-demo .j-main{padding:28px 32px}#jari-chair-demo .j-heading h1{font-size:30px;letter-spacing:-1.2px}#jari-chair-demo .j-heading p{font-size:14px;max-width:420px}#jari-chair-demo .j-panel{border:0;border-radius:16px;padding:24px;box-shadow:0 2px 10px var(--j-shadow)}
+#jari-chair-demo .j-state-title{font-size:23px}#jari-chair-demo .j-panelhead h2,#jari-chair-demo .j-vib-top h2{font-size:15px;color:var(--j-sub)}
+#jari-chair-demo .j-panelhead h2:before,#jari-chair-demo .j-vib-top h2:before{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--j-soft);color:var(--j-blue);margin-right:8px;font-size:12px}
+#jari-chair-demo [aria-label="착석 상태와 센서 반응"] h2:before{content:'1'}#jari-chair-demo .j-rest-card h2:before{content:'2'}#jari-chair-demo [aria-label="진동 피드백"] h2:before{content:'3'}
+#jari-chair-demo .j-eyebrow{color:var(--j-blue);font-weight:600;letter-spacing:1.5px}#jari-chair-demo .j-button{border-radius:10px;font-size:13px;padding:10px 14px}#jari-chair-demo .j-rest-time{font-size:29px}#jari-chair-demo .j-ring{width:116px;height:116px}
+#jari-chair-demo .j-demobar{border:1px solid var(--j-line);border-radius:14px;margin-bottom:20px;padding:16px;background:var(--j-paper);gap:12px}#jari-chair-demo .j-demobar small{font-size:11px;flex-basis:100%;margin:0}#jari-chair-demo .j-demobar label{font-weight:500;color:var(--j-ink)}
+#jari-chair-demo .j-quick{display:flex;gap:6px;flex-wrap:wrap}#jari-chair-demo .j-quick button{font-size:12px;min-height:36px;padding:7px 11px}#jari-chair-demo .j-quick button[aria-pressed="true"]{background:var(--j-soft);color:var(--j-blue);border-color:var(--j-blue)}
+#jari-chair-demo .j-footnote{margin-top:20px;color:var(--j-sub);font-size:12px}#jari-chair-demo .j-footnote button{border:0;background:none;color:var(--j-blue);text-decoration:underline;padding:0;font:inherit}
+#jari-chair-demo .j-tour{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;border:0;margin:0;padding:0;background:transparent;color:var(--j-ink);overflow:hidden}#jari-chair-demo .j-tour::backdrop{background:transparent}
+#jari-chair-demo .j-tour-spot{position:absolute;border:2px solid var(--j-blue);border-radius:13px;box-shadow:0 0 0 200vmax #10192399;pointer-events:none}
+#jari-chair-demo .j-tour-card{position:absolute;width:min(340px,calc(100% - 32px));padding:24px;border-radius:16px;background:var(--j-paper);box-shadow:0 16px 64px #00000030}
+#jari-chair-demo .j-tour-card:before{content:'';position:absolute;width:14px;height:14px;background:var(--j-paper);transform:rotate(45deg);left:var(--arrow-x,32px);top:-7px}#jari-chair-demo .j-tour-card[data-side="above"]:before{top:auto;bottom:-7px}
+#jari-chair-demo .j-tour-card h2{font-size:20px;margin:8px 0 12px;letter-spacing:-.6px}#jari-chair-demo .j-tour-card p{font-size:14px;color:var(--j-sub);line-height:1.75}#jari-chair-demo .j-tour-count{color:var(--j-blue);font-size:12px;font-weight:600;letter-spacing:1px}#jari-chair-demo .j-tour-actions{display:flex;justify-content:space-between;gap:8px;margin-top:24px}#jari-chair-demo .j-tour-actions div{display:flex;gap:6px}#jari-chair-demo .j-tour-skip{background:transparent;border:0;font-size:12px;color:var(--j-sub);padding:0 4px}
+@media(max-width:800px){#jari-chair-demo .j-shell{grid-template-columns:1fr}#jari-chair-demo .j-main{padding:24px}#jari-chair-demo .j-top{padding:16px 20px}}
+@media(max-width:560px){#jari-chair-demo .j-main{padding:20px 14px}#jari-chair-demo .j-top{flex-wrap:wrap;gap:8px}#jari-chair-demo .j-topright{gap:10px}#jari-chair-demo .j-heading h1{font-size:25px}#jari-chair-demo .j-heading p{font-size:13px}#jari-chair-demo .j-panel{padding:20px}#jari-chair-demo .j-demobar{padding:12px}#jari-chair-demo .j-demobar label{width:100%;justify-content:space-between}#jari-chair-demo .j-tour-card{padding:20px}#jari-chair-demo .j-state-title{font-size:21px}}
+</style>
+<script>
+(()=>{
+ const root=document.getElementById('jari-chair-demo'),$=s=>root.querySelector(s);
+ $('.j-logomark').textContent='j';
+ const help=document.createElement('button');help.className='j-button';help.textContent='사용법 보기';help.type='button';help.dataset.tourHelp='';$('.j-topright').prepend(help);
+ const demo=$('.j-demobar');$('.j-heading').after(demo);
+ const quick=document.createElement('div');quick.className='j-quick';quick.setAttribute('aria-label','빠른 시연');
+ for(const [value,label] of [['center','균형 착석'],['left','왼쪽 기울이기'],['away','자리 비우기']]){const b=document.createElement('button');b.className='j-button';b.textContent=label;b.type='button';b.dataset.quick=value;b.onclick=()=>{const s=$('#jari-scenario');s.value=value;s.dispatchEvent(new Event('change',{bubbles:true}));};quick.append(b);}
+ demo.querySelector('label').after(quick);
+ const sync=()=>quick.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.quick===$('#jari-scenario').value)));
+ root.addEventListener('change',sync);quick.addEventListener('click',sync);sync();
+ const timeline=$('.j-timeline');$('#jari-page-records .j-heading').after(timeline);timeline.style.marginBottom='16px';
+ const foot=document.createElement('p');foot.className='j-footnote';foot.append('앉은 습관은 자동으로 기록돼요. ');const record=document.createElement('button');record.textContent='착석 기록 보기 →';record.onclick=()=>$('[data-tab="records"]').click();foot.append(record);$('#jari-page-live').append(foot);
+ const dialog=document.createElement('dialog');dialog.className='j-tour';dialog.setAttribute('aria-labelledby','j-tour-title');dialog.setAttribute('aria-describedby','j-tour-copy');
+ dialog.innerHTML='<div class="j-tour-spot"></div><section class="j-tour-card"><div class="j-tour-count"></div><h2 id="j-tour-title"></h2><p id="j-tour-copy"></p><div class="j-tour-actions"><button class="j-tour-skip" type="button">건너뛰기</button><div><button class="j-button j-tour-prev" type="button">이전</button><button class="j-button j-primary j-tour-next" type="button">다음</button></div></div></section>';
+ root.append(dialog);const card=dialog.querySelector('.j-tour-card'),spot=dialog.querySelector('.j-tour-spot'),next=dialog.querySelector('.j-tour-next'),prev=dialog.querySelector('.j-tour-prev');
+ const steps=[
+ ['.j-demobar','의자를 움직이는 대신, 눌러보세요','가상 의자로 프로젝트를 체험하는 화면이에요. 버튼을 누르면 앉은 상태가 바뀌고, 센서와 알림이 함께 반응해요.'],
+ ['.j-statusline','어떻게 앉았는지 한눈에','의자의 여섯 센서가 좌우 치우침과 등받이 접촉을 감지해요. 아래 의자 그림은 눌린 정도에 따라 색이 진해져요.'],
+ ['.j-rest-card .j-panelhead','작업 흐름에 맞춰 쉬어가기','오래 앉아 있으면 휴식을 알려줘요. 바쁠 땐 알림을 미루세요. 위의 ‘휴식 알림 보기’로 바로 체험할 수 있어요.'],
+ ['.j-vib-top','화면을 안 봐도, 진동으로','의자가 짧게 진동해 알려주는 기능이에요. ON/OFF를 직접 선택할 수 있고, 꺼도 기록은 계속돼요. 여기서는 화면으로만 표현해요.'],
+ ['[data-tab="records"]','변화를 기록으로 확인해요','착석과 휴식, 알림 이력을 모아 볼 수 있어요. 이제 ‘왼쪽 기울이기’나 ‘휴식 알림 보기’를 눌러 직접 체험해 보세요.']
+ ];let index=0;
+ function place(){if(!dialog.open)return;const target=$(steps[index][0]),r=target.getBoundingClientRect(),w=innerWidth,h=innerHeight;Object.assign(spot.style,{left:Math.max(4,r.left-6)+'px',top:r.top-6+'px',width:Math.min(w-8,r.width+12)+'px',height:r.height+12+'px'});const c=card.getBoundingClientRect(),left=Math.max(16,Math.min(w-c.width-16,r.left)),below=r.bottom+22,top=below+c.height<h-12?below:Math.max(12,r.top-c.height-22);card.style.left=left+'px';card.style.top=top+'px';card.dataset.side=top<r.top?'above':'below';card.style.setProperty('--arrow-x',Math.max(20,Math.min(c.width-32,r.left+r.width/2-left))+'px');}
+ function show(){const s=steps[index];dialog.querySelector('.j-tour-count').textContent=`QUICK TOUR · ${index+1} / ${steps.length}`;$('#j-tour-title').textContent=s[1];$('#j-tour-copy').textContent=s[2];prev.hidden=index===0;next.textContent=index===steps.length-1?'직접 체험하기':'다음 →';$(s[0]).scrollIntoView({block:'center',behavior:'instant'});place();next.focus({preventScroll:true});}
+ function start(){root.dataset.touring='true';$('[data-tab="live"]').click();index=0;dialog.showModal();show();}
+ function end(){dialog.close();root.dataset.touring='false';root.dispatchEvent(new Event('jari:tour-complete'));help.focus({preventScroll:true});demo.scrollIntoView({block:'center',behavior:'instant'});}
+ next.onclick=()=>{if(index===steps.length-1)end();else{index++;show();}};prev.onclick=()=>{index--;show();};dialog.querySelector('.j-tour-skip').onclick=end;dialog.addEventListener('cancel',e=>{e.preventDefault();end();});help.onclick=start;window.addEventListener('resize',place);window.addEventListener('scroll',place,true);
+ if(root.dataset.tourDone!=='true')start();
+})();
+</script>

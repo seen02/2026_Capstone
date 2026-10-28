@@ -1,0 +1,619 @@
+{
+  "map_id": "CINEMA-32x24-v6",
+  "purpose": "v6 설계용 설정 초안 / 영화관 상영관 화재 대피 / 실물 구현·시험 완료 아님",
+  "units": "metres",
+  "coordinate_system": "northwest origin; x east; y south",
+  "building": {
+    "width_m": 32,
+    "depth_m": 24,
+    "floors": 1,
+    "usage": "CINEMA_SECTION",
+    "level": "1F",
+    "modelled_floors": 1,
+    "fictional_layout": true,
+    "physical_junction_count": 3,
+    "external_exit_count": 2
+  },
+  "nodes": [
+    {
+      "id": "J",
+      "position": [
+        14,
+        19
+      ],
+      "is_exit": false,
+      "physical_junction": true,
+      "label": "로비 앞 갈림길"
+    },
+    {
+      "id": "L",
+      "position": [
+        8,
+        9
+      ],
+      "is_exit": false,
+      "physical_junction": true,
+      "label": "서측 갈림길"
+    },
+    {
+      "id": "R",
+      "position": [
+        24,
+        9
+      ],
+      "is_exit": false,
+      "physical_junction": true,
+      "label": "동측 갈림길"
+    },
+    {
+      "id": "EL",
+      "position": [
+        0,
+        9
+      ],
+      "is_exit": true,
+      "boundary_type": "EXTERIOR_EXIT_THRESHOLD",
+      "label": "서측 외부 비상 출구"
+    },
+    {
+      "id": "ER",
+      "position": [
+        32,
+        9
+      ],
+      "is_exit": true,
+      "boundary_type": "EXTERIOR_EXIT_THRESHOLD",
+      "label": "동측 외부 비상 출구"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "J",
+      "to": "L",
+      "length_m": 16,
+      "width_m": 3,
+      "area_m2": 48,
+      "source": "S1",
+      "points": [
+        [
+          14,
+          19
+        ],
+        [
+          8,
+          19
+        ],
+        [
+          8,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    },
+    {
+      "id": "e2",
+      "from": "J",
+      "to": "R",
+      "length_m": 20,
+      "width_m": 3,
+      "area_m2": 60,
+      "source": "S1",
+      "points": [
+        [
+          14,
+          19
+        ],
+        [
+          24,
+          19
+        ],
+        [
+          24,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    },
+    {
+      "id": "e3",
+      "from": "L",
+      "to": "EL",
+      "length_m": 8,
+      "width_m": 2.4,
+      "area_m2": 19.2,
+      "source": "S2",
+      "points": [
+        [
+          8,
+          9
+        ],
+        [
+          0,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    },
+    {
+      "id": "e4",
+      "from": "R",
+      "to": "ER",
+      "length_m": 8,
+      "width_m": 2.4,
+      "area_m2": 19.2,
+      "source": "S3",
+      "points": [
+        [
+          24,
+          9
+        ],
+        [
+          32,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    },
+    {
+      "id": "e5",
+      "from": "L",
+      "to": "R",
+      "length_m": 16,
+      "width_m": 2.4,
+      "area_m2": 38.4,
+      "source": "S2",
+      "points": [
+        [
+          8,
+          9
+        ],
+        [
+          24,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    }
+  ],
+  "signs": [
+    {
+      "id": "S1",
+      "node": "J",
+      "directions": {
+        "e1": "LEFT",
+        "e2": "RIGHT"
+      },
+      "owned_edges": [
+        "e1",
+        "e2"
+      ],
+      "local_input_transport": "USB_SERIAL",
+      "remote_state_transport": "ESP_NOW_ONLY"
+    },
+    {
+      "id": "S2",
+      "node": "L",
+      "directions": {
+        "e3": "LEFT",
+        "e5": "RIGHT"
+      },
+      "owned_edges": [
+        "e3",
+        "e5"
+      ],
+      "local_input_transport": "USB_SERIAL",
+      "remote_state_transport": "ESP_NOW_ONLY"
+    },
+    {
+      "id": "S3",
+      "node": "R",
+      "directions": {
+        "e4": "RIGHT"
+      },
+      "owned_edges": [
+        "e4"
+      ],
+      "local_input_transport": "USB_SERIAL",
+      "remote_state_transport": "ESP_NOW_ONLY"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "101",
+      "name": "1관",
+      "bounds_m": [
+        0,
+        0,
+        10.5,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 7.2
+      },
+      "visual_features": [
+        "SCREEN",
+        "SEAT_ROWS"
+      ],
+      "seat_symbols": 30,
+      "seat_symbols_are_capacity": false
+    },
+    {
+      "id": "102",
+      "name": "2관",
+      "bounds_m": [
+        10.5,
+        0,
+        10.5,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 4
+      },
+      "visual_features": [
+        "SCREEN",
+        "SEAT_ROWS"
+      ],
+      "seat_symbols": 30,
+      "seat_symbols_are_capacity": false
+    },
+    {
+      "id": "103",
+      "name": "3관",
+      "bounds_m": [
+        21,
+        0,
+        11,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 3
+      },
+      "visual_features": [
+        "SCREEN",
+        "SEAT_ROWS"
+      ],
+      "seat_symbols": 30,
+      "seat_symbols_are_capacity": false
+    },
+    {
+      "id": "104",
+      "name": "운영실",
+      "bounds_m": [
+        0,
+        10.2,
+        6.5,
+        5
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "105",
+      "name": "비품창고",
+      "bounds_m": [
+        0,
+        15.2,
+        6.5,
+        5.3
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "106",
+      "name": "매점",
+      "bounds_m": [
+        9.5,
+        10.2,
+        6.5,
+        7.3
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 4
+      }
+    },
+    {
+      "id": "107",
+      "name": "카페",
+      "bounds_m": [
+        16,
+        10.2,
+        6.5,
+        7.3
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 4
+      }
+    },
+    {
+      "id": "108",
+      "name": "공용 화장실",
+      "bounds_m": [
+        25.5,
+        10.2,
+        6.5,
+        5
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "109",
+      "name": "설비실",
+      "bounds_m": [
+        25.5,
+        15.2,
+        6.5,
+        5.3
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "110",
+      "name": "매표소",
+      "bounds_m": [
+        0,
+        20.5,
+        9.5,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 7.4
+      }
+    },
+    {
+      "id": "111",
+      "name": "로비 · 입장 대기",
+      "bounds_m": [
+        9.5,
+        20.5,
+        13,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 4.5
+      }
+    },
+    {
+      "id": "112",
+      "name": "관람객 라운지",
+      "bounds_m": [
+        22.5,
+        20.5,
+        9.5,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 1.5
+      }
+    }
+  ],
+  "people": 60,
+  "cost": {
+    "alpha": 2,
+    "density_reference_per_m2": 1,
+    "q_max": 3
+  },
+  "notes": [
+    "Provided geometry retained: rooms are backdrop; P1 people start at WAIT_J; room-door evacuation edges are not inferred.",
+    "P1 uses the supplied directed acyclic graph. No R-to-L or return-to-J path; S3 has only RIGHT/X/UNKNOWN outputs.",
+    "All five edges have simulated local inputs. e2/e5 STATIC_TEST_CLEAR is superseded.",
+    "Local sensor substitution is separate from central management. PC-wide failure is not covered by central-off continuity.",
+    "Edge areas are nominal aggregation areas, not a non-overlapping floor-area sum.",
+    "Design-only model assumptions; no measured evacuation efficacy or completed hardware acceptance test.",
+    "지상 1층 가상 영화관. 갈림길 J/L/R 3개와 외부 출구 EL/ER 2개. 원본 복도 기하 구조 유지.",
+    "EL/ER는 비상 출구 통과 경계. 외부 집결지 이동·실제 피난 성능은 평가하지 않음.",
+    "상영 전 로비 60명 공통 출발. 상영관별 좌석 출발과 전체 재실자는 모델링하지 않음.",
+    "상영관 좌석 기호 30개는 공간 표현이며 실제 수용인원 기준을 뜻하지 않음."
+  ],
+  "source_map_id": "EDU-32x24-v1",
+  "source_file_sha256": "99191d3ff1820ac6fcbf0d5b4d678a5fe6166102044c33514cd57ad9b9dd6cd9",
+  "schema_version": "6.0",
+  "algorithm": {
+    "name": "A_STAR",
+    "heuristic": "MIN_EUCLIDEAN_TO_EXIT",
+    "cost_scale": 1000,
+    "cost_rounding": "CEIL",
+    "heuristic_rounding": "FLOOR",
+    "heuristic_consistency_check": true,
+    "invalid_heuristic": "ZERO_OR_REJECT_MAP",
+    "tie_break": [
+      "TOTAL_COST",
+      "EXIT_ID",
+      "EDGE_ID_SEQUENCE"
+    ],
+    "benchmark_only": "DIJKSTRA",
+    "dynamic_updates": "RESTART_FROM_IMMUTABLE_SNAPSHOT"
+  },
+  "state_policy": {
+    "clear_ttl_s": 3,
+    "crowd_ttl_s": 5,
+    "report_ttl_s": 3,
+    "risk_blocked": "LATCH_UNTIL_EXPLICIT_FRESH_CLEAR",
+    "publish_period_s": 1,
+    "expiration_check_period_s": 0.1,
+    "minimum_improvement": 0.15,
+    "candidate_hold_s": 5,
+    "minimum_direction_hold_s": 5,
+    "duplicate_refreshes_ttl": false,
+    "central_loss_expires_local_input": false,
+    "crowd_application": "COMPLETE_SAME_RUN_AND_SNAPSHOT_FROM_ALL_OWNERS",
+    "crowd_expiry_reference": "OLDEST_OBSERVATION_IN_LAST_COMPLETE_SNAPSHOT",
+    "report_period_s": 1,
+    "central_heartbeat_period_s": 1,
+    "central_heartbeat_ttl_s": 3
+  },
+  "simulation": {
+    "modes": [
+      "SIM_BASELINE",
+      "HIL_NORMAL",
+      "HIL_CENTRAL_OFF"
+    ],
+    "initial_people": 60,
+    "initial_zone": "WAIT_J",
+    "fixed_seed": null,
+    "dt_s": 0.1,
+    "speed_mps": 1,
+    "release_per_second": 2,
+    "exit_capacity_per_second": {
+      "EL": 0.5,
+      "ER": 0.5
+    },
+    "horizon_s": 180,
+    "baseline_policy": "LOCAL_REPLAN",
+    "baseline_local_search_delay_s": 3,
+    "in_edge_blocked_policy": "STOP_AND_COUNT_AS_NOT_EVACUATED",
+    "hil_direction_source": "ACTUAL_SIGN_REPORT",
+    "hil_speed_multiplier": 1,
+    "queue_policy": "FIFO",
+    "exit_queue_counted_in_approach_edge": true,
+    "initial_population_context": "상영 전 로비에서 입장을 기다리는 관람객 60명",
+    "completion_boundary": "EXTERIOR_EXIT_THRESHOLD",
+    "completion_display": "출구 통과 완료",
+    "exterior_assembly_point_modelled": false,
+    "auditorium_seat_departure_modelled": false
+  },
+  "central_management": {
+    "gateway": "G",
+    "role": "OBSERVATION_LOGGING_HEALTH_ONLY",
+    "direction_commands": false,
+    "remote_state_injection": false,
+    "disconnect": [
+      "POWER_OFF_G",
+      "STOP_CENTRAL_MANAGER"
+    ],
+    "retained": [
+      "SIMULATOR",
+      "SENSOR_BRIDGE",
+      "SIGN_LOCAL_USB",
+      "SIGN_POWER",
+      "ESP_NOW"
+    ]
+  },
+  "physical_model": {
+    "scale_denominator": 50,
+    "building_mm": [
+      640,
+      480
+    ],
+    "base_mm": [
+      800,
+      600
+    ],
+    "signs_to_scale": false,
+    "linked_modes": [
+      "HIL_NORMAL",
+      "HIL_CENTRAL_OFF"
+    ],
+    "floorplan_svg": "건물_평면도.svg",
+    "exit_symbols": "EXTERIOR_EXIT_DOORS",
+    "physical_junction_count": 3,
+    "external_exit_count": 2
+  },
+  "static_test_scenarios": [
+    {
+      "id": "normal",
+      "blocked": [],
+      "crowd": {},
+      "wait_j": 60,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    },
+    {
+      "id": "crowd",
+      "blocked": [],
+      "crowd": {
+        "e3": 30
+      },
+      "wait_j": 30,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    },
+    {
+      "id": "left",
+      "blocked": [
+        "e3"
+      ],
+      "crowd": {},
+      "wait_j": 60,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    },
+    {
+      "id": "right",
+      "blocked": [
+        "e4"
+      ],
+      "crowd": {
+        "e3": 30
+      },
+      "wait_j": 30,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    },
+    {
+      "id": "both",
+      "blocked": [
+        "e3",
+        "e4"
+      ],
+      "crowd": {},
+      "wait_j": 60,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    }
+  ],
+  "evacuation_scenarios": [
+    {
+      "id": "F00",
+      "events": [],
+      "name": "차단 없는 비교 기준",
+      "fire_room_id": null,
+      "event_semantics": "SCRIPTED_EDGE_BLOCKAGE_NOT_SMOKE_SIMULATION"
+    },
+    {
+      "id": "F01",
+      "events": [
+        {
+          "time_s": 20,
+          "edge": "e3",
+          "state": "BLOCKED"
+        }
+      ],
+      "name": "서측 1관 영사 장비 화재",
+      "fire_room_id": "101",
+      "event_semantics": "SCRIPTED_EDGE_BLOCKAGE_NOT_SMOKE_SIMULATION"
+    },
+    {
+      "id": "F02",
+      "events": [
+        {
+          "time_s": 20,
+          "edge": "e4",
+          "state": "BLOCKED"
+        }
+      ],
+      "name": "동측 3관 영사 장비 화재",
+      "fire_room_id": "103",
+      "event_semantics": "SCRIPTED_EDGE_BLOCKAGE_NOT_SMOKE_SIMULATION"
+    }
+  ],
+  "central_off_comparison": {
+    "central_off_time_s": 10,
+    "preserve_fire_events": true
+  },
+  "map_hash": "c9f6093fbf53af355b08ada5048546e0d66fb4b73bf82cf6abb4537aee9aee78"
+}

@@ -1,0 +1,439 @@
+{
+  "map_id": "EDU-32x24-v1",
+  "purpose": "교육용 건물 평면 제안 / 실물 연동 없음",
+  "units": "metres",
+  "coordinate_system": "northwest origin; x east; y south",
+  "building": {
+    "width_m": 32,
+    "depth_m": 24,
+    "floors": 1
+  },
+  "nodes": [
+    {
+      "id": "J",
+      "position": [
+        14,
+        19
+      ],
+      "is_exit": false
+    },
+    {
+      "id": "L",
+      "position": [
+        8,
+        9
+      ],
+      "is_exit": false
+    },
+    {
+      "id": "R",
+      "position": [
+        24,
+        9
+      ],
+      "is_exit": false
+    },
+    {
+      "id": "EL",
+      "position": [
+        0,
+        9
+      ],
+      "is_exit": true
+    },
+    {
+      "id": "ER",
+      "position": [
+        32,
+        9
+      ],
+      "is_exit": true
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "J",
+      "to": "L",
+      "length_m": 16,
+      "width_m": 3,
+      "area_m2": 48,
+      "source": "S1",
+      "points": [
+        [
+          14,
+          19
+        ],
+        [
+          8,
+          19
+        ],
+        [
+          8,
+          9
+        ]
+      ]
+    },
+    {
+      "id": "e2",
+      "from": "J",
+      "to": "R",
+      "length_m": 20,
+      "width_m": 3,
+      "area_m2": 60,
+      "source": "STATIC_TEST_CLEAR",
+      "points": [
+        [
+          14,
+          19
+        ],
+        [
+          24,
+          19
+        ],
+        [
+          24,
+          9
+        ]
+      ]
+    },
+    {
+      "id": "e3",
+      "from": "L",
+      "to": "EL",
+      "length_m": 8,
+      "width_m": 2.4,
+      "area_m2": 19.2,
+      "source": "S2",
+      "points": [
+        [
+          8,
+          9
+        ],
+        [
+          0,
+          9
+        ]
+      ]
+    },
+    {
+      "id": "e4",
+      "from": "R",
+      "to": "ER",
+      "length_m": 8,
+      "width_m": 2.4,
+      "area_m2": 19.2,
+      "source": "S3",
+      "points": [
+        [
+          24,
+          9
+        ],
+        [
+          32,
+          9
+        ]
+      ]
+    },
+    {
+      "id": "e5",
+      "from": "L",
+      "to": "R",
+      "length_m": 16,
+      "width_m": 2.4,
+      "area_m2": 38.4,
+      "source": "STATIC_TEST_CLEAR",
+      "points": [
+        [
+          8,
+          9
+        ],
+        [
+          24,
+          9
+        ]
+      ]
+    }
+  ],
+  "signs": [
+    {
+      "id": "S1",
+      "node": "J",
+      "directions": {
+        "e1": "LEFT",
+        "e2": "RIGHT"
+      }
+    },
+    {
+      "id": "S2",
+      "node": "L",
+      "directions": {
+        "e3": "LEFT",
+        "e5": "RIGHT"
+      }
+    },
+    {
+      "id": "S3",
+      "node": "R",
+      "directions": {
+        "e4": "RIGHT"
+      }
+    }
+  ],
+  "rooms": [
+    {
+      "id": "101",
+      "name": "강의실 A",
+      "bounds_m": [
+        0,
+        0,
+        10.5,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 7.2
+      }
+    },
+    {
+      "id": "102",
+      "name": "세미나실",
+      "bounds_m": [
+        10.5,
+        0,
+        10.5,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 4
+      }
+    },
+    {
+      "id": "103",
+      "name": "컴퓨터실",
+      "bounds_m": [
+        21,
+        0,
+        11,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 3
+      }
+    },
+    {
+      "id": "104",
+      "name": "교수연구실",
+      "bounds_m": [
+        0,
+        10.2,
+        6.5,
+        5
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "105",
+      "name": "준비실",
+      "bounds_m": [
+        0,
+        15.2,
+        6.5,
+        5.3
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "106",
+      "name": "프로젝트실 A",
+      "bounds_m": [
+        9.5,
+        10.2,
+        6.5,
+        7.3
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 4
+      }
+    },
+    {
+      "id": "107",
+      "name": "프로젝트실 B",
+      "bounds_m": [
+        16,
+        10.2,
+        6.5,
+        7.3
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 4
+      }
+    },
+    {
+      "id": "108",
+      "name": "공용 화장실",
+      "bounds_m": [
+        25.5,
+        10.2,
+        6.5,
+        5
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "109",
+      "name": "설비실",
+      "bounds_m": [
+        25.5,
+        15.2,
+        6.5,
+        5.3
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "110",
+      "name": "자료실",
+      "bounds_m": [
+        0,
+        20.5,
+        9.5,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 7.4
+      }
+    },
+    {
+      "id": "111",
+      "name": "다목적 홀 · 출발 대기",
+      "bounds_m": [
+        9.5,
+        20.5,
+        13,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 4.5
+      }
+    },
+    {
+      "id": "112",
+      "name": "학생 라운지",
+      "bounds_m": [
+        22.5,
+        20.5,
+        9.5,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 1.5
+      }
+    }
+  ],
+  "people": 60,
+  "cost": {
+    "alpha": 2,
+    "density_reference_per_m2": 1,
+    "q_max": 3
+  },
+  "scenarios": [
+    {
+      "id": "normal",
+      "name": "정상",
+      "blocked": [],
+      "crowd": {},
+      "desc": "S1에서 짧은 왼쪽 경로로 안내합니다. J → L → EL = 24 m.",
+      "directions": [
+        "←",
+        "←",
+        "→"
+      ]
+    },
+    {
+      "id": "crowd",
+      "name": "왼쪽 혼잡",
+      "blocked": [],
+      "crowd": {
+        "e3": 30
+      },
+      "desc": "e3에 30명, 출발 대기 30명. 혼잡을 반영하면 S1·S2가 모두 오른쪽으로 전환합니다.",
+      "directions": [
+        "→",
+        "→",
+        "→"
+      ]
+    },
+    {
+      "id": "left",
+      "name": "왼쪽 출구 차단",
+      "blocked": [
+        "e3"
+      ],
+      "crowd": {},
+      "desc": "S1은 오른쪽으로, 이미 L에 도착한 인원은 S2 안내로 연결 복도를 통해 우회합니다.",
+      "directions": [
+        "→",
+        "→",
+        "→"
+      ]
+    },
+    {
+      "id": "right",
+      "name": "혼잡 + 오른쪽 차단",
+      "blocked": [
+        "e4"
+      ],
+      "crowd": {
+        "e3": 30
+      },
+      "desc": "혼잡보다 차단을 우선합니다. S1·S2는 왼쪽으로 안내하고 S3는 X를 표시합니다.",
+      "directions": [
+        "←",
+        "←",
+        "X"
+      ]
+    },
+    {
+      "id": "both",
+      "name": "양쪽 출구 차단",
+      "blocked": [
+        "e3",
+        "e4"
+      ],
+      "crowd": {},
+      "desc": "두 출구로 가는 경로가 모두 사라져 S1·S2·S3가 X를 표시합니다.",
+      "directions": [
+        "X",
+        "X",
+        "X"
+      ]
+    }
+  ],
+  "notes": [
+    "계획서 v4의 연결관계와 방향 매핑 유지. 길이·면적은 이 평면 치수로 변경. 기존 지도와 동일 해시로 사용하지 말 것.",
+    "실제 복도는 양방향 공간이나 P1 계산은 e1~e5의 단방향 비순환 그래프로 제한. R→L 및 되돌아가기 미지원.",
+    "면적은 중심선 길이×명목 폭의 간선별 유효 집계 면적. 교차부의 기하 면적 중복을 포함할 수 있어 실제 바닥 면적과 합산하지 않음.",
+    "치수는 개념설계 명목치. 시공·피난 적합성 검토용 도면이 아님.",
+    "출구 문 폭 1.8 m, 일반 문 1.0 m, 홀 문 1.8 m. 축척 모형 제작 시 벽 두께 별도 보정."
+  ]
+}

@@ -1,0 +1,34 @@
+const fs=require('fs'),path=require('path');
+const {pathToFileURL}=require('url');
+const {chromium}=require('C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+(async()=>{
+ const out=path.resolve('tmp/jari-qa');fs.mkdirSync(out,{recursive:true});
+ const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+ const page=await browser.newPage({viewport:{width:1100,height:1200}});const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ await page.goto(pathToFileURL(path.resolve('자리_웹앱_목업.html')).href);
+ const iframe=page.frameLocator('iframe');const app=iframe.locator('#jari-chair-demo');await app.waitFor();
+ await app.screenshot({path:path.join(out,'desktop.png')});
+ await iframe.locator('[data-action="test-vibration"]').click();
+ const motor=await iframe.locator('[data-role="vib-status-text"]').innerText();
+ await iframe.locator('[data-role="vib-toggle"]').uncheck();await page.waitForTimeout(550);
+ const off=await iframe.locator('[data-role="vib-status-text"]').innerText();
+ await iframe.locator('[data-action="rest-preview"]').click();
+ const rest=await iframe.locator('[data-role="alarm-title"]').innerText();
+ await iframe.locator('[data-action="snooze"]').click();
+ const snooze=await iframe.locator('[data-role="rest-label"]').innerText();
+ await iframe.locator('#jari-scenario').selectOption('away');
+ const away=await iframe.locator('[data-role="posture"]').innerText();
+ await iframe.locator('#jari-scenario').selectOption('offline');await iframe.locator('[data-role="vib-toggle"]').check();
+ const pending=await iframe.locator('[data-role="vib-status-text"]').innerText();
+ await iframe.locator('#jari-scenario').selectOption('left');await page.waitForTimeout(800);await app.screenshot({path:path.join(out,'alert.png')});
+ await iframe.locator('[data-tab="records"]').click();const rows=await iframe.locator('[data-role="event-list"] tr').count();
+ await iframe.locator('[data-tab="settings"]').click();const locked=await iframe.locator('[data-setting="restMinutes"]').isDisabled();
+ await iframe.locator('[data-tab="live"]').click();await iframe.locator('[data-action="session"]').click();await iframe.locator('[data-tab="settings"]').click();
+ await iframe.locator('[data-setting="restMinutes"]').selectOption('45');await app.screenshot({path:path.join(out,'settings.png')});
+ await iframe.locator('[data-tab="live"]').click();await iframe.locator('[data-action="session"]').click();await iframe.locator('#jari-scenario').selectOption('center');
+ const widths=[];
+ for(const w of [1024,736,390,320]){await page.setViewportSize({width:w,height:1500});await page.waitForTimeout(100);widths.push(await app.evaluate(el=>({viewport:innerWidth,width:document.documentElement.scrollWidth,root:el.getBoundingClientRect().width})));if(w===390)await app.screenshot({path:path.join(out,'mobile.png')});}
+ console.log(JSON.stringify({motor,off,rest,snooze,away,pending,rows,locked,widths,errors},null,2));
+ await browser.close();
+})();
+

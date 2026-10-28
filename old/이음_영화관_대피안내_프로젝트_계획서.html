@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>이음 | 영화관 앱·가변 표지판 연동 대피 안내 시스템 계획서</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#eef1f2;color:#27343c;font:15px/1.85 'Malgun Gothic','Apple SD Gothic Neo',sans-serif}nav{position:fixed;inset:0 auto 0 0;width:245px;background:#fff;padding:30px 20px;overflow:auto;border-right:1px solid #dde4e4}nav strong{display:block;font-size:25px;color:#147969;margin-bottom:6px}nav small{display:block;color:#637579;margin-bottom:25px}nav a{display:block;color:#455a60;text-decoration:none;padding:7px 2px;font-size:12px}nav a.major{font-weight:bold;color:#147969;margin-top:16px}main{max-width:1120px;margin:30px 30px 70px 275px;padding:55px 58px;background:white}h1,h2,h3{line-height:1.5;color:#182d32;scroll-margin-top:24px;break-after:avoid}h1{font-size:32px;letter-spacing:-1px;margin:18px 0}h2{font-size:23px;margin:44px 0 17px}h3{font-size:17px;margin:26px 0 12px}p{margin:12px 0}a{color:#167b6c;text-underline-offset:3px}ul,ol{padding-left:24px}li{margin:6px 0}.tag{color:#147969;font-size:12px;letter-spacing:2px;font-weight:bold}.lead{font-size:18px;line-height:1.8;border-left:4px solid #219a85;padding:14px 20px;background:#eff8f5;margin:26px 0}.note{background:#f4f6f7;border-radius:8px;padding:15px 19px;font-size:14px}.warn{background:#fff5e9;border-left:3px solid #d79642;padding:15px 19px}.meta{font-size:13px;color:#617176}table{border-collapse:collapse;width:100%;margin:18px 0 24px;font-size:13px;line-height:1.7}th,td{border:1px solid #dce3e3;padding:10px 12px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#eaf2f0;color:#244f48}tr{break-inside:avoid}thead{display:table-header-group}tbody tr:nth-child(even){background:#fafcfc}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f6f6;padding:20px;border:1px solid #dce3e3;font:12px/1.8 Consolas,'Malgun Gothic',monospace}.flow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.flow div{padding:18px;background:#eff6f3;border:1px solid #d7e7e0;border-radius:10px}.flow b{display:block;margin-bottom:7px}.flow small{color:#536b65}.appendix{border-top:2px solid #dce7e2;margin-top:70px;padding-top:28px}.tools{position:fixed;right:22px;bottom:20px;display:flex;gap:8px}.tools button,.tools a{background:#146f61;color:white;border:0;border-radius:8px;padding:12px 16px;font:13px 'Malgun Gothic';cursor:pointer;text-decoration:none}.sources li{font-size:13px}code{overflow-wrap:anywhere}details{margin:16px 0}summary{cursor:pointer;font-weight:bold}
+@media(max-width:1150px){nav{display:none}main{margin:18px auto;padding:38px;max-width:960px}}@media(max-width:600px){main{margin:0;padding:25px 18px 100px}body{font-size:14px}h1{font-size:26px}h2{font-size:21px}.flow{grid-template-columns:1fr}table{font-size:12px}th,td{padding:7px}.lead{font-size:16px}.tools{right:12px;bottom:12px}}
+@page{size:A4;margin:17mm 16mm 18mm}@media print{body{background:white;font-size:9.5pt;line-height:1.65}nav,.tools{display:none}main{margin:0;padding:0;max-width:none}h1{font-size:22pt}h2{font-size:15pt;margin-top:24pt}h3{font-size:12pt}table{font-size:8pt;line-height:1.55}th,td{padding:6pt}pre{font-size:8pt;break-inside:avoid}.appendix{break-before:page;margin:0;padding:0;border:0}.lead{font-size:12pt}a{color:#245e53}p{orphans:3;widows:3}.flow{break-inside:avoid}}
+</style></head><body>
+<nav><strong>이음</strong><small>CINEMA SAFETY / PROJECT 01</small><a href="#overview">프로젝트 개요</a><a href="#p1">1 목표와 범위</a><a href="#p2">2 시스템과 이용 흐름</a><a href="#p3">3 수행 계획</a><a href="#p4">4 실현 가능성</a><a href="#p5">5 하드웨어와 예산</a><a href="#p6">6 실험과 검증</a><a href="#p7">7 위험 대응과 완료 기준</a><a href="#p8">8 산출물과 참고자료</a><a class="major" href="#a">별첨 A · 과제 계획서</a><a href="#a1">목적 · 사용기술 · 기대효과</a><a class="major" href="#b">별첨 B · 요구사항명세서</a><a href="#b1">사용자와 기능 요구사항</a><a href="#b2">비기능 요구사항</a><a href="#b3">수용 시험</a><a class="major" href="#c">별첨 C · 상세설계서</a><a href="#c1">구성요소와 데이터</a><a href="#c2">위치와 경로 계산</a><a href="#c3">표지판 동기화와 장애</a><a href="#c4">API와 상태 전이</a><a href="#c5">하드웨어와 화면</a><a href="#c6">구현 순서와 시연</a></nav>
+<main>
+<header id="overview"><div class="tag">COMPUTER SCIENCE CAPSTONE · CONCEPT & DESIGN</div><h1>내 좌석에서, 다음 출구까지.<br>영화관 앱·가변 표지판 연동<br>대피 안내 시스템 <span style="color:#147969">이음</span></h1><p class="meta">작성일 2026.09.22 · 문서 버전 1.0 · 컴퓨터공학 종합설계<br>팀명 / 팀원 / 지도교수 / 제출일: 제출 시 기입</p></header>
+<div class="lead">예매·입장 정보로 관객의 출발 구역을 연결하고, 위험 통로를 제외한 안내를 영화관 앱과 현장 가변 표지판에 함께 제공한다. 앱 이용이 어려운 관객도 현장 안내를 받을 수 있게 하며, 도움 요청과 대피 확인을 관리자 화면으로 연결한다.</div>
+<p>‘자리’ 참고자료의 <b>실행 계획 → 과제 계획서 → 요구사항명세서 → 상세설계서</b> 구성을 따른다. 본 문서는 신규 아이디어의 설계안이다. 함께 제공하는 웹앱 목업은 가상 데이터로 화면과 상태 전환을 보여주며, 실제 영화관·센서·푸시·표지판에는 연결되지 않는다.</p>
+<p class="note"><b>제안의 핵심</b><br>웨어러블 지급을 스마트폰 앱으로 대체한다. 상용 적용은 영화관 사업자가 기존 예매 앱에 기능을 추가하는 형태, 종합설계는 예매·입장을 모사한 독립 웹앱과 모형 표지판으로 검증하는 형태로 구분한다. 앱 설치율·알림 허용률·예매 API 접근 권한이 확보됐다고 가정하지 않는다.</p>
+
+<h2 id="p1">1 프로젝트 목표와 범위</h2>
+<h3>1.1 왜 영화관인가</h3>
+<p>영화관은 상영관·회차·좌석이 정해져 있어, 시설 전체에서 사람을 정밀 추적하지 않아도 입장 시점의 출발 구역을 연결할 수 있다. 관객은 어두운 공간에서 화면을 보고 있고 여러 상영관의 퇴장 동선이 공용 복도에서 합쳐질 수 있으므로, 안내 변경을 알아차리고 같은 구역에서 같은 방향으로 이동하게 하는 문제를 연구하기 좋다.</p>
+<p>예매 앱이 이미 있는 관객에게는 별도 기기 지급을 줄일 수 있다. 그러나 대리 예매, 여러 명을 한 계정으로 예매한 경우, 현장 발권, 휴대폰 미소지 관객이 있으므로 <b>예매 계정 수·휴대폰 수·실제 관객 수를 동일하게 계산하지 않는다.</b></p>
+<h3>1.2 개발 목표</h3>
+<ol><li>입장 확인한 회차·상영관·좌석을 대피 안내 세션에 연결한다.</li><li>통행 제한 이벤트를 입력하면 해당 통로를 경로 후보에서 제거한다.</li><li>같은 의사결정 구역의 앱과 표지판이 같은 경로 버전을 사용하게 하고, 적용 불일치를 표시한다.</li><li>관객의 위치 수정·도움 요청·대피 자기신고를 관리자에게 전달한다.</li><li>통신 단절, 위치 미확인, 표지판 무응답 등 예외 상황을 정상 상태와 구분한다.</li></ol>
+<h3>1.3 필수·선택·범위 밖</h3>
+<table><thead><tr><th>구분</th><th>내용</th></tr></thead><tbody><tr><td>필수 공간</td><td>가상의 상영관 1개, 좌석 구역 2개, 통로 분기점 1개, 외부로 이어지는 경로 2개. 실제 건축 평면이나 적법한 피난 설계가 아닌 실험용 그래프</td></tr><tr><td>필수 장치</td><td>ESP32 계열 표지판 노드 2대, 화면 2개, 위험 입력 버튼 2개, 노트북 1대, 보유 스마트폰 2~3대, 로컬 공유기</td></tr><tr><td>필수 앱</td><td>예매 모사·입장 연결, 대피 안내, 현재 구역 수정, 도움 요청, 자기신고, 관리자 상황판, 이벤트 기록</td></tr><tr><td>선택 확장</td><td>Android 앱의 푸시 수신 실험, BLE 구역 추정, 통로 인원 계수, 여러 상영관의 혼잡 분산</td></tr><tr><td>범위 밖</td><td>실제 영화관 앱 소스 수정, 무단 예매정보 수집, 상용 화재 수신반 연결, 실제 화재 실험, 자동 구조 출동, 전원 장애 생존 보장, 전국 영화관 배포</td></tr></tbody></table>
+
+<h2 id="p2">2 시스템 구조와 이용 흐름</h2>
+<h3>2.1 세 가지 화면을 하나의 안내로 연결</h3>
+<div class="flow"><div><b>관객 앱</b><small>입장 세션 · 출발 구역<br>다음 표지판 · 도움 요청<br>대피 자기신고</small></div><div><b>건물 내부 서버</b><small>위험 통로 제외 · 경로 계산<br>경로 버전 · 장치 응답 관리<br>관리자 화면 · 이벤트 기록</small></div><div><b>가변 표지판</b><small>설치 위치 기준 방향 표시<br>적용 응답 · 통신 상태 보고<br>만료된 가변 안내 해제</small></div></div>
+<p>위험 입력 버튼 또는 허가된 설비 인터페이스가 서버에 이벤트를 제공한다. 서버와 표지판은 로컬 네트워크로 통신한다. 웹앱을 열어 둔 실험에서는 WebSocket으로 상태를 전달하며, 실제 기존 앱에 넣는 단계에서는 사업자의 인증·예매 시스템 및 운영체제 알림 기능과 연동한다.</p>
+<h3>2.2 이용 흐름</h3>
+<table><thead><tr><th>시점</th><th>관객 경험</th><th>시스템 처리</th></tr></thead><tbody><tr><td>예매 후</td><td>모바일 티켓에 ‘상영관 안전 안내’ 진입점 표시</td><td>예매를 현재 위치로 기록하지 않고 회차·좌석 연결 후보로만 보관</td></tr><tr><td>입장</td><td>티켓 검표 후 안내 세션 시작. 동행인은 필요하면 각자 연결</td><td>실제 운영은 검표 이벤트, 시제품은 가상 입장 버튼으로 확인</td></tr><tr><td>상영 전</td><td>두 출구와 현장 표지판을 미리 확인</td><td>기본 지도와 안내를 저장. 오프라인 지도는 현재 통행 가능성 보장이 아님을 표시</td></tr><tr><td>통행 제한 발생</td><td>앱을 열어둔 경우 대피 화면 전환. 현장 안내도 함께 변경</td><td>위험 구간 차단, 새 경로 발행, 표지판 적용 상태 확인</td></tr><tr><td>복도 이동</td><td>‘C 분기점의 B 출구 표지판을 확인하세요’처럼 다음 지점 안내</td><td>구역 선택 또는 선택적 BLE로 위치 갱신. 방향 센서로 몸의 좌우를 단정하지 않음</td></tr><tr><td>이동이 어려움</td><td>도움 요청과 위치 확인</td><td>접수와 담당자 확인을 구분. 요청만으로 구조가 시작됐다고 표시하지 않음</td></tr><tr><td>집결지 도착</td><td>‘대피했어요’ 자기신고 또는 직원 확인</td><td>자기신고·직원확인·미확인을 별도 상태로 저장</td></tr></tbody></table>
+<h3>2.3 같은 구역에서 충돌하지 않는 안내</h3>
+<p>개인화는 우선 <b>출발 구역, 언어, 글자 크기, 도움 요청</b>에 적용한다. 공용 복도 C에서 어떤 앱은 A를, 표지판은 B를 안내하는 식의 개인별 분산은 필수 범위에서 제외한다. C 구역에 도달한 이용자에게는 동일한 정책을 제공한다. 좌석에서 C까지의 경로는 다를 수 있다.</p>
+<p>서로 다른 상영관을 서로 다른 출구로 분산하는 기능은 확장 단계에서 다룬다. 이때에도 공용 분기점 이후의 안내는 일치해야 하며, 그룹별 안내가 필요하면 구역명·문자·화살표가 명확히 분리된 표지판을 별도로 설계하고 사용자 시험을 해야 한다.</p>
+
+<h2 id="p3">3 구체적인 수행 계획</h2>
+<h3>3.1 3인 팀·6주 기준 계획</h3>
+<p>기초 웹 개발 경험이 있는 3인 팀을 가정한 추정이다. 합계는 팀 전체 인시이며 납기와 시설 협의 시간은 별도다. 미경험 기술 학습이나 네이티브 앱 추가는 일정 증가 요인이다.</p>
+<table><thead><tr><th>주차</th><th>할 일</th><th>완료 기준</th><th>인시</th></tr></thead><tbody><tr><td>1주</td><td>시나리오·그래프·위험 상태·API 확정, 장치 1개 통신</td><td>노트북 명령에 표지판 변경 및 응답</td><td>16–22</td></tr><tr><td>2주</td><td>예매·입장 모사, 관객 화면, 경로 계산</td><td>A 차단 시 B 선택, 양쪽 차단 시 경로 없음</td><td>20–28</td></tr><tr><td>3주</td><td>표지판 2대, 경로 버전·만료·재연결</td><td>앱과 장치 버전 비교, 무응답 구분</td><td>22–30</td></tr><tr><td>4주</td><td>위치 수정, 도움 요청, 관리자 확인, 저장</td><td>요청 상태와 이벤트 CSV 연결</td><td>18–26</td></tr><tr><td>5주</td><td>장애 시험·휴대폰 교차 시험·모의 보행 실험</td><td>측정 결과, 실패 조건, 수정 내역</td><td>20–28</td></tr><tr><td>6주</td><td>통합 수정·발표·문서·시연 영상</td><td>재현 가능한 실행 절차와 최종 보고</td><td>14–20</td></tr><tr><td>합계</td><td colspan="2">기본 110–154인시 + 예비 22–31인시</td><td><b>132–185</b></td></tr></tbody></table>
+<p>3인 기준 1인당 주 약 7.3–10.3시간이다. 서버·경로 담당, 장치·통신 담당, 웹앱·실험 담당으로 나누되 3주차부터 통합 시험을 함께 진행한다. 4주로 줄이면 푸시·BLE·혼잡 분산을 제외하고 모의 위치 입력과 전경 웹앱에 집중한다.</p>
+<h3>3.2 처음 12인시의 진행 판단</h3>
+<ol><li>휴대폰 두 대가 같은 서버 화면에 접속해 이벤트를 받는지 확인한다.</li><li>ESP32 1대가 명령을 받고 적용 응답을 보내는지 확인한다.</li><li>노트북에서 A 통로 차단 → B 경로 변경 → 앱과 모형 표지판 반영을 연결한다.</li><li>공유기 분리 후 장치가 설정된 시간 안에 오래된 가변 화살표를 해제하는지 확인한다.</li></ol>
+<p>학교 Wi-Fi의 단말 간 통신 차단이 있으면 실험용 공유기로 전환한다. 이 기본 연결을 완성하기 전에는 BLE·푸시·AI를 추가하지 않는다.</p>
+
+<h2 id="p4">4 현실적인 수행 가능성</h2>
+<h3>4.1 무엇을 알 수 있고, 무엇을 알 수 없는가</h3>
+<table><thead><tr><th>입력</th><th>알 수 있는 것</th><th>알 수 없는 것</th></tr></thead><tbody><tr><td>예매·검표</td><td>어느 회차·좌석으로 입장했는지</td><td>지금도 그 좌석에 있는지, 휴대폰 소유자가 누구인지</td></tr><tr><td>구역 직접 선택</td><td>사용자가 신고한 현재 구역</td><td>신고 정확성, 계속 그 구역에 있는지</td></tr><tr><td>BLE 신호 세기</td><td>근처 비콘에 기반한 구역 추정</td><td>정확한 좌석·몸 방향·센티미터 단위 위치</td></tr><tr><td>표지판 ACK</td><td>장치가 해당 명령 처리를 보고했는지</td><td>LED 고장 없이 실제로 보이는지, 관객이 봤는지</td></tr><tr><td>앱 수신·열람</td><td>앱이 메시지를 받고 화면을 표시했는지</td><td>사용자가 이해했는지, 실제 대피했는지</td></tr></tbody></table>
+<h3>4.2 권장 기술 단계</h3>
+<p><b>1단계:</b> QR/티켓 연결 + 구역 선택 + 전경 웹앱 + Wi-Fi 표지판. <b>2단계:</b> Android 네이티브 앱에서 BLE 구역 추정과 푸시를 별도로 검증. <b>3단계:</b> 영화관 사업자와 기존 앱·검표·설비 연동을 협의한다. 졸업작품에서 실제 예매 시스템 사용 권한이 있다고 가정하거나, 앱이 이미 설치되어 있으니 곧바로 센서처럼 쓸 수 있다고 설명하지 않는다.</p>
+<p>웹 Bluetooth는 브라우저 호환성과 보안 컨텍스트 제약이 있어, 모든 휴대폰 웹앱에서 비콘을 자동 검색하는 기능을 필수로 잡기 어렵다.[R1] Android의 백그라운드 BLE도 별도 실행·권한 설계가 필요하다.[R2] 일반 BLE RSSI와 정밀 측위용 AoA는 구분해야 한다.[R6]</p>
+<h3>4.3 영화관 앱의 알림 문제</h3>
+<p>영화 중에는 무음·방해금지·화면 꺼짐이 흔할 수 있으므로 ‘앱이 모든 관객을 반드시 깨운다’를 전제로 하지 않는다. Android 13 이상에는 알림 런타임 권한이 있고, iOS의 무음·집중모드를 넘어 소리를 내는 Critical Alerts는 별도 권한과 사용자 승인이 필요하다.[R3][R4] 푸시는 단말 상태와 메시지 수명에 따라 지연되거나 전달되지 않을 수 있다.[R5]</p>
+<p class="warn">앱은 개별 안내와 양방향 요청 수단이다. 기본 경보·방송·법정 피난설비·직원 안내는 계속 필요하다. 실험의 ‘웹앱 실행 중 전달 시간’ 결과를 ‘잠긴 스마트폰에도 전달 보장’으로 확대하지 않는다.</p>
+
+<h2 id="p5">5 하드웨어 구성과 예산</h2>
+<h3>5.1 최소 구성</h3>
+<p>아래 금액은 구매 견적이 아니라 범위 결정을 위한 <b>예산 가정</b>이며, 판매처·정품 여부·부가세·배송에 따라 변한다. 구매 전에 보드 핀맵과 화면 전압·드라이버 호환을 확인한다.</p>
+<table><thead><tr><th>항목</th><th>수량</th><th>역할</th><th>총 계획 금액</th></tr></thead><tbody><tr><td>ESP32-C3 개발보드</td><td>2</td><td>표지판 제어·Wi-Fi 통신. BLE는 선택 확장</td><td>2–4만원</td></tr><tr><td>작은 OLED/TFT 화면</td><td>2</td><td>방향·제한·장치 상태 표시</td><td>2–5만원</td></tr><tr><td>버튼·저항·브레드보드·배선</td><td>1식</td><td>A/B 통로 제한 모의 입력</td><td>1–2만원</td></tr><tr><td>USB 전원·케이블</td><td>1식</td><td>장치 전원</td><td>1–3만원</td></tr><tr><td>폼보드·거치대·인쇄</td><td>1식</td><td>소형 공간 모형·표지판 설치</td><td>1–3만원</td></tr><tr><td>노트북·스마트폰·공유기</td><td>보유 장비</td><td>서버·관객 단말·로컬 통신</td><td>0원 가정</td></tr><tr><td>기본 합계</td><td colspan="2">약 7–17만원 + 예비비 약 20%</td><td><b>약 8.4–20.4만원</b></td></tr></tbody></table>
+<p>공유기·보조전원 신규 구매와 대형 LED 표지판 제작비는 제외했다. OLED는 책상 위 시연용으로, 실제 복도에서 읽을 수 있는 휘도·크기·내구성을 증명하지 않는다. ESP32-C3는 Wi-Fi와 BLE를 지원한다.[R7]</p>
+<h3>5.2 센서는 어디에 필요한가</h3>
+<table><thead><tr><th>기능</th><th>최초 구현</th><th>확장 방향</th></tr></thead><tbody><tr><td>위험 감지</td><td>버튼·관리자 입력</td><td>시설의 허가된 감지 설비 인터페이스. 실험용 온도·연기값은 별도 신호로 기록</td></tr><tr><td>관객 위치</td><td>입장 시 좌석 구역 + 직접 수정</td><td>복도 비콘과 네이티브 앱. 신호가 불확실하면 UNKNOWN</td></tr><tr><td>혼잡도</td><td>가상 혼잡 입력, 성능 주장하지 않음</td><td>출입구 계수 센서 또는 동의된 영상 실험. 중복·역방향·미착용자를 별도 평가</td></tr><tr><td>구조 요청</td><td>앱 버튼</td><td>직원 처리 단말과 담당자 확인</td></tr></tbody></table>
+<p>MQ-2처럼 여러 연기·가연성 가스에 반응하는 취미용 센서 하나로 화재를 확정하거나 통로 안전을 판정하지 않는다.[R8] 이 과제의 중심은 화재 검출 정확도가 아니라 <b>위험 정보가 주어졌을 때 안내를 어떻게 일관되게 바꾸고, 전달 실패를 어떻게 드러내는가</b>다.</p>
+
+<h2 id="p6">6 실험 및 검증 계획</h2>
+<h3>6.1 시스템 시험</h3>
+<table><thead><tr><th>항목</th><th>방법</th><th>계획 목표 / 보고 방식</th></tr></thead><tbody><tr><td>경로 정확성</td><td>A 차단, B 차단, 양쪽 차단, 위험 입력 미확인, 폐쇄 출구 조합</td><td>차단 구간 포함 0건. 해가 없으면 경로 없음</td></tr><tr><td>변경 지연</td><td>서버 이벤트 접수부터 앱 화면·장치 적용까지 각 30회</td><td>정상 로컬망 P95 2초 이하를 목표. 중앙값·P95·최댓값·실패 수 함께 보고</td></tr><tr><td>버전 일치</td><td>명령 지연·중복·역순·ACK 유실</td><td>이전 버전 복귀 0건. 일치 미확인 상태가 숨겨지지 않을 것</td></tr><tr><td>장치 단절</td><td>장치별 전원·네트워크 분리</td><td>제안 만료시간 5초 이후 1초 이내 가변 화살표 해제. 상용 기준 아님</td></tr><tr><td>앱 중단</td><td>전경, 백그라운드, 화면 잠금, 복귀</td><td>복귀 직후 오래된 방향 숨기고 현재 버전 재조회</td></tr><tr><td>요청 처리</td><td>도움 요청 중복 클릭·네트워크 장애·담당자 확인</td><td>미전송과 접수, 확인을 구분. 중복 접수 방지</td></tr></tbody></table>
+<h3>6.2 사람이 이해하는지 확인</h3>
+<p>실제 화재·연기·암전 없이 안전하게 통제된 모의 공간에서, 동의한 성인 6–10명을 대상으로 탐색적 평가를 한다. ‘가변 표지판만’과 ‘가변 표지판 + 앱’ 조건의 순서를 참가자별로 번갈아 배치하고, 서로 비슷하지만 다른 차단 시나리오를 사용한다.</p>
+<p>알림 인지 시간, 첫 경로 선택 정확도, 잘못된 분기 선택 횟수, 도움 요청 성공 여부, 읽기 부담을 기록한다. 이동 속도를 경쟁시키거나 실제 피난 시간을 단축했다고 일반화하지 않는다. 앱 사용으로 보행 중 화면 주시가 늘어나는지도 함께 기록하고, 필요하면 앱 내용을 ‘다음 표지판 한 개’로 줄인다.</p>
+<h3>6.3 기록의 구분</h3>
+<p>예매 좌석 수, 검표 인원, 앱 연결 세션 수, 알림 표시 세션 수, 대피 자기신고 수, 직원 확인 인원을 분리한다. 미응답을 잔류·사망·위험 인원으로 자동 분류하지 않는다. 실험 시작 전에 기기·OS·브라우저·네트워크·버전을 적고, 아직 실행하지 않은 시험은 ‘미실행’으로 남긴다.</p>
+
+<h2 id="p7">7 위험 대응과 완료 기준</h2>
+<table><thead><tr><th>상황</th><th>설계 대응</th></tr></thead><tbody><tr><td>예매 좌석에 없음</td><td>마지막 위치의 근거·시각 표시. ‘현재 위치 수정’을 제공하며, 위치 불명 시 좌석 기반 이동 화살표를 숨김</td></tr><tr><td>같은 계정으로 여러 명 예매</td><td>좌석별 일회용 연결 또는 대표자 세션임을 구분. 휴대폰 1대를 4명 위치로 복제하지 않음</td></tr><tr><td>센서가 말이 없음</td><td>‘정상’으로 간주하지 않음. 영향 구간 UNKNOWN으로 처리하고 동적 추천에서 제외</td></tr><tr><td>앱·표지판 불일치</td><td>새 추천을 일치 완료로 표시하지 않음. 관리자에게 해당 장치·버전·마지막 응답 표시</td></tr><tr><td>선택할 경로가 없음</td><td>임의 경로 생성 금지. ‘확인 가능한 경로 없음’과 현장 경보·직원 안내 확인, 도움 요청을 제공. 무조건 그 자리에 대기하라고 지시하지 않음</td></tr><tr><td>전원·통신 장애</td><td>추가한 가변 출력은 만료 후 해제. 독립된 기존 피난 안내 유지. 실제 운영의 예비전원·배선·화재 내성은 별도 시설 설계</td></tr><tr><td>위험 해제 신호</td><td>한 번 값이 정상으로 돌아왔다고 자동 재개방하지 않음. 권한 있는 운영자 확인 후 새 사건 버전으로 해제</td></tr><tr><td>위치정보와 개인정보</td><td>회차 한정 가명 세션, 최소 구역·근거·시각만 수집. 종료 후 보관기간을 정해 삭제하고 개인 예매·결제정보는 저장하지 않음</td></tr></tbody></table>
+<p><b>완료 기준:</b> 실제 표지판 노드 2개와 휴대폰 2대가 연결된 상태에서 필수 시나리오를 재현하고, 장애 표시·버전 처리·이벤트 기록을 검증한다. 경로 차단 시험과 역순 명령 시험을 통과하며, 성능 미달은 수치와 함께 보고한다. 현재 전달하는 HTML 목업만으로 이 완료 기준을 충족했다고 주장하지 않는다.</p>
+
+<h2 id="p8">8 산출물과 참고자료</h2>
+<p>계획 산출물: 펌웨어, 로컬 서버, 웹앱, 그래프·지도 파일, 모형 표지판, 요구사항·시험표, 익명화 CSV, 시연 영상, 실행 설명서. 이번 아이디어 구체화 산출물: 본 계획서와 <a href="이음_웹앱_목업.html">인터랙티브 웹앱 목업</a>.</p>
+<ol class="sources"><li id="r1">[R1] <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API">MDN · Web Bluetooth API</a> — 브라우저 지원·보안 컨텍스트 제한.</li><li id="r2">[R2] <a href="https://developer.android.com/develop/connectivity/bluetooth/ble/background">Android Developers · Communicate in the background</a> — 백그라운드 BLE 설계.</li><li id="r3">[R3] <a href="https://developer.android.com/develop/ui/compose/notifications/notification-permission">Android Developers · Notification runtime permission</a> — 알림 권한.</li><li id="r4">[R4] <a href="https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.usernotifications.critical-alerts">Apple Developer · Critical Alerts</a> — 특수 알림 권한과 사용자 승인.</li><li id="r5">[R5] <a href="https://firebase.google.com/docs/cloud-messaging/customize-messages/setting-message-lifespan">Firebase · Set the lifespan of a message</a> — 지연·만료·저장 정책.</li><li id="r6">[R6] <a href="https://www.bluetooth.com/blog/a-technical-look-at-direction-finding/">Bluetooth SIG · A technical look at Direction Finding</a> — AoA/AoD 하드웨어와 방식.</li><li id="r7">[R7] <a href="https://documentation.espressif.com/esp32-c3_datasheet_en.html">Espressif · ESP32-C3 Datasheet</a> — 통신·전원·인터페이스 사양.</li><li id="r8">[R8] <a href="https://www.winsen-sensor.com/product/mq-2.html">Winsen · MQ-2</a> — 연기·가연성 가스 반응 특성.</li></ol>
+<p class="meta">공식 기술 문서 확인일: 2026.09.22. 위 자료는 통신·하드웨어 선택 근거이며 이 시스템의 소방 적합성 인증이나 대피 효과 검증 자료가 아니다. 비용·일정·시간 임계값은 본 설계의 가정이다.</p>
+
+<section class="appendix" id="a"><div class="tag">APPENDIX A</div><h1>별첨 A · 과제 계획서</h1><h2 id="a1">A1 과제 목적 및 필요성</h2><p>과제명은 ‘영화관 예매·입장 정보와 가변 표지판을 연동한 대피 안내 및 도움 요청 시스템’이다. 영화관의 상영관·좌석 정보로 관객의 초기 출발 구역을 연결하고, 위험 통로를 제외한 경로 안내를 앱과 표지판에 일관되게 제공한다. 현장 안내 변경의 인지와 도움이 필요한 관객의 의사 전달을 보완하는 것이 목적이다.</p><p>기존 앱의 접근성은 활용하되 전원·통신·알림 허용 여부에 따라 앱을 사용할 수 없는 관객이 존재한다는 전제로 설계한다. 학교 실험에서는 실제 영화관 서비스 권한을 전제로 하지 않고 예매와 검표를 모사한다.</p>
+<h2>A2 사용기술 및 설계</h2><table><thead><tr><th>기술</th><th>활용</th></tr></thead><tbody><tr><td>ESP32-C3 / 소형 화면</td><td>방향 표시, 통행 제한 입력, 장치 응답, 만료 처리</td></tr><tr><td>Python FastAPI / WebSocket</td><td>세션·위치·위험 이벤트·경로 버전·장치 상태 중계</td></tr><tr><td>HTML/CSS/JavaScript</td><td>전경 관객 웹앱과 관리자 상황판</td></tr><tr><td>그래프 / Dijkstra</td><td>차단·미확인 구간 제외 후 목적지까지 연결 확인</td></tr><tr><td>SQLite</td><td>세션·위치 근거·경로·요청·응답·시험 기록</td></tr><tr><td>선택: Android / BLE / FCM</td><td>권한별 알림과 구역 인식 실험. 기본 MVP와 분리</td></tr></tbody></table>
+<p>노트북이 전체 판단과 기록을 맡고, 표지판은 받은 정책의 유효성 확인·표시·응답에 집중한다. 경로는 ‘허용 구간 중 연결 가능한 길’이며 실제 화재 상황의 안전을 예측하는 모델이 아니다. 3인·6주·132–185인시를 기준으로 계획한다.</p>
+<h2>A3 기대효과 및 활용방안</h2><p>개별 기기 지급 부담을 줄이고 관객에게 익숙한 티켓 화면에서 안내에 접근하도록 할 수 있다. 위치를 알 수 없는 경우와 전달되지 않은 경우를 구분함으로써 관리자가 시스템의 한계를 파악할 수 있다. 효과는 모의 실험으로 평가하며 실제 사고 감소나 대피 시간 단축은 아직 입증되지 않았다.</p><p>후속 연구로 다상영관의 공용 복도 정책, 접근 가능한 대피공간 안내, 다국어 제공, 사업자 시스템 연동을 고려한다. 이동약자 경로는 사전 검토된 시설 계획을 입력받아야 하며 일반 승강기 자동 안내는 제외한다.</p></section>
+
+<section class="appendix" id="b"><div class="tag">APPENDIX B</div><h1>별첨 B · 요구사항명세서</h1>
+<h2 id="b1">B1 사용자와 기능 요구사항</h2><p>관객은 자기 세션의 안내·요청을 사용한다. 운영자는 시험 상황 입력, 전체 구역 상태, 요청 확인을 담당한다. 장치에는 별도 인증정보를 부여하며 관객이 임의로 위험 상태나 표지판 명령을 수정할 수 없게 한다. 본 HTML 목업의 관제 탭은 설명용 역할 전환이며 실제 인증은 구현하지 않는다.</p>
+<table><thead><tr><th>ID</th><th>기능 요구사항</th><th>수용 조건</th></tr></thead><tbody>
+<tr><td>FR01</td><td>회차·상영관·좌석과 입장 상태를 연결</td><td>미입장 예매를 현재 위치로 표시하지 않음</td></tr><tr><td>FR02</td><td>좌석별 또는 대표자 세션 구분</td><td>복수 예매를 휴대폰 수로 환산하지 않음</td></tr><tr><td>FR03</td><td>위치의 구역·근거·시각·상태 표시</td><td>직접 선택과 입장 정보 구분</td></tr><tr><td>FR04</td><td>현재 구역 수정 / 미확인 선택</td><td>미확인 시 개인 경로 화살표 해제</td></tr><tr><td>FR05</td><td>위험 구간 입력·승인된 해제</td><td>차단·미확인을 허용 구간으로 자동 전환하지 않음</td></tr><tr><td>FR06</td><td>허용 간선만 사용해 경로 계산</td><td>해가 없으면 NO_ROUTE</td></tr><tr><td>FR07</td><td>공용 분기점 단일 정책 적용</td><td>같은 구역 일반 이용자의 앱·표지판 방향 동일</td></tr><tr><td>FR08</td><td>명령의 사건·버전·만료·중복 관리</td><td>역순·중복 명령으로 과거 경로 복귀 없음</td></tr><tr><td>FR09</td><td>표지판 적용 응답과 미확인 표시</td><td>송신 성공만으로 표시 완료 판단 금지</td></tr><tr><td>FR10</td><td>오래된 가변 출력 만료</td><td>타임아웃 후 현재 방향으로 표시하지 않음</td></tr><tr><td>FR11</td><td>재연결 시 최신 상태 재조회</td><td>저장된 이전 방향을 먼저 재생하지 않음</td></tr><tr><td>FR12</td><td>웹앱 전경 상태 안내</td><td>백그라운드·잠금 전달 보장과 구분</td></tr><tr><td>FR13</td><td>도움 요청과 멱등 처리</td><td>동일 요청 ID 재전송으로 요청 증가 없음</td></tr><tr><td>FR14</td><td>전송 대기·접수·담당자 확인 구분</td><td>서버 응답 전 접수 완료 표시 없음</td></tr><tr><td>FR15</td><td>대피 자기신고·직원확인 분리</td><td>연결 끊김을 대피 완료로 처리하지 않음</td></tr><tr><td>FR16</td><td>위치·명령·장애·요청 기록</td><td>CSV로 사건 흐름 재구성 가능</td></tr><tr><td>FR17</td><td>지도에서 다음 확인 지점 안내</td><td>휴대폰 회전으로 몸 방향을 추정하지 않음</td></tr><tr><td>FR18</td><td>관리자 권한 분리</td><td>관객 토큰으로 위험 입력·전체 위치 조회 거부</td></tr></tbody></table>
+<h2 id="b2">B2 비기능 요구사항과 제약</h2><table><thead><tr><th>ID</th><th>요구사항</th></tr></thead><tbody><tr><td>NFR01</td><td>정상 로컬망, 웹앱 전경 조건에서 변경 반영 P95 2초 이하를 시험 목표로 한다. 시간 동기화 오차를 기록한다.</td></tr><tr><td>NFR02</td><td>단절 판단 초기값 5초. 장치와 앱은 마지막 유효 상태 이후 경과 시간을 각각 관리한다.</td></tr><tr><td>NFR03</td><td>화면 폭 360px 이상 지원, 주요 조작 영역 약 44px 이상, 색상 외 문자로 상태 표현.</td></tr><tr><td>NFR04</td><td>관객 세션은 자기 데이터만 조회. 운영자·장치 토큰 분리. 실제 서비스에는 TLS와 비밀정보 관리 필요.</td></tr><tr><td>NFR05</td><td>실험에는 가명 데이터만 사용하고 회차 종료 후 위치 수집 중단. 보관기간은 동의서에 명시.</td></tr><tr><td>NFR06</td><td>최소 3개 앱 세션과 2개 장치 동시 시험. 수백 명 확장은 별도 부하 검증.</td></tr><tr><td>NFR07</td><td>모든 표시의 근거를 목업 가상값·시제품 실측·계획 목표로 구분.</td></tr><tr><td>NFR08</td><td>기존 피난설비를 대체하지 않는 실험용 보조 시스템. 안전성·인증·현장 설치 적합성은 별도 검토.</td></tr></tbody></table>
+<h2 id="b3">B3 수용 시험과 추적</h2><table><thead><tr><th>시험</th><th>시나리오</th><th>대응 요구사항</th></tr></thead><tbody><tr><td>T01</td><td>미입장, 1인 예매, 대표자 4인 예매의 세션 생성</td><td>FR01–03</td></tr><tr><td>T02</td><td>좌석 → 복도 → 미확인으로 위치 수정</td><td>FR03–04, FR17</td></tr><tr><td>T03</td><td>A/B/양쪽 차단 및 입력 상태 미확인 조합</td><td>FR05–07</td></tr><tr><td>T04</td><td>표지판 한 대 무응답·표시 버전 지연</td><td>FR08–09</td></tr><tr><td>T05</td><td>중복·역순·이전 서버 세대 명령 전송</td><td>FR08, FR11</td></tr><tr><td>T06</td><td>공유기 분리·장치 재부팅·웹앱 복귀</td><td>FR10–12, NFR02</td></tr><tr><td>T07</td><td>도움 요청 중복·미전송·접수·운영자 확인</td><td>FR13–14</td></tr><tr><td>T08</td><td>자기신고·직원확인·연결 단절 비교</td><td>FR15</td></tr><tr><td>T09</td><td>기록 내보내기, 잘못된 토큰·역할 요청</td><td>FR16, FR18, NFR04–05</td></tr><tr><td>T10</td><td>장치 2대·앱 3개로 각 변경 30회 측정</td><td>NFR01, NFR06</td></tr><tr><td>T11</td><td>휴대폰 화면·키보드 조작·문자 상태 확인</td><td>NFR03</td></tr><tr><td>T12</td><td>표지판 단독 / 앱 병행 탐색적 비교</td><td>FR07, FR17, NFR07–08</td></tr></tbody></table>
+<p>위 표는 계획이며 아직 실행한 시제품 시험 결과가 아니다. 제공한 목업의 브라우저 검사는 상호작용과 화면 검증만 의미한다.</p></section>
+
+<section class="appendix" id="c"><div class="tag">APPENDIX C</div><h1>별첨 C · 상세설계서</h1>
+<h2 id="c1">C1 구성요소와 데이터</h2><table><thead><tr><th>구성요소</th><th>책임</th></tr></thead><tbody><tr><td>session_service</td><td>회차·입장·가명 세션·위치 근거·회차 종료</td></tr><tr><td>incident_service</td><td>위험 이벤트 검증, 사건 세대, 권한 있는 해제</td></tr><tr><td>route_engine</td><td>허용 간선 추출, 목적지 연결, 공용 분기점 정책</td></tr><tr><td>sign_gateway</td><td>장치 인증, 버전·ACK·생존 신호·재연결</td></tr><tr><td>assistance_service</td><td>요청 중복 방지, 접수·확인·종료 상태</td></tr><tr><td>repository / broadcaster</td><td>SQLite 기록, 앱별 허용 데이터 전송</td></tr></tbody></table>
+<pre>show_session: id, show_id, seat_zone, checkin_at, party_mode, ended_at
+location: session_id, zone_id, source, observed_at, received_at, confidence
+incident: id, epoch, revision, edge_states, operator_id, created_at
+route_policy: epoch, revision, zone_id, next_node, exit_id, expires_at
+sign_state: sign_id, applied_revision, last_seen, status, error
+assistance: request_id, session_id, zone_snapshot, status, created_at, acknowledged_at
+evacuation_report: session_id, SELF_REPORTED / STAFF_CONFIRMED, at, verifier
+event: id, type, occurred_at, received_at, actor, payload</pre>
+<p>location.source는 CHECKIN / SELF_REPORT / BLE / UNKNOWN으로 구분한다. 위험 이벤트와 요청에는 서버 시각을 붙이고, 장치 시각은 별도 보관한다. 카메라 영상·실명·결제정보는 필수 데이터가 아니다. 대피 자기신고는 실제 인원 전수 확인값으로 사용하지 않는다.</p>
+
+<h2 id="c2">C2 위치와 경로 계산</h2>
+<h3>C2.1 위치의 유효성</h3><p>검표는 초기 구역 추정 근거로만 사용한다. 시제품은 사용자가 출발 구역을 확인한 후 개인 경로를 보여준다. 대피 안내 중 위치 확인이 30초 이상 갱신되지 않으면 ‘이전 확인 위치’로 표시하는 것을 초기 정책으로 삼고, 경계 이동이나 사용자 이의가 있으면 즉시 UNKNOWN으로 전환한다. 30초는 검증할 설계값이며 좌석 위치를 보장하는 시간은 아니다.</p><p>확장 BLE는 휴대폰이 고정 비콘을 관찰하는 방식이다. 서버가 일반 스마트폰의 신호를 수동 수집해 모든 관객을 추적한다고 가정하지 않는다. 여러 신호 표본과 구역 전환 유지 시간을 적용하고, 후보가 비슷하면 어느 한 구역으로 억지 분류하지 않는다.</p>
+<h3>C2.2 그래프 모델</h3><pre>좌석 구역 S1 / S2 → 내부 통로 J → 공용 분기점 C
+C → 통로 LA → 출구 EA → 사전 정의된 외부 집결 구역
+C → 통로 LB → 출구 EB → 사전 정의된 외부 집결 구역
+
+간선: from, to, length_m, allowed_profile, state, updated_at
+state: AVAILABLE / BLOCKED / UNKNOWN
+AVAILABLE은 사전 정의된 통행 허용 상태이며 현장 안전 보증이 아니다.</pre>
+<p>위험 통로와 미확인 통로를 제거한 뒤 Dijkstra로 허용 경로를 계산한다. 필수 버전은 거리만 사용한다. 확장 버전에서만 검증된 혼잡 입력을 대기 비용으로 추가한다. 혼잡 변화만으로는 작은 차이에 즉시 변경하지 않되, 위험 이벤트는 지연 규칙과 무관하게 즉시 기존 추천을 무효화한다.</p>
+<p>계단 이용이 어려운 이용자는 allowed_profile로 사전에 검토한 경로만 선택한다. 해당 경로가 없으면 직원 지원을 요청하게 하며, 임의의 승강기·대기 장소를 만들어 안내하지 않는다. 위치가 미확인이어도 C 표지판은 C 자체의 정책을 유지할 수 있지만, 개인 앱의 출발 경로는 제시하지 않는다.</p>
+
+<h2 id="c3">C3 표지판 동기화와 장애 처리</h2>
+<p>서버·앱·표지판은 (epoch, revision)으로 안내 버전을 식별한다. epoch는 서버의 새 실행·사건 세대를 구분하며 인증된 재접속 절차로만 갱신한다. 같은 세대에서는 revision이 증가하고 이전 버전은 거부한다. 각 명령은 멱등 처리하며 중복 명령은 응답만 반복한다.</p>
+<ol><li>위험 이벤트를 접수하면 현재 위험 경로를 즉시 무효화하고 영향 구역에 INVALIDATE를 전송한다.</li><li>새 경로 정책을 계산하여 해당 장치에 적용 요청한다. 앱은 ‘안내 갱신 중’을 표시한다.</li><li>장치가 표시 버퍼를 갱신한 뒤 해당 버전의 ACK를 보낸다.</li><li>필수 장치의 ACK가 모두 확인되면 앱에 새 경로를 활성화한다. 일부 장치가 실패하면 ‘현장 표시 적용 미확인’과 확인 필요 안내를 제공한다.</li><li>위험이 해제돼도 자동으로 최초 경로로 복귀하지 않고 운영자 확인 후 새 버전을 만든다.</li></ol>
+<p>무선망에서 완벽한 동시 전환을 보장할 수는 없다. ‘같은 버전을 목표로 배포하고 적용 불일치를 감지’하는 설계다. ACK는 실제 빛 출력이나 관객 인지를 검증하지 않으므로 하드웨어 시연에서는 화면을 직접 관찰하는 시험도 수행한다.</p>
+<h3>C3.1 초기 통신 파라미터</h3><table><thead><tr><th>항목</th><th>설계 초깃값</th><th>처리</th></tr></thead><tbody><tr><td>생존 신호</td><td>1초</td><td>현재 세대·정책 버전을 포함</td></tr><tr><td>정책 유효시간</td><td>5초</td><td>유효한 정책 확인으로만 갱신. 일반 ping만으로 낡은 경로 연장 금지</td></tr><tr><td>ACK 대기</td><td>500ms, 같은 ID로 최대 2회 재시도</td><td>실패하면 적용 미확인. 최신 정책 전송 우선</td></tr><tr><td>장치 재부팅</td><td>처음에는 방향 없음</td><td>인증·최신 세대·유효 정책 확인 후 표시</td></tr><tr><td>앱 복귀</td><td>즉시 최신 상태 요청</td><td>이전 화면을 실시간 안내처럼 유지하지 않음</td></tr></tbody></table>
+<p>표지판은 수신 시 단조 시계를 사용해 남은 유효시간을 관리하고 지연·만료된 패킷으로 시간을 다시 늘리지 않는다. 앱도 메시지의 절대 만료시각과 수신 경과시간을 검증한다. 실험에서는 서버와 단말의 시간 차이를 측정하고, 큰 차이가 있으면 경로를 활성화하지 않는다.</p>
+<p>연결이 끊기면 만료된 가변 화살표를 해제하고 ‘가변 안내 확인 불가’ 상태로 바꾼다. 기존 법정 유도등의 전원을 끄거나 가리지 않는다. 모든 경로 미확인 시에는 앱이 ‘확인 가능한 경로 없음’을 표시하고 현장 경보·직원 안내를 확인하도록 하며, 일률적인 정지·대기를 지시하지 않는다.</p>
+
+<h2 id="c4">C4 API·프로토콜·상태 전이</h2>
+<table><thead><tr><th>방식 / 경로</th><th>동작</th><th>권한</th></tr></thead><tbody><tr><td>POST /api/checkins</td><td>검표 토큰으로 회차 세션 생성. 시제품은 가상 토큰</td><td>입장 단말</td></tr><tr><td>GET /api/me/guidance</td><td>위치 근거·경로 버전·표지판 적용 상태</td><td>본인</td></tr><tr><td>PUT /api/me/location</td><td>직접 선택한 구역 또는 UNKNOWN</td><td>본인</td></tr><tr><td>POST /api/assistance</td><td>request_id로 멱등 접수</td><td>본인</td></tr><tr><td>PATCH /api/assistance/{id}</td><td>담당자 확인·종료 상태 기록</td><td>운영자</td></tr><tr><td>POST /api/me/evacuation-report</td><td>SELF_REPORTED 저장</td><td>본인</td></tr><tr><td>POST /api/incidents</td><td>통로 차단·미확인, 해제 승인</td><td>운영자</td></tr><tr><td>WS /ws/me</td><td>본인 안내와 요청 결과</td><td>본인</td></tr><tr><td>WS /ws/signs/{id}</td><td>정책·ACK·장치 상태</td><td>장치</td></tr><tr><td>GET /api/events/export</td><td>가명화 CSV</td><td>운영자</td></tr></tbody></table>
+<pre>서버 → 장치
+{type:"APPLY", epoch:"incident-07", revision:12, command_id:"s1-12",
+ sign_id:"S1", zone:"C", direction:"RIGHT", exit_id:"B",
+ issued_at:"...", expires_at:"..."}
+
+장치 → 서버
+{type:"ACK", epoch:"incident-07", revision:12, command_id:"s1-12",
+ sign_id:"S1", result:"APPLIED"}
+
+안내 상태
+NORMAL → UPDATING → GUIDING
+                  → NO_ROUTE / LOCATION_UNKNOWN / SIGN_UNCONFIRMED
+모든 상태 → STALE (만료·단절)
+STALE → UPDATING (인증된 재연결, 최신 데이터 수신)
+
+도움 요청
+LOCAL_PENDING → RECEIVED → STAFF_ACKNOWLEDGED → CLOSED
+전송 실패는 LOCAL_PENDING에 남기고 ‘전달 안 됨’을 명시한다.</pre>
+<p>형식 오류는 422, 인증 실패는 401, 역할 위반은 403, 오래된 버전·상태 충돌은 409를 반환하도록 설계한다. 서버는 사용자 입력의 구역 ID를 사전 지도와 대조하며 임의 문자열을 그대로 제어 명령으로 사용하지 않는다. CSV의 사용자 입력은 수식 주입을 방지한다.</p>
+
+<h2 id="c5">C5 하드웨어·화면 상세</h2>
+<h3>C5.1 장치 제작</h3><p>정확한 GPIO는 구매한 개발보드의 핀맵을 확인한 뒤 확정한다. 화면은 I²C 또는 SPI 연결 제품 중 한 종류로 통일하고 전압·소비전류·주소 충돌을 확인한다. 입력 버튼은 내부 풀업과 디바운스를 적용하며, 실제 화재 수신반의 전압을 GPIO에 직접 연결하지 않는다. 장치 부팅 시 출력은 방향 없음으로 시작한다.</p><p>소형 OLED에는 긴 한글 문장 대신 큰 화살표·A/B·연결 상태를 표시할 수 있다. 전체 문장은 관리자와 앱이 제공한다. 대형 LED 매트릭스로 확장할 때는 별도 전원·드라이버·휘도 검증을 해야 한다.</p>
+<h3>C5.2 화면 구성</h3><table><thead><tr><th>화면</th><th>주요 내용</th><th>행동</th></tr></thead><tbody><tr><td>관람·입장</td><td>가상 티켓·회차·좌석·입장 연결 상태</td><td>입장 확인, 현재 구역 확인</td></tr><tr><td>대피 안내</td><td>다음 표지판, 문자 목적지, 위치 근거·갱신 상태</td><td>위치 수정, 도움 요청, 대피 자기신고</td></tr><tr><td>관제</td><td>위험 구간, 경로 버전, 장치 응답, 요청 목록</td><td>담당자 확인, 모의 상황 변경</td></tr><tr><td>연동 설명</td><td>기존 앱 추가 영역과 시제품 범위</td><td>계획서 열기</td></tr></tbody></table>
+<p>방향은 ‘휴대폰 기준 오른쪽’이 아니라 고정된 표지판을 정면으로 보는 기준으로 명시한다. 앱은 경보 중 광고·예매 추천을 숨기고 짧은 문구와 큰 글씨를 사용한다. 길찾기와 도움 요청에 로그인·결제를 추가 요구하지 않도록 기존 입장 세션을 활용한다.</p>
+
+<h2 id="c6">C6 구현 순서와 최종 시연</h2><pre>ieum/
+  firmware/sign_node/          표시·응답·만료
+  server/main.py               REST·WebSocket
+  server/route_engine.py       차단 후 경로 계산
+  server/sign_gateway.py       명령·ACK·세대
+  server/session_service.py    회차·위치·도움 요청
+  server/repository.py         기록
+  web/                        관객·운영자 화면
+  maps/cinema_demo.json        사전 정의한 모의 지도
+  tests/                      그래프·명령·장애 시험
+  docs/                       배선·측정표·시연 순서
+
+위 구조는 구현 계획이며 현재 생성 완료한 소스 목록이 아니다.</pre>
+<ol><li>가상 티켓 H8을 입장 처리하고 출발 구역을 확인한다.</li><li>A 통로 차단 버튼을 누른다. 위험 구간 표시와 경로 변경을 관찰한다.</li><li>표지판 2대의 적용 응답 후 앱에서 B 경로가 활성화되는 것을 확인한다.</li><li>현재 위치를 C 복도로 변경하고 앱·표지판의 안내 일치를 설명한다.</li><li>도움 요청을 접수하고 운영자가 확인한다. 요청 당시 위치를 함께 보여준다.</li><li>한 표지판의 네트워크를 끊어 미확인·만료 동작을 확인한다.</li><li>양쪽 경로를 차단하여 임의 경로를 추천하지 않는 것을 확인한다.</li><li>복구 후 대피 자기신고를 하고 기록을 내보낸다.</li></ol>
+<p class="lead">발표의 중심 문장: <b>“예매 앱으로 관객의 출발 구역을 연결하고, 현장 표지판과 같은 대피 정보를 제공하며, 안내가 전달되지 않은 상황까지 확인하는 시스템입니다.”</b></p>
+<p class="meta">최종 제출 시 팀의 실제 구현·부품·시험 결과로 문서를 갱신한다. 목업 기능, 설계 목표, 구현 완료 기능을 구분한다.</p></section>
+</main><div class="tools"><a href="이음_웹앱_목업.html">목업 열기 ↗</a><button type="button" onclick="window.print()">인쇄 / PDF 저장</button></div></body></html>

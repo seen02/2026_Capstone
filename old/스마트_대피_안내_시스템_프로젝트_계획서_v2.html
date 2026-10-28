@@ -1,0 +1,1355 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>분산형 스마트 대피 안내 시스템 계획서 v2</title><style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#eef1f4;color:#1d2530;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:15px;line-height:1.85}nav{position:fixed;inset:0 auto 0 0;width:260px;background:#fff;padding:28px 18px;overflow:auto;border-right:1px solid #d9dfe6}nav b{display:block;margin-bottom:16px;color:#000}nav a{display:block;text-decoration:none;font-size:12px;line-height:1.55;padding:5px 8px;color:#46576a}nav a.major{font-weight:bold;margin-top:12px;color:#000}main{max-width:1080px;margin:32px 32px 64px 292px;padding:52px 60px;background:white}h1,h2,h3{color:#000;line-height:1.45;break-after:avoid;scroll-margin-top:20px}h1{font-size:29px;margin:10px 0 26px}h2{font-size:23px;margin:42px 0 18px}h3{font-size:18px;margin:29px 0 12px}p{margin:12px 0}table{border-collapse:collapse;width:100%;margin:20px 0 26px;font-size:13px;line-height:1.7;table-layout:auto}th,td{border:1px solid #d9d9d9;padding:10px 12px;vertical-align:middle;word-break:normal;overflow-wrap:anywhere}th{background:#e6edf4;color:#000;text-align:left;font-weight:700}tr{break-inside:avoid}thead{display:table-header-group}tbody tr:nth-child(even){background:#fafbfd}ul,ol{padding-left:24px}li{margin:5px 0}a{color:#185c96;text-underline-offset:3px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f6f8;padding:18px;border:1px solid #d9d9d9;font:12px/1.8 Consolas,'Malgun Gothic',monospace;break-inside:avoid}code{font-family:Consolas,'Malgun Gothic',monospace}.diagram{margin:24px 0;break-inside:avoid}.diagram svg{display:block;width:100%;height:auto}.pagebreak{margin-top:80px;padding-top:10px;border-top:1px solid #ddd}.print{position:fixed;right:24px;bottom:22px;background:#254863;color:white;border:0;border-radius:7px;padding:12px 20px;cursor:pointer;font:14px 'Malgun Gothic'}
+@media(max-width:1100px){nav{display:none}main{margin:16px auto;padding:30px;max-width:960px}}@media(max-width:600px){main{padding:22px 16px;margin:0}body{font-size:14px}h1{font-size:24px}h2{font-size:20px}table{font-size:11px}td,th{padding:7px}pre{font-size:10px}}
+@page{size:A4;margin:17mm 16mm 18mm}@media print{body{background:white;font-size:9.5pt;line-height:1.65}nav,.print{display:none}main{margin:0;padding:0;max-width:none}h1{font-size:20pt;margin-top:0}h2{font-size:15pt;margin-top:22pt}h3{font-size:12pt;margin-top:15pt}p{margin:7pt 0}table{font-size:8.3pt;line-height:1.5;margin:12pt 0 16pt}td,th{padding:6pt 7pt}a{color:#164e75;text-decoration:none}pre{font-size:8pt;padding:10pt;line-height:1.6}.pagebreak{break-before:page;border:0;margin:0;padding:0}.diagram{max-height:220mm}.diagram svg{max-height:220mm}h1,h2,h3{break-after:avoid}p{orphans:3;widows:3}}
+
+.artifact-links{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;margin-bottom:25px;padding-bottom:18px;border-bottom:1px solid #dce5eb;font-size:12px;color:#456674}.artifact-links a{font-weight:700}@media print{.artifact-links{display:none}}main{max-width:1200px;overflow-wrap:anywhere}h1{font-size:30px}h2{color:#183f59}strong{color:#153d56}thead{background:#eaf1f6}.diagram{padding:12px 0}.diagram svg{max-height:none}td:first-child{font-weight:500}.id-table td:first-child{white-space:nowrap}nav a.major{color:#165a70}a{overflow-wrap:anywhere}@media print{.diagram svg{max-height:195mm}.diagram{padding:0}h1{font-size:20pt}h2{color:#000}.id-table td,.id-table th{padding:5pt 6pt}}@media print{body{line-height:1.58}p{margin:6pt 0}h2{margin-top:18pt}table{font-size:8.2pt;line-height:1.45}td,th{padding:5pt 6pt}.id-table td,.id-table th{padding:4.5pt 6pt}}</style></head><body><nav><b>계획서 v2 · 제출용 별첨</b><a class="major" href="#sec-1">혼잡도를 반영하는 분산형 스마트 대피 안내 시스템 계획서 v2</a><a class="" href="#sec-2">0 v2의 주요 수정과 문서 이용 방법</a><a class="" href="#sec-3">1 과제 목표와 범위</a><a class="" href="#sec-4">2 시스템 구조와 대표 동작</a><a class="" href="#sec-5">3 수행 계획·인력·완료 단계</a><a class="" href="#sec-6">4 실행 가능성·예산·범위 조정</a><a class="" href="#sec-7">5 검증 계획과 성과 해석</a><a class="" href="#sec-8">6 부스 및 발표 시연 계획</a><a class="" href="#sec-9">7 위험 관리·산출물·참고자료</a><a class="major" href="#sec-10">별첨 A 과제 계획서</a><a class="" href="#sec-11">A1 과제 목적 및 필요성</a><a class="" href="#sec-12">A2 사용기술 및 설계</a><a class="" href="#sec-13">A3 기대효과 및 활용방안</a><a class="major" href="#sec-14">별첨 B 요구사항명세서</a><a class="" href="#sec-15">B0 목차</a><a class="" href="#sec-16">B1 서론(개요)</a><a class="" href="#sec-17">B2 시스템 기능</a><a class="" href="#sec-18">B3 기능 요구사항</a><a class="" href="#sec-19">B4 비기능 요구사항</a><a class="" href="#sec-20">B5 수용 시험·추적 관계</a><a class="major" href="#sec-21">별첨 C 상세설계서</a><a class="" href="#sec-22">C0 목차</a><a class="" href="#sec-23">C1 서론(개요)</a><a class="" href="#sec-24">C2 모듈·하드웨어</a><a class="" href="#sec-25">C3 지도·집계·비용</a><a class="" href="#sec-26">C4 경로·표시 상태</a><a class="" href="#sec-27">C5 메시지·최신성·복구</a><a class="" href="#sec-28">C6 초기화·서버·데이터</a><a class="" href="#sec-29">C7 화면·목업·시험 추적</a></nav><main><div class="artifact-links"><span>DESIGN REVIEW · VERSION 2.0</span><a href="스마트_대피_안내_시스템_Mockup_v2.html">인터랙티브 목업 열기 ↗</a></div><h1 id="sec-1">혼잡도를 반영하는 분산형 스마트 대피 안내 시스템 계획서 v2</h1>
+<p>작성일: 2026년 9월 23일<br>문서 버전: 2.0 · 구현 범위 및 검증 계획 개정<br>과목명: 컴퓨터공학 종합설계<br>팀명 / 팀원 / 지도교수 / 제출일: 제출 시 기입</p>
+<p><strong>가상 구역 인원과 실제 위험 버튼을 입력하면 ESP32 표지판 3대가 각자 경로를 계산해 방향을 바꾸는 교육용 시제품</strong>을 개발한다. 대형 지도 화면과 실물 표지판을 나란히 놓아, 혼잡 회피·위험 우선·안내 불가·통신 장애를 짧은 시간에 설명한다.</p>
+<p>v2는 v1의 분산 계산 원칙을 유지하면서 장치 수, 초기화 절차, 필수 검증 범위를 정리했다. 현실적인 목표는 실제 건물의 대피 안전성 입증이 아니라 <strong>주어진 상황에서 일관된 경로 판단과 예외 처리를 실제 장치로 재현하는 것</strong>이다. 본문은 실행 계획이고, 하단 별첨 A·B·C는 과제 계획서·요구사항명세서·상세설계서다.</p>
+<h2 id="sec-2">0 v2의 주요 수정과 문서 이용 방법</h2>
+<table>
+<thead>
+<tr>
+<th>검토한 문제</th>
+<th>v2 수정</th>
+<th>실무적 효과</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>무선 조작기까지 별도 제작하여 장치·전원·위험 원천 의존 증가</td>
+<td>표지판 3대 + 게이트웨이 1대로 기본 구성. 표지판마다 위험 스위치 부착</td>
+<td>제작 대상 5대→4대, 위험 입력을 표지판에서 직접 시험</td>
+</tr>
+<tr>
+<td>위험 메시지와 시뮬레이션 실행 ID가 함께 초기화됨</td>
+<td>위험은 설치·지도·원천 세대에 귀속, 인원은 실행 ID에 귀속</td>
+<td>시연 초기화나 일부 초기화 실패가 위험을 지우지 않음</td>
+</tr>
+<tr>
+<td>모든 기능을 한 번에 필수로 지정</td>
+<td>필수 시제품, 제출 검증, 선택 확장을 분리</td>
+<td>후반 통합·시험 시간 확보</td>
+</tr>
+<tr>
+<td>인원 애니메이션이 있어야 시연 가능</td>
+<td>고정 인원 분포를 바꾸는 조건 실험을 기본 시연으로 채택</td>
+<td>장면이 이동 중 사라지지 않고 같은 결과를 반복 가능</td>
+</tr>
+<tr>
+<td>통신 지연이 있는데 위험 경로 안내 0건을 절대 표현</td>
+<td>수신·처리 후 경로 위반과 외부 입력부터 반영 지연을 별도 측정</td>
+<td>관측 전 지연을 숨기지 않는 수용 기준</td>
+</tr>
+<tr>
+<td>임의 시드만 제시한 군중 성능 비교</td>
+<td>정적 경로·상태 시험을 필수로, 정의된 이동 모델의 효과 비교는 선택</td>
+<td>근거 없는 대피 시간 개선 주장 방지</td>
+</tr>
+<tr>
+<td>그래프상의 최적 경로와 공용 표지판의 현재 안내가 다를 수 있음</td>
+<td>전체 예측 경로와 각 지점의 현재 다음 방향을 분리해 표시</td>
+<td>유지시간 때문에 실제와 다른 전역 경로를 확정처럼 표시하지 않음</td>
+</tr>
+</tbody></table>
+<p>동봉한 <a href="%EC%8A%A4%EB%A7%88%ED%8A%B8_%EB%8C%80%ED%94%BC_%EC%95%88%EB%82%B4_%EC%8B%9C%EC%8A%A4%ED%85%9C_Mockup_v2.html">인터랙티브 Mockup v2</a>는 화면·계산 규칙을 확인하는 소프트웨어 산출물이다. ESP-NOW, 실제 LED, 위험 스위치, 실제 사람 위치는 연결되어 있지 않다. 문서의 하드웨어 성능 목표는 아직 미측정이며 목업 동작으로 통과 처리하지 않는다.</p>
+<p>목업은 별도 설치 없이 HTML을 브라우저에서 열어 사용한다. 위쪽 네 상황 버튼 또는 숫자키 1–4로 조건을 바꾸고, P 키로 발표 모드를 전환한다. 혼잡을 넣은 뒤 후보 확인 5초를 기다리면 방향이 바뀐다. 상세 영역에서 G·S3 단절을 시험하고, 인원 초기화가 위험·단절을 유지하는지 확인할 수 있다. 상황 프리셋은 표시된 시험 인원·위험 조건을 교체하지만 단절은 복구하지 않는다.</p>
+<h3>목차</h3>
+<ol>
+<li>과제 목표와 범위</li>
+<li>시스템 구조와 대표 동작</li>
+<li>수행 계획·인력·완료 단계</li>
+<li>실행 가능성·예산·범위 조정</li>
+<li>검증 계획과 성과 해석</li>
+<li>부스 및 발표 시연 계획</li>
+<li>위험 관리·산출물·참고자료</li>
+<li>별첨 A 과제 계획서</li>
+<li>별첨 B 요구사항명세서</li>
+<li>별첨 C 상세설계서</li>
+</ol>
+<h2 id="sec-3">1 과제 목표와 범위</h2>
+<h3>1.1 문제 정의</h3>
+<p>고정된 안내 방향은 복도 차단이나 특정 출구 주변의 인원 집중을 반영하기 어렵다. 본 과제는 사전에 등록한 복도 구조와 위험·혼잡 상태를 결합하여, 갈림길의 공용 표지판이 다음 이동 방향을 갱신하는 과정을 구현한다. 상태 수집, 무선 공유, 장치별 계산, 표시와 검증 기록의 연결이 설계의 중심이다.</p>
+<p>검증할 질문은 “새 위험을 받은 표지판이 해당 구간을 제외하는가?”, “같은 위험 조건에서 혼잡 비용의 변화가 합리적인 우회로 선택으로 이어지는가?”, “정보가 끊기면 무엇을 유지하고 무엇을 미확인으로 표시하는가?”다. 실제 사람의 행동·화재 확산·시설 피난 성능은 기본 실험의 측정 대상이 아니다.</p>
+<h3>1.2 필수와 선택 범위</h3>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>포함 기능</th>
+<th>완료 근거</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P0 핵심 연결</td>
+<td>표지판 2대의 위험 버튼 직접 공유, 로컬 경로 계산, 실제 방향·X 표시</td>
+<td>입력과 LED가 함께 보이는 영상, 소스·원천 로그</td>
+</tr>
+<tr>
+<td>P1 제출 시제품</td>
+<td>표지판 3대·G 1대, 고정 인원 분포, 밀도·혼잡 비용, 만료·복구, 지도와 실제 보고, 기록</td>
+<td>별첨 B 필수 요구사항과 수용 시험</td>
+</tr>
+<tr>
+<td>P2 선택 확장</td>
+<td>가상 사람 이동과 효과 비교, 입력 기록 재생, 실제 위치 측정, 별도 조작기</td>
+<td>P1 완료 뒤 별도 시험 결과</td>
+</tr>
+</tbody></table>
+<p>P0는 중간 점검용이며 P1 완료와 같지 않다. P1이 최종 목표다. 실제 자동 위치 측정이 수업 필수 조건이면 1주차에 지도교수와 확인하여 요구사항·일정·예산을 변경한다. 모의 인원 입력을 실제 구역 측정으로 보고하지 않는다.</p>
+<p>기본 공간은 갈림길 J·L·R, 출구 EL·ER, 방향이 있는 복도 5개다. 가상 ID 60명을 구역 또는 출발 대기에 배정한다. 임의의 위험·인원 조합에서도 경로 모듈이 계산하며 시연 버튼에 화살표 결과를 하드코딩하지 않는다.</p>
+<h3>1.3 범위 밖과 기대 결과</h3>
+<p>실제 화재 감지의 신뢰도, 전 건물 통신, 자동 메시 중계, 양방향·다층 동선, 전체 관객 위치, 개인별 경로 배분, 상용 소방 설비 연동, 배터리 백업, AI 군중 인식은 P1에 포함하지 않는다. 한 표지판은 한 시점에 한 방향만 보여주므로 인원을 개인별로 두 경로에 나누는 기능도 없다.</p>
+<p>기대 결과는 위험 우선 판단과 혼잡에 따른 대안 선택을 관찰하고, 분산 장치의 지연·정보 만료·복구를 수치와 영상으로 설명하는 것이다. 대피 시간이 반드시 줄거나 실제 시설의 안전성이 확보되었다고 주장하지 않는다.</p>
+<h2 id="sec-4">2 시스템 구조와 대표 동작</h2>
+<h3>2.1 전체 구조</h3>
+<div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 750" role="img" aria-label="전체 시스템 구조도"><defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0L0 6L7 3Z" fill="#375b76"/></marker><marker id="back" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto"><path d="M7 0L7 6L0 3Z" fill="#375b76"/></marker></defs><style>.title{font:600 21px 'Malgun Gothic',sans-serif;fill:#183449}.sub{font:16px 'Malgun Gothic',sans-serif;fill:#40576a}.label{font:16px 'Malgun Gothic',sans-serif;fill:#23465e;paint-order:stroke;stroke:white;stroke-width:6px;stroke-linejoin:round}</style><rect x="270" y="15" width="420" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="480" y="46" text-anchor="middle" class="title">대형 화면 웹 UI</text><text x="480" y="71" text-anchor="middle" class="sub">지도 · 가상 인원 · 실제 장치 보고</text><path d="M480 95V145" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" marker-start="url(#back)"/><text x="620" y="125" text-anchor="middle" class="label">HTTP / WebSocket</text><rect x="270" y="145" width="420" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="480" y="176" text-anchor="middle" class="title">노트북 로컬 서버</text><text x="480" y="201" text-anchor="middle" class="sub">가상 ID 집계 · 시나리오 · SQLite 기록</text><path d="M480 225V275" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" marker-start="url(#back)"/><text x="570" y="257" text-anchor="middle" class="label">USB 시리얼</text><rect x="320" y="275" width="320" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="480" y="306" text-anchor="middle" class="title">ESP32 게이트웨이 G</text><text x="480" y="331" text-anchor="middle" class="sub">혼잡 전달 · 장치 보고 수집</text><path d="M480 355V415" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" marker-start="url(#back)"/><text x="602" y="390" text-anchor="middle" class="label">상황 데이터 · 응답</text><rect x="270" y="415" width="420" height="80" rx="10" fill="#e5f1ee" stroke="#7691a7"/><text x="480" y="446" text-anchor="middle" class="title">ESP-NOW · 고정 채널 단일 홉</text><text x="480" y="471" text-anchor="middle" class="sub">화살표 명령이 아닌 상황을 공유</text><path d="M340 495V540H160V585" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" marker-start="url(#back)"/><path d="M480 495V585" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" marker-start="url(#back)"/><path d="M620 495V540H800V585" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" marker-start="url(#back)"/><rect x="20" y="585" width="280" height="105" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="160" y="616" text-anchor="middle" class="title">S1 · 위치 J</text><text x="160" y="641" text-anchor="middle" class="sub">e1 위험 스위치 · 계산 · LED</text><rect x="340" y="585" width="280" height="105" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="480" y="616" text-anchor="middle" class="title">S2 · 위치 L</text><text x="480" y="641" text-anchor="middle" class="sub">e3 위험 스위치 · 계산 · LED</text><rect x="660" y="585" width="280" height="105" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="800" y="616" text-anchor="middle" class="title">S3 · 위치 R</text><text x="800" y="641" text-anchor="middle" class="sub">e4 위험 스위치 · 계산 · LED</text><text x="480" y="732" text-anchor="middle" class="label">각 표지판의 위험을 서로 직접 공유 · 인원 초기화와 위험 상태 분리</text></svg></div>
+
+
+<p>그림 1. 각 표지판은 자신이 담당하는 위험 상태를 다른 표지판에 직접 공유한다. G는 노트북과 무선 사이의 변환 장치이며 방향을 결정하지 않는다. 위험 직접 공유는 G·서버가 없어도 가능하지만, 혼잡의 생성·전달과 웹 관찰에는 서버·G가 필요하다. 장치마다 외부 전원을 사용한다.</p>
+<h3>2.2 실험 그래프</h3>
+<div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" role="img" aria-label="실험용 공간 및 표지판 배치"><defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0L0 6L7 3Z" fill="#375b76"/></marker><marker id="back" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto"><path d="M7 0L7 6L0 3Z" fill="#375b76"/></marker></defs><style>.title{font:600 21px 'Malgun Gothic',sans-serif;fill:#183449}.sub{font:16px 'Malgun Gothic',sans-serif;fill:#40576a}.label{font:16px 'Malgun Gothic',sans-serif;fill:#23465e;paint-order:stroke;stroke:white;stroke-width:6px;stroke-linejoin:round}</style><rect x="20" y="165" width="150" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="95" y="196" text-anchor="middle" class="title">J · S1</text><text x="95" y="221" text-anchor="middle" class="sub">출발 분기</text><rect x="330" y="35" width="180" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="420" y="66" text-anchor="middle" class="title">L · S2</text><text x="420" y="91" text-anchor="middle" class="sub">왼쪽 분기</text><rect x="330" y="305" width="180" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="420" y="336" text-anchor="middle" class="title">R · S3</text><text x="420" y="361" text-anchor="middle" class="sub">오른쪽 분기</text><rect x="740" y="35" width="190" height="80" rx="10" fill="#e5f1ee" stroke="#7691a7"/><text x="835" y="66" text-anchor="middle" class="title">출구 EL</text><text x="835" y="91" text-anchor="middle" class="sub">왼쪽 출구</text><rect x="740" y="305" width="190" height="80" rx="10" fill="#e5f1ee" stroke="#7691a7"/><text x="835" y="336" text-anchor="middle" class="title">출구 ER</text><text x="835" y="361" text-anchor="middle" class="sub">오른쪽 출구</text><path d="M170 190H250V75H330" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="238" y="49" text-anchor="middle" class="label">e1 · 10m / 40㎡</text><path d="M170 220H250V345H330" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="211" y="394" text-anchor="middle" class="label">e2 · 12m / 48㎡</text><path d="M510 75H740" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="625" y="56" text-anchor="middle" class="label">e3 · 10m / 20㎡</text><path d="M510 345H740" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="625" y="324" text-anchor="middle" class="label">e4 · 12m / 24㎡</text><path d="M420 115V305" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="513" y="215" text-anchor="middle" class="label">e5 · 12m / 24㎡</text><text x="660" y="257" text-anchor="middle" class="label">단방향 실험 그래프 · 실제 도면 아님</text></svg></div>
+
+
+<p>그림 2. 실제 건물 도면이 아닌 비순환 방향 그래프다. e1·e3·e4에는 각각 S1·S2·S3의 위험 입력을 연결한다. e2·e5는 실험에서 고정 통행 가능으로 설정한 간선이며 센서가 안전을 검증했다는 뜻은 아니다.</p>
+<p>S1에서 e1은 왼쪽, e2는 오른쪽이다. S2에서 e3은 왼쪽, e5는 오른쪽이다. S3에서 e4는 오른쪽이다. 모든 장치가 같은 지도 해시와 방향 매핑을 사용한다. 비순환 제한은 장치별 정보·유지 이력이 달라도 경로 순환이 생기지 않게 하는 실험 조건이다. 실제 양방향 공간에는 추가 설계가 필요하다.</p>
+<h3>2.3 대표 조건과 계산 결과</h3>
+<table>
+<thead>
+<tr>
+<th>조건</th>
+<th>입력</th>
+<th>안정화 후 예상 표시 S1 / S2 / S3</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>정상</td>
+<td>간선 인원 0, 출발 대기 60, 위험 해제</td>
+<td>왼쪽 / 왼쪽 / 오른쪽</td>
+</tr>
+<tr>
+<td>왼쪽 혼잡</td>
+<td>30개 가상 ID를 e3로 배정, 대기 30</td>
+<td>오른쪽 / 오른쪽 / 오른쪽</td>
+</tr>
+<tr>
+<td>오른쪽 차단</td>
+<td>혼잡 유지, e4 차단</td>
+<td>왼쪽 / 왼쪽 / X</td>
+</tr>
+<tr>
+<td>양쪽 출구 접근 차단</td>
+<td>e3·e4 차단</td>
+<td>X / X / X</td>
+</tr>
+</tbody></table>
+<p>‘정상’의 인원 0은 빈 복도 조건이지 건물 전체 0명이 아니다. 시연은 사람의 이동을 기다리지 않고 고정 배정을 변경한다. 각 분포는 총 60개 ID를 유지하며 조건 변경은 로그에 남긴다. 위험 해제와 인원 초기화는 별도 조작이다.</p>
+<h3>2.4 장애 시 유지 범위</h3>
+<table>
+<thead>
+<tr>
+<th>장애</th>
+<th>유지</th>
+<th>제한</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>브라우저 종료</td>
+<td>서버 집계·무선·표지판 계산</td>
+<td>화면과 웹 조작</td>
+</tr>
+<tr>
+<td>서버 종료·USB 분리·G 차단</td>
+<td>각 표지판의 물리 위험 입력·직접 공유·계산</td>
+<td>혼잡 5초 만료 후 거리 기준으로 전환, 품질 저하 표시. 웹의 장치 보고도 갱신 중단</td>
+</tr>
+<tr>
+<td>S3 차단</td>
+<td>S1·S2 동작</td>
+<td>e4의 CLEAR 보고가 3초 만료되면 UNKNOWN. 기존 BLOCKED는 유지. S3 LED는 꺼짐</td>
+</tr>
+<tr>
+<td>S2 차단</td>
+<td>S1·S3 동작</td>
+<td>e3의 상태가 같은 규칙으로 만료. 해당 표지판의 방향 안내 없음</td>
+</tr>
+<tr>
+<td>지도 불일치·새 장치 부팅</td>
+<td>이미 동기화된 다른 장치의 독립 동작</td>
+<td>해당 장치는 상태 확인 전 ? 표시</td>
+</tr>
+</tbody></table>
+<p>혼잡 미확인 시 거리 기준 안내는 실험용 성능 저하 동작이다. 실제 시설에 적합한 실패 대응 정책으로 검증한 것은 아니다. 웹에서 오프라인이라고 표시하는 것과 해당 장치가 스스로 통신 장애를 감지한 것은 구별한다.</p>
+<h2 id="sec-5">3 수행 계획·인력·완료 단계</h2>
+<h3>3.1 인시와 일정 가정</h3>
+<p>3인 팀·부품 수령 후 8주·기초 C/C++와 웹 개발 경험을 가정한다. 인시는 팀 전체 작업량이며 배송 대기와 장비 대여 대기는 별도다. v2에서 기능을 줄인 만큼 통신·통합·시험에 여유를 남겨 <strong>총 200–280인시</strong>를 유지한다.</p>
+<table>
+<thead>
+<tr>
+<th>작업</th>
+<th>구체적 산출물</th>
+<th align="right">기본 인시</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>범위·설계 확정</td>
+<td>그래프·메시지·완료 기준·부품표</td>
+<td align="right">16–20</td>
+</tr>
+<tr>
+<td>하드웨어</td>
+<td>표지판 3대·G·스위치·고정 배선·방향 패턴</td>
+<td align="right">20–28</td>
+</tr>
+<tr>
+<td>경로·집계 규칙</td>
+<td>C++ 계산 모듈·독립 기준값·ID 집계</td>
+<td align="right">18–24</td>
+</tr>
+<tr>
+<td>무선·상태</td>
+<td>원천·순번·ACK·만료·재부팅 동기화</td>
+<td align="right">30–42</td>
+</tr>
+<tr>
+<td>서버·USB·기록</td>
+<td>입력 검증·스냅샷·저장·내보내기</td>
+<td align="right">18–26</td>
+</tr>
+<tr>
+<td>웹·시연 조작</td>
+<td>지도·보고·조건 변경·발표 화면</td>
+<td align="right">18–26</td>
+</tr>
+<tr>
+<td>통합·검증</td>
+<td>수용 시험·지연 영상·결함 수정</td>
+<td align="right">26–38</td>
+</tr>
+<tr>
+<td>제출·리허설</td>
+<td>문서·설치 설명·영상·반복 시연</td>
+<td align="right">14–20</td>
+</tr>
+<tr>
+<td><strong>기본 합계</strong></td>
+<td></td>
+<td align="right"><strong>160–224</strong></td>
+</tr>
+<tr>
+<td><strong>예비 25%</strong></td>
+<td>부품 교체·환경 차이·통합 오류</td>
+<td align="right"><strong>40–56</strong></td>
+</tr>
+<tr>
+<td><strong>총량</strong></td>
+<td></td>
+<td align="right"><strong>200–280</strong></td>
+</tr>
+</tbody></table>
+<p>3명이면 1인당 주당 약 8.3–11.7시간, 2명이면 약 12.5–17.5시간이다. 2인·주 8시간씩만 가능한 경우 8주 작업량은 128인시이므로 본 계획과 맞지 않는다. 기간을 약 13–18주로 늘리거나 P1 범위를 공식 조정해야 한다. 경험 부족 시 학습 시간을 추가한다.</p>
+<h3>3.2 8주 일정과 단계별 통과 기준</h3>
+<table>
+<thead>
+<tr>
+<th>주차</th>
+<th>핵심 작업</th>
+<th>통과 기준·미달 시 조치</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>준비</td>
+<td>부품·장비 대여·실제 위치 필수 여부 확인</td>
+<td>구매 전 P1 범위 확정</td>
+</tr>
+<tr>
+<td>1주</td>
+<td>보드 2대 통신, LED 1대, 고정 경로</td>
+<td>버튼 30회에 수신·계산·표시 연결. 실패 시 원인 분리만 수행</td>
+</tr>
+<tr>
+<td>2주</td>
+<td>표지판 2대 위험 직접 공유·서버 분리</td>
+<td>P0 통과. 미달이면 새 기능 추가 중지</td>
+</tr>
+<tr>
+<td>3주</td>
+<td>표지판 3대·G, 인원 집계·혼잡 비용</td>
+<td>웹 조건이 실제 표지판 계산에 반영</td>
+</tr>
+<tr>
+<td>4주</td>
+<td>만료·중복·재부팅·인원 초기화</td>
+<td>위험 유지와 X/? 구분. 첫 P1 통합 시연</td>
+</tr>
+<tr>
+<td>5주</td>
+<td>웹 실제 보고·기록·자동 경로 벡터</td>
+<td>72개 벡터와 상태 시험 1차 결과</td>
+</tr>
+<tr>
+<td>6주</td>
+<td>실제 지연·전원·장애·결함 수정</td>
+<td>필수 결함 목록 정리. P2 착수 여부 결정</td>
+</tr>
+<tr>
+<td>7주</td>
+<td>부스 설치·가독성·영상·10회 리허설</td>
+<td>코드 수정 없이 시연 반복</td>
+</tr>
+<tr>
+<td>8주</td>
+<td>회귀 확인·문서 일치·예비 장비</td>
+<td>제출본과 실행 환경 동결</td>
+</tr>
+</tbody></table>
+<p>P2는 P1 필수 시험에 해결되지 않은 실패가 없고 최소 30인시의 여유가 있을 때만 착수한다. 4주차까지 실제 장치 3대 연동이 안 되면 이동 시뮬레이션·BLE·별도 조작기는 추가하지 않는다. 6주차까지 핵심 지연·차단·복구 시험이 실패하면 실패 원인과 범위 조정을 지도교수에게 제시한다.</p>
+<p>2주차 종료 시 실제 투입 시간과 남은 결함으로 잔여 인시를 다시 추정한다. 계획 상한을 넘을 전망이면 범위·일정을 조정하고 시험 시간을 마지막 주로 미루지 않는다.</p>
+<h3>3.3 역할</h3>
+<p>A는 배선·전원·ESP32 통신과 표시, B는 경로·집계·서버, C는 화면·시험·시연을 담당한다. A와 B가 메시지·상태 규칙을 함께 검토하고, B와 C가 기준값·실제 보고 구분을 맞춘다. 주 1회 2시간 통합 시험은 위 인시에 포함한다. 한 사람이 시험 결과를 작성하면 다른 사람이 영상·로그와 대조한다.</p>
+<h2 id="sec-6">4 실행 가능성·예산·범위 조정</h2>
+<h3>4.1 실행 가능성 판단</h3>
+<p>계산량보다 장치 상태와 표시의 일치가 주요 난점이다. 작은 그래프, 동일 보드, 단일 홉, USB 게이트웨이, 고정 인원 조건으로 이를 집중 검증한다. 별도 조작기·앱·측위 장치·배터리 제작을 기본에서 빼면 학생 팀이 통합과 증거 확보까지 접근할 수 있다. 다만 기간·인시·대여 장비가 확보되어야 성립하는 조건부 계획이다.</p>
+<p>‘서버가 계산한 화살표를 ESP32에 보내는 방식’으로 바꾸면 기본 통신 시연은 쉬워지지만 본 과제의 분산 계산 목표가 달라진다. 일정 부족 때도 이를 조용히 대체하지 않고 변경 사유를 기록한다. 표지판 수를 2대로 줄인 경우도 P1 전 항목 완료로 표기하지 않는다.</p>
+<h3>4.2 계획 예산</h3>
+<p>아래는 판매가 검증 전 편성한 배정액이다. 노트북·모니터·카메라·멀티미터는 보유 또는 대여를 전제로 하며 학교 지원 한도를 확인한 값이 아니다.</p>
+<table>
+<thead>
+<tr>
+<th>품목</th>
+<th>수량·용도</th>
+<th align="right">배정액</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>동일 ESP32 개발보드</td>
+<td>5대: 표지판 3 + G 1 + 예비 1</td>
+<td align="right">60,000원</td>
+</tr>
+<tr>
+<td>5V 8×8 RGB 패널</td>
+<td>3개, 유효 폭 8cm 이상 후보</td>
+<td align="right">75,000원</td>
+</tr>
+<tr>
+<td>정격 5V 4A 어댑터·잭</td>
+<td>3세트, 패널별 전원</td>
+<td align="right">45,000원</td>
+</tr>
+<tr>
+<td>74AHCT 계열 레벨 변환</td>
+<td>3세트</td>
+<td align="right">12,000원</td>
+</tr>
+<tr>
+<td>USB 케이블·보드 전원</td>
+<td>1식</td>
+<td align="right">24,000원</td>
+</tr>
+<tr>
+<td>위험 토글·확인 LED·저항</td>
+<td>표지판별 1세트</td>
+<td align="right">10,000원</td>
+</tr>
+<tr>
+<td>기판·배선·단자·콘덴서</td>
+<td>고정 배선</td>
+<td align="right">25,000원</td>
+</tr>
+<tr>
+<td>지지대·A3 설명판·고정재</td>
+<td>전시와 운송</td>
+<td align="right">30,000원</td>
+</tr>
+<tr>
+<td>촬영 거치대·젠더</td>
+<td>확대 촬영</td>
+<td align="right">20,000원</td>
+</tr>
+<tr>
+<td><strong>소계</strong></td>
+<td></td>
+<td align="right"><strong>301,000원</strong></td>
+</tr>
+<tr>
+<td><strong>배송·교체 예비비</strong></td>
+<td></td>
+<td align="right"><strong>60,000원</strong></td>
+</tr>
+<tr>
+<td><strong>계획 총액</strong></td>
+<td></td>
+<td align="right"><strong>361,000원</strong></td>
+</tr>
+</tbody></table>
+<p>구매 전 패널 크기·드라이버·전류·납기·부가세·배송비를 확인한다. 대형 화면을 구매해야 하면 위 예산으로 성립하지 않는다. 패널을 먼저 1개 시험한 뒤 나머지를 구매한다. 전시용 무선 USB 발표기는 보유품을 선택 사용하고 미보유 시 노트북 키보드로 조작한다.</p>
+<p>패널은 GPIO나 보드 핀에서 전원을 공급하지 않는다. USB 보드 전원과 별도 패널 5V는 GND만 공통으로 연결하고 두 +5V를 연결하지 않는다. 3.3V 데이터는 5V 레벨 변환을 거친다. 64픽셀×60mA=3.84A는 보수적 상한 계산이며 실제 패널 데이터시트를 우선한다. 밝기 25% 제한·사용 패턴 실측·30분 점등 시험으로 전원 여유를 확인한다.[R3]</p>
+<h3>4.3 실제 위치 입력을 추가하는 경우</h3>
+<p>위치 자동 측정이 반드시 필요하면 Android 한 기종·BLE 비콘 3개·전경 앱으로 구역 수준을 시험한다. 최소 2주·40–70인시와 비콘·공유기 등 별도 예산 5만–12만원을 추가 편성한다. OS 권한·스캔 동작과 구역 보정을 먼저 확인한다.[R2] 이 수치는 확정 견적이나 개발 시간 보장이 아니다.</p>
+<p>보정과 별도 세션으로 구역별 20회 정지 판별, 경계 통과 20회를 평가한다. 미판정을 오류로 포함하고 구역별 혼동·전환 지연을 제시한다. 한 대의 결과를 전체 관객 집계로 일반화하지 않는다. 수동 구역 선택은 입력 시험에는 유용하지만 자동 측위로 분류하지 않는다.</p>
+<h2 id="sec-7">5 검증 계획과 성과 해석</h2>
+<h3>5.1 필수 검증</h3>
+<table>
+<thead>
+<tr>
+<th>검증</th>
+<th>방법</th>
+<th>수용 기준</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>정적 경로</td>
+<td>위험 8조합 × 혼잡 분포 3종 × 출발점 3 = 72벡터</td>
+<td>독립 전수 경로 기준과 일치. 예상값은 구현 출력으로 만들지 않음</td>
+</tr>
+<tr>
+<td>위험 우선</td>
+<td>e1·e3·e4 변화와 현재 전체 경로 비교</td>
+<td>해당 장치가 새 상태를 처리한 뒤 차단·미확인 간선을 쓰는 선택 0건</td>
+</tr>
+<tr>
+<td>새 위험 반영</td>
+<td>입력 30회 × 장치 3대, 물리 스위치 확인 LED와 출력 동시 촬영</td>
+<td>장치별 95백분위 1.5초 이하 목표, 최악값·누락도 별도 기록</td>
+</tr>
+<tr>
+<td>혼잡 안정화</td>
+<td>비용 차이·5초 경계·짧은 흔들림</td>
+<td>15% 개선·5초 지속·5초 최소 유지. 위험에는 대기 없음</td>
+</tr>
+<tr>
+<td>만료·복구</td>
+<td>S1/S2/S3·G·USB·서버 단절</td>
+<td>위험 CLEAR 3초 만료, 혼잡 5초 만료, 차단 유지, 복구 확인</td>
+</tr>
+<tr>
+<td>초기화</td>
+<td>위험 ON 상태에서 인원 초기화</td>
+<td>새 인원 실행으로 바뀌어도 위험·장애 상태 유지</td>
+</tr>
+<tr>
+<td>기록·보고</td>
+<td>ACK·보고 유실, 일부 인원 결측</td>
+<td>예측·실제 보고 분리, 누락·미확인 기록</td>
+</tr>
+<tr>
+<td>연속 시연</td>
+<td>30분과 전체 장면 10회</td>
+<td>예기치 않은 재부팅·임의 수동 코드 수정 없이 완료</td>
+</tr>
+</tbody></table>
+<p>정적 3분포는 D0=모든 간선 0명·대기60, DL=e3 30명·대기30, DR=e4 30명·대기30이다. 기대 경로는 모든 단순 경로를 열거한 독립 도구로 생성한다. 상태 유지 이력이 있는 표지판은 당장 최단 경로로 바뀌지 않을 수 있으므로 72벡터 시험과 시간 전이 시험을 분리한다.</p>
+<p>지연은 동기화되지 않은 ESP32 시계를 빼지 않고 같은 촬영 프레임의 입력 확인 LED와 출력으로 측정한다. 각 장치 30개의 정렬된 지연 중 29번째 값을 최근접 순위 95백분위로 사용한다. 누락이 하나라도 있으면 지연만으로 통과하지 않으며 누락 시험을 실패로 기록한다. 하드웨어가 없는 목업에서는 해당 항목을 ‘미실행’으로 유지한다.</p>
+<p>위험 지연 시험은 매회 DL 분포에서 세 장치가 모두 오른쪽을 표시하는 것을 확인한 뒤 S3의 물리 스위치로 e4를 차단한다. S1·S2는 왼쪽, S3는 X로 바뀌므로 세 장치의 출력 변화를 관측할 수 있다. 해제 후 다시 안정된 오른쪽 상태를 확인하고 다음 회차를 시작한다.</p>
+<h3>5.2 선택 성능 비교</h3>
+<p>P2에서 사람 이동을 추가하면 거리 비용과 혼잡 비용만 다르게 하여 비교한다. “시드 10개”라고만 적지 않고, 난수의 용도를 출발 시각·초기 위치로 한정하여 생성 규칙과 시드를 저장한다. 또는 난수 없이 고정된 10개 입력 분포를 공개한다. 조건·출구 처리율·속도·차단 시각은 두 정책에 동일하게 적용한다.</p>
+<p>결과는 최대 구역 인원, 평균·최대 대기, 미대피 인원, 방향 변경 수, 가상 완료 시간으로 보고한다. 180초 내 미완료는 남은 인원과 함께 표시하고 완료 실행만 평균내지 않는다. 예상 최단 경로가 아니라 각 노드에서 실제로 채택한 현재 다음 방향을 따라 이동시킨다. 과밀 구역 수치가 초기조건부터 같은 최대치라면 단순 최대값 대신 사건 이후 최대치·초과 구간 시간 등 사전 지정한 지표를 사용한다.</p>
+<p>이동 중 차단 구역에 남은 사람은 정지·미완료로 처리하는 단순 모델이므로 실제 화재 행동 모형이 아니다. 혼잡 정책이 손해를 보이는 조건도 함께 보고한다. P2를 생략하더라도 P1의 정적 경로·시간 전이·장치 검증은 완료할 수 있다.</p>
+<h3>5.3 증거와 기록</h3>
+<p>시험 ID / 날짜 / 버전 / 지도 해시 / 설정 / 입력 모드 / 인원 실행 ID / 위험 원천 세대·순번 / 입력 조건 / 기대값 / 실제값 / 지연·누락 / 통과 여부 / 증거 파일 / 결함 번호를 기록한다. 목표 미달·미실행·미구현을 서로 구분한다. 결과란은 측정 전 비워 두고 ‘미실행’으로 표시한다.</p>
+<h2 id="sec-8">6 부스 및 발표 시연 계획</h2>
+<h3>6.1 전시 구성</h3>
+<div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 490" role="img" aria-label="부스 전시 배치도"><defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0L0 6L7 3Z" fill="#375b76"/></marker><marker id="back" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto"><path d="M7 0L7 6L0 3Z" fill="#375b76"/></marker></defs><style>.title{font:600 21px 'Malgun Gothic',sans-serif;fill:#183449}.sub{font:16px 'Malgun Gothic',sans-serif;fill:#40576a}.label{font:16px 'Malgun Gothic',sans-serif;fill:#23465e;paint-order:stroke;stroke:white;stroke-width:6px;stroke-linejoin:round}</style><rect x="70" y="20" width="820" height="100" rx="10" fill="#e5f1ee" stroke="#7691a7"/><text x="480" y="51" text-anchor="middle" class="title">대형 모니터 / 프로젝터</text><text x="480" y="76" text-anchor="middle" class="sub">지도 65% · 실제 장치 보고와 변경 이유 35%</text><path d="M480 120V165" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><rect x="70" y="165" width="240" height="90" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="190" y="196" text-anchor="middle" class="title">S1 · J</text><text x="190" y="221" text-anchor="middle" class="sub">왼쪽 / 오른쪽</text><rect x="360" y="165" width="240" height="90" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="480" y="196" text-anchor="middle" class="title">S2 · L</text><text x="480" y="221" text-anchor="middle" class="sub">왼쪽 / 오른쪽</text><rect x="650" y="165" width="240" height="90" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="770" y="196" text-anchor="middle" class="title">S3 · R</text><text x="770" y="221" text-anchor="middle" class="sub">오른쪽 / X / ?</text><rect x="285" y="315" width="390" height="85" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="480" y="346" text-anchor="middle" class="title">관람객 웹 · 실물 스위치</text><text x="480" y="371" text-anchor="middle" class="sub">조건 변경 · 위험 입력 · 인원 초기화</text><path d="M480 315V255" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><rect x="30" y="315" width="225" height="85" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="142.5" y="346" text-anchor="middle" class="title">측면 운영 장비</text><text x="142.5" y="371" text-anchor="middle" class="sub">노트북 · G · 전원</text><text x="480" y="450" text-anchor="middle" class="label">지도와 같은 장치 라벨 · 실물 촬영 확대 · 케이블 고정</text></svg></div>
+
+
+<p>그림 3. 작은 모형 건물보다 큰 지도와 실물 화살표의 연결을 강조한다. 세 표지판은 같은 높이에 고정하고 지도와 라벨을 일치시킨다. 8cm 패널은 부스 약 2m 거리에서 확인하고 발표장에서는 카메라로 확대한다. 배선은 지지대 뒤로 고정한다.</p>
+<p>목업 전시에는 “소프트웨어 목업·장치 미연결”, 하드웨어 완성본에는 “가상 인원·실제 무선 표지판”을 표시한다. 위험 스위치는 시험 입력이다. 실제 화재·연기나 암실을 만들지 않는다.</p>
+<h3>6.2 부스: 3분 체험</h3>
+<table>
+<thead>
+<tr>
+<th>시간</th>
+<th>조작</th>
+<th>관람 포인트</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0:00–0:25</td>
+<td>정상 조건</td>
+<td>대기 인원과 복도 인원 구분, S1의 가까운 출구 선택</td>
+</tr>
+<tr>
+<td>0:25–1:00</td>
+<td>왼쪽 혼잡 30명</td>
+<td>밀도·비용 증가와 5초 후보 유지 후 우회</td>
+</tr>
+<tr>
+<td>1:00–1:30</td>
+<td>S3 위험 스위치 또는 시험 요청</td>
+<td>위험 우선, 혼잡한 왼쪽으로 복귀, S3 X</td>
+</tr>
+<tr>
+<td>1:30–2:00</td>
+<td>S2 위험도 ON</td>
+<td>출구 접근 경로 없음, 세 표지판 X</td>
+</tr>
+<tr>
+<td>2:00–2:30</td>
+<td>선택: G 끊기 또는 임의 혼잡 수치</td>
+<td>상황 버튼 외 값으로도 계산, 정보 만료와 경로 없음 차이</td>
+</tr>
+<tr>
+<td>2:30–3:00</td>
+<td>위험 해제·장치 복구·인원 초기화</td>
+<td>위험 해제 확인과 초기화의 역할 구분</td>
+</tr>
+</tbody></table>
+<p>혼잡은 고정 분포를 사용하므로 설명 도중 군중이 이동해 상황이 사라지지 않는다. 관람객이 임의 수치를 입력할 수 있어 미리 정한 화살표만 보여준다는 오해를 줄인다. 두 명이면 설명/조작과 장치 감시를 분담한다. 한 명이면 장애 체험을 생략한다.</p>
+<h3>6.3 발표: 90초 시연</h3>
+<table>
+<thead>
+<tr>
+<th>구간</th>
+<th>행동</th>
+<th>짧은 설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0–15초</td>
+<td>정상 화면·LED 확대</td>
+<td>“인원은 가상이고, 완성본의 방향 계산은 각 표지판에서 합니다.”</td>
+</tr>
+<tr>
+<td>15–35초</td>
+<td>왼쪽 혼잡 입력·후보 대기</td>
+<td>“잠깐의 변동에는 유지하고, 지속되는 혼잡에는 우회합니다.”</td>
+</tr>
+<tr>
+<td>35–55초</td>
+<td>오른쪽 위험</td>
+<td>“위험은 혼잡보다 우선하여 해당 경로를 즉시 제외합니다.”</td>
+</tr>
+<tr>
+<td>55–70초</td>
+<td>양쪽 차단</td>
+<td>“유효 경로가 없으면 X를 표시합니다.”</td>
+</tr>
+<tr>
+<td>70–90초</td>
+<td>위험 해제 확인·인원 초기화</td>
+<td>“위험 해제와 시연 초기화는 별도입니다.”</td>
+</tr>
+</tbody></table>
+<p>하드웨어 완성 전 발표에서는 첫 문장을 “지금은 계산과 화면을 검토하는 소프트웨어 목업입니다”로 바꾼다. 발표자는 노트북 키 또는 보유 USB 발표기를 사용하고 실물 조작이 필요하면 동료가 표지판 스위치를 조작한다. 별도 무선 조작기 제작은 필요하지 않다. 장치 분리·복구는 부스/질의응답에 남긴다.</p>
+<p>7분 발표 예시는 문제 1분, 구조와 설계 2분, 시연 1분30초, 검증 1분30초, 한계와 활용 1분이다. 60초 시연만 가능하면 정상→혼잡→오른쪽 차단까지 보여준다.</p>
+<h3>6.4 실패 대응과 당일 점검</h3>
+<p>발표 시작 30분 전 지도 해시·채널·포트·전원·위험 스위치·준비 보고를 확인하고 전체 장면을 한 번 실행한다. 마지막 열에서 확대 LED와 문자 크기를 확인한다. 절전·팝업·자동 업데이트와 케이블 고정을 점검한다.</p>
+<p>라이브가 10초 이상 반응하지 않으면 한 번 상태를 확인하고 30초 실제 촬영 영상으로 전환한다. 영상에는 입력 확인 LED와 실물 출력을 함께 담고 원래 지연을 보존한다. 목업 녹화는 ‘실제 하드웨어 시연 영상’으로 사용하지 않는다. 인터넷 없이 실행되는 파일·영상·설정을 로컬과 USB에 준비한다.</p>
+<table>
+<thead>
+<tr>
+<th>고장</th>
+<th>대체</th>
+<th>한계 표시</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>웹 제어 실패</td>
+<td>표지판의 물리 위험 스위치</td>
+<td>혼잡 조작은 중단될 수 있음</td>
+</tr>
+<tr>
+<td>G 실패</td>
+<td>직접 위험 공유를 보여주고 영상 전환</td>
+<td>웹 보고와 혼잡은 최신이 아님</td>
+</tr>
+<tr>
+<td>표지판 실패</td>
+<td>예비 보드 교체 또는 해당 장치 OFFLINE 표시</td>
+<td>세 장치 정상으로 꾸미지 않음</td>
+</tr>
+<tr>
+<td>카메라·프로젝터 실패</td>
+<td>사전 영상·결과 이미지</td>
+<td>영상 전환 사실을 명시</td>
+</tr>
+</tbody></table>
+<h2 id="sec-9">7 위험 관리·산출물·참고자료</h2>
+<h3>7.1 주요 위험과 대응</h3>
+<table>
+<thead>
+<tr>
+<th>위험</th>
+<th>대응·완료 증거</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>방향 왕복·혼잡 이동</td>
+<td>15%·5초 규칙, 변경 횟수 기록, 기본 비순환 그래프</td>
+</tr>
+<tr>
+<td>재전송된 옛 정상으로 복구</td>
+<td>원천 세대·순번·신선도 검사, 중복으로 만료 타이머 연장 금지</td>
+</tr>
+<tr>
+<td>시연 초기화가 차단을 해제</td>
+<td>위험 영역과 인원 실행 영역 분리, 위험 ON 초기화 시험</td>
+</tr>
+<tr>
+<td>서버 예측을 실제 표시로 오인</td>
+<td>보고 시각·입력 버전 표시, 미수신 시 오프라인, 육안 출력 시험</td>
+</tr>
+<tr>
+<td>LED 순간 부하·접촉 불량</td>
+<td>전원 분리, 밝기 제한, 전류 실측, 고정 배선, 예비 보드</td>
+</tr>
+<tr>
+<td>실제 위치 측정이 평가 필수</td>
+<td>1주차 확인 후 확장 범위·일정 재승인, 모의 측위로 대체 주장 금지</td>
+</tr>
+</tbody></table>
+<h3>7.2 산출물</h3>
+<p>P1은 펌웨어·서버·웹 소스, 지도·설정·시험 입력, 배선도·부품표·실행법, 요구사항별 시험표, 영상·CSV, 제출 문서를 남긴다. 현재 제공하는 v2 계획서와 목업은 이 중 설계·UI 검토 산출물이며 실물 구현 완료를 뜻하지 않는다.</p>
+<h3>7.3 참고자료</h3>
+<ul>
+<li>[D1] 사용자 제공 「스마트_대피_안내_시스템_핵심기능.pdf」, 2026.09.22. 분산 계산·위험 우선·혼잡·시연 요구의 기준.</li>
+<li>[D2] 「착석_습관_휴식_코칭_프로젝트_계획서.md / .html」. 수행 계획과 별첨 구성 참고.</li>
+<li>[D3] 「스마트_대피_안내_시스템_프로젝트_계획서.md」 v1. 위험/실행 영역·범위·검증 기준을 개정.</li>
+<li>[R1] <a href="https://docs.espressif.com/projects/esp-idf/en/release-v5.5/esp32/api-reference/network/esp_now.html">Espressif ESP-NOW 공식 문서</a>. 같은 채널·응용 ACK·재전송·콜백 처리 근거.</li>
+<li>[R2] <a href="https://developer.android.com/develop/connectivity/bluetooth/bt-permissions">Android Bluetooth permissions</a>. 선택 BLE 확장의 권한 설계 근거.</li>
+<li>[R3] <a href="https://learn.adafruit.com/adafruit-neopixel-uberguide/powering-neopixels">Adafruit NeoPixel 전원 안내</a>, <a href="https://learn.adafruit.com/adafruit-neopixel-uberguide?view=all">전체 가이드</a>. 패널 전원·레벨 변환·보호 부품 검토.</li>
+</ul>
+<p>외부 문서는 2026.09.23 확인한 자료를 기준으로 한다. 비용 계수·1.5초·3초·5초·예산·인시는 본 과제의 초기 설계값이다. 구매 모델과 설치 버전은 착수 시 고정하고 평가 후 수치 변경은 새 버전으로 기록한다.</p>
+<div class="pagebreak"></div>
+
+<h1 id="sec-10">별첨 A 과제 계획서</h1>
+<p>과제명: 혼잡도를 반영하는 분산형 스마트 대피 안내 시스템<br>버전: 2.0<br>과목명: 컴퓨터공학 종합설계<br>팀명 / 팀원 / 지도교수 / 제출일: 제출 시 기입</p>
+<h2 id="sec-11">A1 과제 목적 및 필요성</h2>
+<p>실내 대피 안내는 통로 차단과 특정 구역의 인원 집중 등 변화하는 조건을 반영할 필요가 있다. 본 과제는 영화관을 단순화한 실험 그래프에서 위험 경로를 제외하고 혼잡 비용을 고려하여 안내 방향을 갱신하는 시스템을 설계·구현한다.</p>
+<p>ESP32 표지판들이 상황을 공유하고 각자 자신의 위치에서 경로를 계산하게 하여, 임베디드 입력·무선 통신·그래프 알고리즘·상태 관리·웹 시각화를 통합한다. 경로가 없거나 필요한 정보가 만료된 경우도 별도의 상태로 표현한다.</p>
+<p>기본 범위는 고정된 가상 인원 분포와 실제 표지판 3대의 통합이다. 실제 화재 감지·관객 측위·건물 전체 피난 안전성은 검증하지 않는다. 결과물은 분산 안내 규칙과 장애 대응을 비교하는 교육용 시제품이다.</p>
+<h2 id="sec-12">A2 사용기술 및 설계</h2>
+<h3>A2.1 기술과 구조</h3>
+<table>
+<thead>
+<tr>
+<th>기술</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ESP32·C/C++·ESP-NOW</td>
+<td>위험 스위치 수집, 단일 홉 공유, 각 표지판 경로 계산</td>
+</tr>
+<tr>
+<td>방향 그래프·Dijkstra</td>
+<td>위험·미확인 간선 제거 후 거리·혼잡 비용 비교</td>
+</tr>
+<tr>
+<td>Python·FastAPI·pyserial·SQLite</td>
+<td>가상 ID 집계, USB 게이트웨이 연결, 기록·API</td>
+</tr>
+<tr>
+<td>HTML·CSS·JavaScript·SVG</td>
+<td>지도, 상황 조작, 장치 보고, 시연 화면</td>
+</tr>
+<tr>
+<td>RGB LED·레벨 변환·별도 5V 전원</td>
+<td>화살표·X·? 및 품질 저하 표시</td>
+</tr>
+</tbody></table>
+<div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" role="img" aria-label="별첨 과제 계획서 시스템 구조도"><defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0L0 6L7 3Z" fill="#375b76"/></marker><marker id="back" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto"><path d="M7 0L7 6L0 3Z" fill="#375b76"/></marker></defs><style>.title{font:600 21px 'Malgun Gothic',sans-serif;fill:#183449}.sub{font:16px 'Malgun Gothic',sans-serif;fill:#40576a}.label{font:16px 'Malgun Gothic',sans-serif;fill:#23465e;paint-order:stroke;stroke:white;stroke-width:6px;stroke-linejoin:round}</style><rect x="20" y="20" width="300" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="170" y="51" text-anchor="middle" class="title">웹 시뮬레이션</text><text x="170" y="76" text-anchor="middle" class="sub">가상 ID · 구역</text><rect x="380" y="20" width="300" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="530" y="51" text-anchor="middle" class="title">노트북</text><text x="530" y="76" text-anchor="middle" class="sub">집계 · 기록</text><path d="M320 60H380" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><rect x="380" y="160" width="300" height="80" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="530" y="191" text-anchor="middle" class="title">게이트웨이 G</text><text x="530" y="216" text-anchor="middle" class="sub">USB ↔ ESP-NOW</text><path d="M530 100V160" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" marker-start="url(#back)"/><text x="572" y="138" text-anchor="middle" class="label">USB</text><rect x="20" y="300" width="280" height="95" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="160" y="331" text-anchor="middle" class="title">표지판별 위험 스위치</text><text x="160" y="356" text-anchor="middle" class="sub">S1=e1 · S2=e3 · S3=e4</text><rect x="380" y="300" width="550" height="95" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="655" y="331" text-anchor="middle" class="title">실물 표지판 3대</text><text x="655" y="356" text-anchor="middle" class="sub">각자 상태 관리 → 경로 계산 → LED</text><path d="M530 240V300" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" marker-start="url(#back)"/><text x="674" y="278" text-anchor="middle" class="label">상황 · 실제 보고</text><path d="M300 347H380" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="480" y="455" text-anchor="middle" class="label">무선으로 공유하는 것은 상황 데이터 · 최종 방향은 각 표지판이 결정</text></svg></div>
+
+
+<p>그림 A1. 웹은 상황과 실제 장치 보고를 표시한다. 방향은 각 ESP32에서 결정한다. 위험 메시지는 인원 시연 실행 ID와 분리하여 초기화가 위험을 지우지 않게 한다.</p>
+<h3>A2.2 설계 내용</h3>
+<p>갈림길 3개·출구 2개·복도 5개를 등록한다. 구역별 가상 ID 수를 면적으로 나눠 밀도를 계산하고, 위험·미확인 간선을 제외한 경로에 거리와 혼잡 비용을 적용한다. 혼잡에 의한 방향 변경에는 15% 비용 개선과 5초 지속·최소 유지 조건을 적용한다. 새 위험으로 현재 경로가 무효가 되면 대기 없이 재계산한다.</p>
+<p>표지판 3대가 각각 위험 원천 역할도 수행하고 G 1대가 USB와 무선 사이를 연결한다. 위험 정상 보고는 3초, 혼잡은 5초 만료 기준을 둔다. 위험은 자동 해제하지 않으며, 혼잡이 만료되면 거리 기준과 품질 저하를 표시한다. 웹 예측과 실제 장치 보고는 구분한다.</p>
+<h3>A2.3 수행 계획과 가능성</h3>
+<p>3인·8주·총 200–280인시를 계획한다. 1–2주차 두 장치의 위험 직접 공유, 3–4주차 세 장치·혼잡·예외 통합, 5–6주차 검증·결함 수정, 7–8주차 전시·문서·리허설을 수행한다. 노트북·모니터 대여 전제의 배정 예산은 361,000원이다. 자동 위치 측정과 이동 시뮬레이션은 별도 확장으로 둔다.</p>
+<p>72개 정적 경로 벡터, 위험 수신·처리 이후 차단 경로 선택 0건, 실제 LED 반영 지연 장치별 95백분위 1.5초 이하를 목표로 한다. 누락·만료·초기화·복구·30분 연속 동작도 검증한다. 목표 성능은 구현 후 측정한다.</p>
+<h2 id="sec-13">A3 기대효과 및 활용방안</h2>
+<p>위험 우선과 혼잡 회피의 관계를 상황 조작으로 설명하고, 분산 장치의 정보 갱신과 실패 대응을 실습할 수 있다. 경로 알고리즘과 실제 출력 사이의 지연·누락을 기록하여 소프트웨어와 하드웨어 통합 검증 경험을 얻을 수 있다.</p>
+<p>부스에서는 지도와 실물 표지판으로 3분 체험을 운영하고 발표에서는 90초 시연과 실제 촬영 예비 영상을 사용한다. 후속 과제로 실제 구역 측정·이동 모델·양방향 공간을 검토할 수 있다. 실제 대피 시간 단축이나 현장 안전성 향상은 본 실험만으로 입증된 효과로 제시하지 않는다.</p>
+<div class="pagebreak"></div>
+
+<h1 id="sec-14">별첨 B 요구사항명세서</h1>
+<p>문서명: 분산형 스마트 대피 안내 시스템 요구사항명세서<br>버전: 2.0<br>작성자 / 검토자 / 제출일: 제출 시 기입</p>
+<h2 id="sec-15">B0 목차</h2>
+<ol>
+<li>서론(개요)</li>
+<li>시스템 기능</li>
+<li>기능 요구사항</li>
+<li>비기능 요구사항</li>
+<li>수용 시험·추적 관계</li>
+</ol>
+<h2 id="sec-16">B1 서론(개요)</h2>
+<h3>B1.1 목적과 운영 환경</h3>
+<p>본 명세서는 가상 인원과 실제 위험 스위치를 사용하여 ESP32 표지판 3대가 분산 경로 계산을 수행하는 시제품의 P1 수용 기준을 정의한다. 노트북·USB 게이트웨이 1대·표지판 3대, 등록 피어의 같은 방 단일 홉 통신을 대상으로 한다.</p>
+<p>운영자는 지도·장치·실행 조건을 준비하고, 관람객은 상황을 조작하며, 개발자는 로그·영상으로 결과를 검증한다. 서버는 기본적으로 localhost에서 사용한다. 실제 관객의 실명·위치·영상 분석을 수집하지 않는다.</p>
+<h3>B1.2 용어</h3>
+<table>
+<thead>
+<tr>
+<th>용어</th>
+<th>정의</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>위험 영역</td>
+<td>설치 ID·지도 해시·원천·부팅 세대·순번으로 관리하는 간선 상태</td>
+</tr>
+<tr>
+<td>인원 실행 영역</td>
+<td>run_id와 crowd_version으로 구분하는 가상 인원 조건</td>
+</tr>
+<tr>
+<td>CLEAR / BLOCKED / UNKNOWN</td>
+<td>시험상 통행 가능 / 차단 / 위험 정보 미확인</td>
+</tr>
+<tr>
+<td>혼잡 미확인</td>
+<td>인원 입력이 만료·부분 관측되어 현재 밀도를 확정할 수 없음</td>
+</tr>
+<tr>
+<td>실제 보고</td>
+<td>장치가 보낸 현재 다음 간선·사용 상태 벡터·이유. 실제 픽셀 점등의 자동 증명은 아님</td>
+</tr>
+<tr>
+<td>인원 초기화</td>
+<td>가상 인원·후보 유지 이력·실행 기록 구간을 새로 시작. 위험·연결 상태는 유지</td>
+</tr>
+<tr>
+<td>목업</td>
+<td>브라우저 계산·화면 시연. 실제 통신·LED 성능의 검증 대상과 구분</td>
+</tr>
+</tbody></table>
+<h2 id="sec-17">B2 시스템 기능</h2>
+<p>지도·방향 매핑 검증, 위험 스위치와 TEST 요청, ID 중복 제거와 밀도 계산, ESP-NOW 상황 공유, 원천별 최신성 관리, 로컬 경로 계산, 방향 안정화, 화살표·X·? 표시, 웹 실제 보고, 인원 초기화, 기록 내보내기를 제공한다.</p>
+<p>대표 흐름은 준비 → 정상 → 왼쪽 혼잡 → 오른쪽 차단 → 양쪽 차단 → 명시적 위험 해제 → 인원 초기화다. 위험 ON 상태에서 인원 초기화를 실행해도 해당 차단은 남아야 한다.</p>
+<h2 id="sec-18">B3 기능 요구사항</h2>
+<p>FR01–FR18은 P1 필수다. EX는 선택이며 필수 완료율에서 제외한다. v1에서 FR19–FR22에 분산되어 있던 기록·비교·장애·표시는 아래 항목과 EX로 재구성했으므로 v1 시험표를 그대로 사용하지 않는다.</p>
+<table class="id-table"><colgroup><col style="width:11%"><col style="width:43%"><col style="width:46%"></colgroup>
+<thead>
+<tr>
+<th>ID</th>
+<th>요구사항</th>
+<th>수용 기준</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FR01</td>
+<td>지도·방향 매핑을 검증한다</td>
+<td>ID 중복·없는 노드·0 이하 면적·순환·해시 불일치를 거부</td>
+</tr>
+<tr>
+<td>FR02</td>
+<td>표지판별 위험 원천을 고정한다</td>
+<td>S1=e1, S2=e3, S3=e4. 권한 없는 해제 거부</td>
+</tr>
+<tr>
+<td>FR03</td>
+<td>물리·시험 위험을 함께 적용한다</td>
+<td>effective=physical OR test. 인원 초기화로 차단 해제 불가</td>
+</tr>
+<tr>
+<td>FR04</td>
+<td>위험을 먼저 제외한다</td>
+<td>새 상태 처리 후 현재 선택 경로에 BLOCKED/UNKNOWN 간선 0개</td>
+</tr>
+<tr>
+<td>FR05</td>
+<td>가상 ID를 한 위치에만 집계한다</td>
+<td>60개 ID 보존·중복/역순 제거·미확인을 0명으로 간주하지 않음</td>
+</tr>
+<tr>
+<td>FR06</td>
+<td>인원·면적·혼잡 비용을 계산한다</td>
+<td>3개 기준 분포의 집계와 비용 일치</td>
+</tr>
+<tr>
+<td>FR07</td>
+<td>표지판이 각자 경로를 계산한다</td>
+<td>방향 명령 없이 72벡터의 독립 기준과 일치</td>
+</tr>
+<tr>
+<td>FR08</td>
+<td>혼잡 방향 변경을 안정화한다</td>
+<td>15% 개선·5초 지속·최소 유지, 현재 경로 위험 시 즉시 무효화</td>
+</tr>
+<tr>
+<td>FR09</td>
+<td>경로 없음과 위험 미확인을 구분한다</td>
+<td>X/? 판별과 유효 우회 존재 시 안내 유지</td>
+</tr>
+<tr>
+<td>FR10</td>
+<td>순번·세대·범위를 검사한다</td>
+<td>옛 정상·중복·이전 인원 실행을 거부, 위험은 인원 run_id와 독립</td>
+</tr>
+<tr>
+<td>FR11</td>
+<td>중요 입력의 수용과 적용을 구분한다</td>
+<td>응용 ACK·재전송·표시 보고를 분리, 미확인 장치 명시</td>
+</tr>
+<tr>
+<td>FR12</td>
+<td>상태 종류별 만료를 처리한다</td>
+<td>CLEAR 3초→UNKNOWN, BLOCKED 유지, 혼잡 5초→거리 기준·품질 저하</td>
+</tr>
+<tr>
+<td>FR13</td>
+<td>부팅·복구 시 현재 상태를 확인한다</td>
+<td>동기화 전 과거 정상으로 안내하지 않음</td>
+</tr>
+<tr>
+<td>FR14</td>
+<td>실제 장치 보고를 관찰한다</td>
+<td>다음 간선·이유·상태 벡터·수신 경과. 예측과 실제 보고 분리</td>
+</tr>
+<tr>
+<td>FR15</td>
+<td>인원 초기화를 독립 수행한다</td>
+<td>새 run_id 적용 현황 표시, 위험·장치 단절 유지, 옛 혼잡 부활 없음</td>
+</tr>
+<tr>
+<td>FR16</td>
+<td>입력·운영 모드를 표시한다</td>
+<td>MOCKUP/HIL_TEST/REPLAY 구분. P1은 HIL_TEST, REPLAY는 선택</td>
+</tr>
+<tr>
+<td>FR17</td>
+<td>실행 조건·사건·보고를 내보낸다</td>
+<td>버전·설정·지도·영역 ID·누락·오류를 CSV/JSON에 포함</td>
+</tr>
+<tr>
+<td>FR18</td>
+<td>장애 시 기능 의존을 표현한다</td>
+<td>G 없는 위험 직접 공유, 혼잡 만료, 웹 보고 중단을 개별 표시</td>
+</tr>
+<tr>
+<td>EX01</td>
+<td>가상 이동과 정책 효과를 비교한다</td>
+<td>이동 모델·입력·지표·미완료 처리 공개</td>
+</tr>
+<tr>
+<td>EX02</td>
+<td>실제 위치 또는 기록 재생을 입력한다</td>
+<td>원천 라벨과 별도 실측·재현 시험</td>
+</tr>
+</tbody></table>
+<h2 id="sec-19">B4 비기능 요구사항</h2>
+<table class="id-table"><colgroup><col style="width:11%"><col style="width:24%"><col style="width:65%"></colgroup>
+<thead>
+<tr>
+<th>ID</th>
+<th>요구사항</th>
+<th>수용 기준 또는 제약</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>NFR01</td>
+<td>반응성</td>
+<td>위험 30회×3대, 각 95백분위 1.5초 이하 목표·누락 0. 혼잡 조건 유지 시 7초 이하 목표</td>
+</tr>
+<tr>
+<td>NFR02</td>
+<td>안정성</td>
+<td>30분 동작·전체 장면 10회 반복, 예상 외 재부팅 없음</td>
+</tr>
+<tr>
+<td>NFR03</td>
+<td>전기·설치</td>
+<td>패널 별도 전원·공통 GND·+5V 분리·밝기 제한·고정 배선</td>
+</tr>
+<tr>
+<td>NFR04</td>
+<td>통신 한정</td>
+<td>등록 장치 4대·고정 채널·사전 확인한 한 공간. 다중 홉 없음</td>
+</tr>
+<tr>
+<td>NFR05</td>
+<td>가독성</td>
+<td>부스 2m·발표 확대 화면에서 화살표/X/?와 모드 라벨 구분</td>
+</tr>
+<tr>
+<td>NFR06</td>
+<td>재현성</td>
+<td>빌드·부품·핀맵·설정·독립 기대값·영상·실행법 보존</td>
+</tr>
+<tr>
+<td>NFR07</td>
+<td>접근·입력</td>
+<td>등록 피어·설치별 키·원천 검사·프레임 길이/값 검사. 웹은 localhost</td>
+</tr>
+<tr>
+<td>NFR08</td>
+<td>오프라인·정보 최소화</td>
+<td>기본 시연 외부 인터넷 불필요, 가상 ID만 사용</td>
+</tr>
+<tr>
+<td>NFR09</td>
+<td>주장 범위</td>
+<td>목업/하드웨어/실측 구분. 미측정 성능·안전성·개선율 표시 금지</td>
+</tr>
+</tbody></table>
+<p>예산과 인시는 프로젝트 관리 기준이며 동작 시험의 합격 수치가 아니다. 8주·200–280인시·361,000원의 가정이 바뀌면 수행 계획을 개정한다.</p>
+<h2 id="sec-20">B5 수용 시험·추적 관계</h2>
+<table class="id-table"><colgroup><col style="width:11%"><col style="width:64%"><col style="width:25%"></colgroup>
+<thead>
+<tr>
+<th>ID</th>
+<th>시험·기대 결과</th>
+<th>대응 요구사항</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T01</td>
+<td>잘못된 지도·해시·핀 방향 입력 거부</td>
+<td>FR01 NFR03 NFR06</td>
+</tr>
+<tr>
+<td>T02</td>
+<td>72개 독립 벡터 비교·차단 간선 사용 검사</td>
+<td>FR04 FR06 FR07</td>
+</tr>
+<tr>
+<td>T03</td>
+<td>15% 비용·5초 경계·위험 중 후보 무효화</td>
+<td>FR04 FR08 NFR01</td>
+</tr>
+<tr>
+<td>T04</td>
+<td>중복 ID·구역 이동·결측·총60 보존</td>
+<td>FR05 FR06</td>
+</tr>
+<tr>
+<td>T05</td>
+<td>물리 ON+시험 OFF, 위험 ON+인원 초기화</td>
+<td>FR02 FR03 FR15</td>
+</tr>
+<tr>
+<td>T06</td>
+<td>옛 세대·역순·이전 run_id·중복 재전송</td>
+<td>FR10 FR11</td>
+</tr>
+<tr>
+<td>T07</td>
+<td>CLEAR 만료·BLOCKED 만료·우회·X/? 조합</td>
+<td>FR09 FR12</td>
+</tr>
+<tr>
+<td>T08</td>
+<td>원천 재부팅·게이트웨이 재시작·동기화</td>
+<td>FR10 FR13 FR18</td>
+</tr>
+<tr>
+<td>T09</td>
+<td>인원 초기화 일부 미응답·뒤늦은 옛 패킷</td>
+<td>FR11 FR15</td>
+</tr>
+<tr>
+<td>T10</td>
+<td>실제 위험 지연30회×3대와 출력 영상 대조</td>
+<td>FR11 FR14 NFR01</td>
+</tr>
+<tr>
+<td>T11</td>
+<td>브라우저/서버/USB/G 단절·웹 보고 중단</td>
+<td>FR12 FR14 FR18 NFR04</td>
+</tr>
+<tr>
+<td>T12</td>
+<td>30분·10회·소비전류·시야·인터넷 차단</td>
+<td>FR16 NFR02–NFR05 NFR08</td>
+</tr>
+<tr>
+<td>T13</td>
+<td>로그 내보내기·실패/누락·원천/모드 표시</td>
+<td>FR16 FR17 NFR06 NFR09</td>
+</tr>
+<tr>
+<td>T14</td>
+<td>잘못된 원천·해제 권한·프레임·웹 입력 거부</td>
+<td>FR02 FR10 NFR07</td>
+</tr>
+</tbody></table>
+<p>실물 시험 결과는 최초 모두 ‘미실행’이다. 브라우저 목업 자동 확인은 T02·T03·T05·T07 일부 규칙의 사전 점검이며 펌웨어·통신·전원·실제 출력의 수용 시험을 대체하지 않는다.</p>
+<div class="pagebreak"></div>
+
+<h1 id="sec-21">별첨 C 상세설계서</h1>
+<p>문서명: 분산형 스마트 대피 안내 시스템 상세설계서<br>버전: 2.0<br>작성자 / 검토자 / 제출일: 제출 시 기입</p>
+<h2 id="sec-22">C0 목차</h2>
+<ol>
+<li>서론(개요)</li>
+<li>모듈·하드웨어</li>
+<li>지도·집계·비용</li>
+<li>경로·표시 상태</li>
+<li>메시지·최신성·복구</li>
+<li>초기화·서버·데이터</li>
+<li>화면·목업·시험 추적</li>
+</ol>
+<h2 id="sec-23">C1 서론(개요)</h2>
+<p>본 문서는 노트북·G 1대·표지판 3대로 구성되는 P1 시제품의 구현 계약을 정의한다. 표지판은 위험 입력 원천과 경로 계산 장치 역할을 함께 수행한다. 서버는 가상 ID 집계·시험 요청·기록을 맡고, G는 USB/ESP-NOW 변환만 수행한다.</p>
+<p>위험 데이터와 인원 데이터를 다른 영역으로 관리하는 것이 v2의 핵심 변경이다. 표시 상태는 장치의 현재 입력을 근거로 하며 전체 시설에 대한 안전 판단을 뜻하지 않는다. 동일 지도·설정의 작은 비순환 공간을 전제로 한다.</p>
+<h2 id="sec-24">C2 모듈·하드웨어</h2>
+<h3>C2.1 구성요소</h3>
+<table>
+<thead>
+<tr>
+<th>모듈</th>
+<th>책임</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RiskSource</td>
+<td>물리 스위치·시험 latch의 OR, 원천 상태 발행</td>
+</tr>
+<tr>
+<td>Transport</td>
+<td>등록 피어·패킷 검사·수신 큐·ACK·재시도</td>
+</tr>
+<tr>
+<td>StateStore</td>
+<td>원천 세대·순번·최신 수신 시각·위험/인원 영역 관리</td>
+</tr>
+<tr>
+<td>RouteEngine</td>
+<td>유효 간선과 비용으로 각 출발점의 최적 경로 계산</td>
+</tr>
+<tr>
+<td>DirectionPolicy</td>
+<td>후보 유지·최소 유지·위험에 의한 즉시 무효화</td>
+</tr>
+<tr>
+<td>Renderer/Reporter</td>
+<td>LED 표시와 현재 다음 간선·근거 보고</td>
+</tr>
+<tr>
+<td>Aggregator</td>
+<td>가상 ID 중복 제거·분포·품질·완성 스냅샷</td>
+</tr>
+<tr>
+<td>Server/Repository</td>
+<td>USB·웹·기록·초기화·내보내기</td>
+</tr>
+</tbody></table>
+<p>ESP32-WROOM 계열 같은 모델을 사용하고 ESP-IDF 5.5 계열로 빌드 환경을 고정한다. Python은 FastAPI·pyserial·SQLite, 화면은 HTML/JS를 사용한다. 실제 설치 버전은 잠금 파일과 README에 기록한다.</p>
+<h3>C2.2 배선 초안</h3>
+<table>
+<thead>
+<tr>
+<th>연결</th>
+<th>설계</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GPIO18→패널 DIN</td>
+<td>3.3V→5V 레벨 변환과 330Ω 직렬 저항 경유</td>
+</tr>
+<tr>
+<td>GPIO27→위험 토글→GND</td>
+<td>내부 풀업, LOW=물리 차단, 30ms 디바운스</td>
+</tr>
+<tr>
+<td>GPIO25→저항→확인 LED</td>
+<td>원천이 입력 변화를 수용한 시각의 촬영 기준</td>
+</tr>
+<tr>
+<td>표지판 전원</td>
+<td>보드 USB, 패널별 별도 5V. 공통 GND·+5V 분리</td>
+</tr>
+<tr>
+<td>G 연결</td>
+<td>USB 115200bps와 고정 채널 ESP-NOW</td>
+</tr>
+</tbody></table>
+<p>실제 개발보드의 노출 핀·부팅 제약을 확인한 뒤 확정한다. 패널 커넥터·전선·어댑터 정격과 레벨 변환 회로를 검토하고 데이터 입력 근처 보호 저항·전원 콘덴서를 배치한다.[R3] 시험 latch는 변경 시 영속 저장하여 재부팅으로 차단이 사라지지 않게 한다. 반복 heartbeat마다 저장하지 않는다.</p>
+<h2 id="sec-25">C3 지도·집계·비용</h2>
+<h3>C3.1 그래프·방향</h3>
+<table>
+<thead>
+<tr>
+<th>간선</th>
+<th>방향</th>
+<th align="right">길이 m</th>
+<th align="right">면적 ㎡</th>
+<th>위험 원천</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>e1</td>
+<td>J→L</td>
+<td align="right">10</td>
+<td align="right">40</td>
+<td>S1</td>
+</tr>
+<tr>
+<td>e2</td>
+<td>J→R</td>
+<td align="right">12</td>
+<td align="right">48</td>
+<td>STATIC_TEST_CLEAR</td>
+</tr>
+<tr>
+<td>e3</td>
+<td>L→EL</td>
+<td align="right">10</td>
+<td align="right">20</td>
+<td>S2</td>
+</tr>
+<tr>
+<td>e4</td>
+<td>R→ER</td>
+<td align="right">12</td>
+<td align="right">24</td>
+<td>S3</td>
+</tr>
+<tr>
+<td>e5</td>
+<td>L→R</td>
+<td align="right">12</td>
+<td align="right">24</td>
+<td>STATIC_TEST_CLEAR</td>
+</tr>
+</tbody></table>
+<p>지도 JSON에는 노드·출구·간선·면적·위험 원천·표지판 방향 매핑을 저장한다. 정규화한 파일의 해시를 장치와 서버에 함께 배포한다. STATIC_TEST_CLEAR는 실험 가정이다. J→L→R→출구의 단방향 순서를 검증하고 순환 입력을 거부한다.</p>
+<h3>C3.2 ID 집계</h3>
+<p>입력은 <code>run_id, person_id, person_seq, zone_id</code>다. zone_id는 e1–e5, WAIT_J, UNKNOWN 중 하나다. 60개의 가상 ID를 한 구역에만 배정한다. 최신 순번만 수용하고 구역 변경은 이전 제거와 새 추가를 원자적으로 처리한다. 분포 프리셋도 60개 ID를 생성한 뒤 같은 집계 경로를 거친다.</p>
+<p>수신이 5초 이상 없는 ID는 UNKNOWN으로 이동하고 마지막 구역에 미확인 수를 표시한다. UNKNOWN이 있으면 혼잡 스냅샷의 품질을 PARTIAL로 둔다. 표시하는 숫자는 “확인된 인원”과 “미확인”을 나누고 마지막 구역을 0명이라고 확정하지 않는다. P1은 고정 분포를 1초마다 새로운 순번으로 보고한다.</p>
+<p>완성 스냅샷은 모든 구역의 counts·품질을 담고 1초마다 새 crowd_version으로 발행한다. 소스가 멈추면 G가 과거 값을 새 버전으로 다시 발행하지 않는다. 어느 구역이든 PARTIAL/STALE이면 계산 전체의 혼잡 항을 끄고 품질 저하를 표시한다. 여러 구역의 오래된 값과 최신 값을 임의로 섞지 않는다.</p>
+<h3>C3.3 경로 비용</h3>
+<pre><code class="language-text">rho[e] = confirmed_count[e] / area[e]
+q[e] = min(rho[e] / 1.0, 3)
+cost[e] = length[e] * (1 + alpha * q[e])
+alpha = 2       # 유효한 혼잡 반영
+alpha = 0       # 거리 비교 또는 혼잡 미확인
+BLOCKED / UNKNOWN 간선은 비용과 무관하게 제거
+</code></pre>
+<p>비용은 단위 없는 비교 점수로 정의한다. 밀도 기준 1명/㎡는 정규화 값이며 위험 밀도 기준이 아니다. 소수 계산 후 정수 밀리단위로 반올림한다. 동률은 출구 ID, 간선 ID 사전순으로 결정한다.</p>
+<p>D0에서 J→L→EL=20, J→R→ER=24다. e3 30명·20㎡이면 e3 비용40, 왼쪽 직행50, 오른쪽24가 된다. e4 차단 시 오른쪽 후보를 제거하고 왼쪽으로 안내한다. e3도 차단되면 출구 경로가 없다.</p>
+<h2 id="sec-26">C4 경로·표시 상태</h2>
+<h3>C4.1 계산과 유지</h3>
+<p>각 표지판은 동일한 지도·로컬 상태를 사용하여 출구까지 Dijkstra를 수행한다. 현재 저장된 전체 경로를 새 입력으로 다시 검증하고, 그중 어느 간선이든 차단·미확인이면 후보 유지 시간과 무관하게 즉시 무효화한다.</p>
+<p>혼잡 변화만 있을 때 후보 비용이 현재 전체 경로 비용의 85% 이하이고, 같은 다음 간선 후보가 5초 지속되며, 마지막 방향 변경 뒤 5초가 지났을 때 변경한다. 후보가 달라지거나 개선 조건이 깨지면 후보 타이머를 초기화한다. 같은 다음 간선이면 출력은 유지하면서 저장 경로·비용 근거를 갱신한다.</p>
+<p>유효한 기존 경로가 없는 경우에는 즉시 유효 대안을 표시한다. 혼잡 만료 시 즉시 거리 기준으로 계산하고, 혼잡 복구 뒤에는 5초 규칙을 다시 적용한다. 차단 해제 후 기존 안내가 유효하면 더 좋은 대안에 5초 규칙을 적용한다. 모든 타이머는 단조 증가 시각을 사용한다.</p>
+<p>각 표지판이 현재 유지 중인 다음 방향은 한 개의 일관된 전역 최적 경로와 다를 수 있다. 웹에서는 “계산상 후보 경로”와 “지점별 현재 안내”를 별도로 표시한다. 후속 이동 모델은 지점별 현재 방향을 따른다. 기본 비순환 그래프에서는 다른 유지 이력으로도 순환은 없지만 최적 비용은 보장하지 않는다.</p>
+<h3>C4.2 표시와 장애</h3>
+<table>
+<thead>
+<tr>
+<th>상태</th>
+<th>조건</th>
+<th>출력</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SYNC</td>
+<td>부팅 초기 확인·지도 오류</td>
+<td>노랑 ?·상태 확인 중</td>
+</tr>
+<tr>
+<td>GUIDE</td>
+<td>유효 경로와 혼잡</td>
+<td>초록 방향</td>
+</tr>
+<tr>
+<td>DEGRADED</td>
+<td>유효 위험 경로는 있으나 혼잡 만료/부분 관측</td>
+<td>초록 방향+노랑 모서리 점</td>
+</tr>
+<tr>
+<td>NO_ROUTE</td>
+<td>미확인 간선을 허용해도 차단 때문에 경로 없음</td>
+<td>빨강 X</td>
+</tr>
+<tr>
+<td>UNKNOWN</td>
+<td>현재 경로 없고 미확인 간선을 허용하면 경로 존재</td>
+<td>노랑 ?</td>
+</tr>
+<tr>
+<td>OFFLINE</td>
+<td>상위 링크가 정상인데 G가 특정 표지판 보고를 3초 받지 못함</td>
+<td>웹 상태. 전원 단절 확정이 아니라 보고 미수신</td>
+</tr>
+</tbody></table>
+<p>위험 미확인 간선을 쓰지 않는 유효 대안이 있으면 그 대안을 안내한다. UNKNOWN을 임시 허용한 그래프는 X/? 원인 분류에만 사용하고 안내에는 쓰지 않는다. 이미 알려진 BLOCKED는 원천이 끊겨도 유지한다.</p>
+<p>부팅 초기 동기화는 3초를 상한으로 수행한다. 지도·자기 위치가 유효하면 미응답 원천은 UNKNOWN 간선으로 두고 C4의 경로 규칙을 적용한다. 한 원천의 미응답만으로 모든 출력을 무기한 SYNC에 묶지 않는다. G·USB 자체가 끊기면 웹은 모든 장치에 ‘상위 연결 단절·마지막 보고’를 표시하며 개별 표지판의 전원 OFF로 단정하지 않는다.</p>
+<div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-label="표시 상태 전이도"><defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0L0 6L7 3Z" fill="#375b76"/></marker><marker id="back" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto"><path d="M7 0L7 6L0 3Z" fill="#375b76"/></marker></defs><style>.title{font:600 21px 'Malgun Gothic',sans-serif;fill:#183449}.sub{font:16px 'Malgun Gothic',sans-serif;fill:#40576a}.label{font:16px 'Malgun Gothic',sans-serif;fill:#23465e;paint-order:stroke;stroke:white;stroke-width:6px;stroke-linejoin:round}</style><rect x="20" y="180" width="225" height="90" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="132.5" y="211" text-anchor="middle" class="title">SYNC</text><text x="132.5" y="236" text-anchor="middle" class="sub">현재 상태 확인</text><rect x="365" y="180" width="225" height="90" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="477.5" y="211" text-anchor="middle" class="title">GUIDE</text><text x="477.5" y="236" text-anchor="middle" class="sub">유효 경로 안내</text><rect x="685" y="20" width="255" height="90" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="812.5" y="51" text-anchor="middle" class="title">DEGRADED</text><text x="812.5" y="76" text-anchor="middle" class="sub">혼잡 미확인 · 거리 기준</text><rect x="685" y="205" width="255" height="90" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="812.5" y="236" text-anchor="middle" class="title">NO_ROUTE · X</text><text x="812.5" y="261" text-anchor="middle" class="sub">차단으로 경로 없음</text><rect x="685" y="390" width="255" height="90" rx="10" fill="#eff5fa" stroke="#7691a7"/><text x="812.5" y="421" text-anchor="middle" class="title">UNKNOWN · ?</text><text x="812.5" y="446" text-anchor="middle" class="sub">위험 정보 부족</text><path d="M245 225H365" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="305" y="207" text-anchor="middle" class="label">동기화 완료</text><path d="M530 180V65H685" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="597" y="46" text-anchor="middle" class="label">혼잡 만료</text><path d="M685 92H565V180" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="643" y="147" text-anchor="middle" class="label">복구 · 안정화</text><path d="M590 225H685" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="636" y="211" text-anchor="middle" class="label">차단</text><path d="M685 278H558V270" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="622" y="316" text-anchor="middle" class="label">해제 확인</text><path d="M478 270V435H685" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="565" y="423" text-anchor="middle" class="label">필수 정보 만료</text><path d="M685 465H400V270" fill="none" stroke="#375b76" stroke-width="2" marker-end="url(#arr)" /><text x="527" y="486" text-anchor="middle" class="label">현재 상태 확인</text></svg></div>
+
+
+<p>그림 C1. 대표 전이도다. 모든 상태에서 지도 오류·재부팅은 SYNC로 이동한다. DEGRADED에서도 위험 변화에 따라 X/?로 바뀔 수 있다. 인원 초기화는 위험 상태 자체를 SYNC나 CLEAR로 변경하지 않는다.</p>
+<h2 id="sec-27">C5 메시지·최신성·복구</h2>
+<h3>C5.1 통신 계약</h3>
+<p>등록 피어 S1·S2·S3·G는 같은 고정 채널에서 개별 유니캐스트로 통신한다. 설치별 PMK/LMK와 source_id↔MAC 매핑을 설정한다. 위험 원천은 다른 표지판과 G에 직접 발행한다. G는 모든 표지판에 혼잡을 전달하고 표시 보고를 수집한다. 자동 중계는 없다.[R1]</p>
+<p>공통 헤더는 protocol_version·type·installation_id·map_hash·source_id·boot_epoch·seq·payload_length다. 인원 메시지만 run_id·crowd_version을 추가한다. 위험 메시지에 인원 run_id 조건을 걸지 않는다. 길이 상한 200바이트, 정수 폭·바이트 순서·단위를 고정하고 C 구조체 메모리를 그대로 보내지 않는다.</p>
+<table>
+<thead>
+<tr>
+<th>메시지</th>
+<th>송수신</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HELLO / SYNC_REQUEST / SYNC_REPLY</td>
+<td>장치↔원천</td>
+<td>부팅 세대·challenge·현재 전체 상태</td>
+</tr>
+<tr>
+<td>RISK_STATE</td>
+<td>S1/S2/S3→나머지 표지판·G</td>
+<td>담당 간선 physical/test/effective, 원천 순번</td>
+</tr>
+<tr>
+<td>TEST_SET</td>
+<td>G→담당 원천</td>
+<td>요청 ID·시험 latch ON/OFF. 직접 위험 상태를 사칭하지 않음</td>
+</tr>
+<tr>
+<td>CROWD</td>
+<td>G→표지판</td>
+<td>인원 run_id·version·counts·품질</td>
+</tr>
+<tr>
+<td>ACK</td>
+<td>수신자→발행자</td>
+<td>메시지 키와 수용/중복/거부</td>
+</tr>
+<tr>
+<td>REPORT</td>
+<td>표지판→G</td>
+<td>다음 간선·표시·위험 벡터·인원 버전·이유·업타임</td>
+</tr>
+</tbody></table>
+<p>위험 변경은 즉시 발행하고 미확인 장치에 150/400/800ms 시점으로 재전송한다. 위험 전체 상태는 1초마다 새 seq로 보고한다. 콜백에서는 길이 검사·큐 적재만 수행하고 계산·LED·저장은 별도 태스크에서 처리한다. 송신 콜백 성공, 응용 ACK, REPORT를 별개로 기록한다.[R1]</p>
+<p>REPORT는 표시·사용 상태가 바뀌면 즉시, 변화가 없어도 1초마다 전송한다. G는 자신의 heartbeat와 각 표지판의 마지막 보고 경과를 1초마다 USB로 전달한다. 서버는 G heartbeat 3초 만료와 개별 표지판 보고 3초 만료를 구별한다.</p>
+<h3>C5.2 상태 최신성</h3>
+<p>전송 중복 키는 원천·boot_epoch·메시지 종류·seq이며 종류별 순번을 별도로 증가시킨다. 위험 최신성에는 RISK_STATE의 risk_seq만 사용한다. REPORT나 ACK 수신이 위험 최신성 타이머를 연장하지 않는다. 같은/작은 위험 순번은 상태를 바꾸지 않는다. CLEAR는 마지막 새 위험 보고부터 3초가 지나면 UNKNOWN, BLOCKED는 명시적 새 해제 전까지 유지한다. 혼잡은 마지막 새 crowd_version부터 5초면 만료다. 100ms 주기로 만료를 검사한다.</p>
+<p>새 부팅 세대를 발견하면 해당 원천을 동기화 대상으로 표시하고, 기존 차단은 유지하며 정상으로의 복귀는 challenge가 일치하는 현재 전체 응답 뒤에만 허용한다. 본인 재부팅 시에도 원천별 현재 응답을 받는다. boot_epoch는 영속 부팅 카운터로 사용하며 초기화한 교체 보드는 재등록한다. 지도 불일치 메시지는 적용하지 않는다.</p>
+<h3>C5.3 물리 위험과 시험 위험</h3>
+<p>원천만 <code>effective_blocked = physical_blocked OR test_latch</code>를 계산·발행한다. TEST_SET OFF는 물리 스위치 ON을 해제할 수 없다. 담당 원천이 꺼져 있으면 서버는 해제 성공을 표시하지 않는다. 시험 차단은 통신 단절이나 인원 초기화로 만료 해제하지 않는다.</p>
+<p>원천이 물리 스위치를 해제했어도 시험 latch가 남으면 차단을 유지한다. 화면에 물리·시험 두 원인을 표시하여 해제되지 않는 이유를 설명한다. 부스 운영자는 스위치 해제→시험 위험 해제 확인→장치 복구 확인→인원 초기화 순서로 다음 관람객을 준비한다.</p>
+<h2 id="sec-28">C6 초기화·서버·데이터</h2>
+<h3>C6.1 인원 초기화</h3>
+<p>분산 위험을 바꾸는 2단계 커밋을 구현하지 않는다. 서버는 새 run_id를 만들고 60개 ID를 WAIT_J로 배정한 완성 CROWD를 전송한다. 표지판은 해당 G의 현재 세대를 확인한 연결에서 새 실행을 수용하고 인원 후보 유지 이력을 비운다. 위험·물리 스위치·단절 상태는 유지한다.</p>
+<p>인원 ID의 유일한 발급자는 서버다. SQLite에 보존한 <code>server_epoch</code>를 서버 시작 때 트랜잭션으로 1 증가시키고, 그 세대 안에서 <code>run_counter</code>를 증가시켜 run_id=(server_epoch, run_counter)로 만든다. crowd_version은 실행 안에서 증가한다. G는 이 값을 그대로 전달하며 새 순번을 붙여 과거 인원을 살리지 않는다.</p>
+<p>G·서버 재연결 때 표지판은 G를 경유해 현재 서버의 challenge 응답과 전체 인원을 확인한다. 새로운 server_epoch는 해당 동기화 후에만 수용한다. 같은 서버 세대의 초기화 요청 재시도는 요청 ID별 기존 run_id를 재사용한다. 서버가 재시작했으면 새 epoch의 새 실행을 만들고 이전 실행을 재개한 것처럼 표시하지 않는다. DB 손상·삭제로 epoch를 보존할 수 없으면 0부터 자동 시작하지 않고 통제된 설치 ID 재등록·복구를 요구한다.</p>
+<p>REPORT에 새 run_id가 없는 표지판은 ‘인원 적용 미확인’으로 표시한다. 3초 응답 제한을 넘으면 시연 시작을 보류하지만 장치의 위험 대응은 계속된다. 모든 표지판이 동시에 바뀌었다고 가정하지 않는다. G가 끊겨 있으면 실제 장치의 인원 초기화는 완료될 수 없다.</p>
+<h3>C6.2 API·USB</h3>
+<p>USB는 115200bps 줄 단위 JSON, 최대 1,024바이트다. 무선 바이너리와 USB JSON은 G에서 변환한다. 서버는 localhost 바인딩과 실행 토큰·Origin 확인을 사용하며 포트·프레임 오류를 기록한다.</p>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>기능·검증</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET /api/state</td>
+<td>예측·실제 보고·입력 품질·수신 경과 조회</td>
+</tr>
+<tr>
+<td>POST /api/crowd</td>
+<td>허용 구역·총 ID 수·범위 검증 후 분포 변경</td>
+</tr>
+<tr>
+<td>POST /api/run/reset</td>
+<td>같은 요청 ID 재시도, 위험 상태 유지</td>
+</tr>
+<tr>
+<td>POST /api/test/risk</td>
+<td>TEST 모드에서 담당 원천에 latch 요청·원천 응답 확인</td>
+</tr>
+<tr>
+<td>GET /api/export</td>
+<td>실행·위험·보고·오류 CSV/JSON</td>
+</tr>
+<tr>
+<td>WS /ws/state</td>
+<td>최초 전체 상태와 이후 증가하는 서버 이벤트 번호</td>
+</tr>
+</tbody></table>
+<h3>C6.3 저장</h3>
+<table>
+<thead>
+<tr>
+<th>자료</th>
+<th>핵심 필드</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>runs</td>
+<td>run_id·모드·지도·설정·버전·시작/끝</td>
+</tr>
+<tr>
+<td>persons</td>
+<td>run_id·ID·seq·zone·품질·마지막 수신</td>
+</tr>
+<tr>
+<td>risk_events</td>
+<td>설치·지도·원천·boot_epoch·seq·physical/test/effective·수신 시각</td>
+</tr>
+<tr>
+<td>snapshots</td>
+<td>run_id·crowd_version·counts·품질</td>
+</tr>
+<tr>
+<td>reports</td>
+<td>장치·위험 벡터·인원 버전·현재 다음 간선·표시·이유·수신 시각</td>
+</tr>
+<tr>
+<td>tests</td>
+<td>시험 ID·입력·기대/실제·지연·누락·결함·증거</td>
+</tr>
+</tbody></table>
+<p>위험 이벤트는 특정 인원 run_id가 없어도 저장한다. 시험 분석 때 관찰 시각으로 연결하되 위험을 실행 종료와 함께 삭제하지 않는다. 로그 쓰기 실패는 별도 경고하며 장치 계산을 중단시키지 않는다. 기록 성공을 확인하지 못한 자료는 저장 완료로 표시하지 않는다.</p>
+<h2 id="sec-29">C7 화면·목업·시험 추적</h2>
+<h3>C7.1 화면과 모드</h3>
+<p>큰 지도, 지점별 현재 방향, e3 인원 조건, 현재 사건·변경 이유를 중심으로 배치한다. 조건 조작은 정상·왼쪽 혼잡·오른쪽 차단·양쪽 차단, 세부 입력은 인원 수·각 위험·장애로 구성한다. 노랑 ?와 빨강 X는 문자 설명을 병기한다. 변경 안정화 중에는 남은 시간을 표시한다.</p>
+<p>MOCKUP은 브라우저의 소프트웨어 계산, HIL_TEST는 가상 인원과 실제 장치, REPLAY는 선택 구현할 저장 입력 재생이다. 목업은 HIL_TEST 모드로 표시하지 않는다. 장치 원천이 꺼진 경우 last-known과 실제 적용 미확인을 구분한다. G가 꺼지면 웹에서 보이는 새 방향은 수신 보고가 아니라 계산상의 추정임을 표시해야 한다.</p>
+<h3>C7.2 동봉 목업의 범위</h3>
+<p>목업은 정상/혼잡/위험 조건, 비용 기반 경로, 후보 유지 타이머, X/?·거리 기준 성능 저하, 인원 초기화와 위험 유지, 전시 화면을 검토한다. 고정 분포를 사용하고 실제 이동·대피 완료 시간을 제공하지 않는다. 화면의 ‘표지판’은 모의 계산이며 ESP-NOW·실제 LED·전기·ACK·펌웨어 재부팅 구현 증거가 아니다.</p>
+<p>현재 목업의 인원은 e3와 WAIT_J의 수를 합계 60으로 배정한 수치 모델이다. 개별 ID의 수신·중복 제거·결측 처리는 서버 구현 대상이며 목업 검증 완료에 포함하지 않는다. 목업에서 G 단절 중 인원 초기화는 화면 입력 세션만 바꾸고 표지판 모형은 전달받은 마지막 혼잡 또는 만료 규칙을 따른다. 실제 장치 적용이 확인된 초기화로 표현하지 않는다.</p>
+<p>목업을 P1 웹으로 발전시킬 때 입력 계산 모듈을 실제 서버 API로 연결하고, 실제 보고 영역을 REPORT 수신 데이터만으로 채운다. 브라우저 예측값을 실제 보고처럼 채우는 코드를 이식하지 않는다. 물리 스위치는 완성본에서만 존재하며 목업의 위험 토글은 해당 조건의 소프트웨어 재현이다.</p>
+<h3>C7.3 구현 순서와 추적</h3>
+<pre><code class="language-text">config/      지도·방향·비용·만료·시험 분포
+firmware/    공통 protocol/state/route + sign + gateway
+server/      가상 ID 집계·USB·API·저장
+web/         지도·조건 입력·실제 보고
+tests/       독립 경로 열거 기준·시간 전이·패킷 장애
+evidence/    CSV·영상·배선 사진·시험표
+docs/        빌드·설치·전시·제출 문서
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>설계</th>
+<th>요구사항</th>
+<th>시험</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>C2 하드웨어</td>
+<td>FR02 FR03 NFR03</td>
+<td>T01 T05 T12</td>
+</tr>
+<tr>
+<td>C3 지도·집계·비용</td>
+<td>FR01 FR05 FR06</td>
+<td>T01 T02 T04</td>
+</tr>
+<tr>
+<td>C4 경로·표시</td>
+<td>FR04 FR07–FR09 NFR01</td>
+<td>T02 T03 T07 T10</td>
+</tr>
+<tr>
+<td>C5 통신·원천</td>
+<td>FR02 FR03 FR10–FR13 NFR04 NFR07</td>
+<td>T05–T08 T14</td>
+</tr>
+<tr>
+<td>C6 초기화·저장</td>
+<td>FR15 FR17 FR18 NFR06</td>
+<td>T09 T11 T13</td>
+</tr>
+<tr>
+<td>C7 화면·모드</td>
+<td>FR14 FR16 NFR05 NFR08 NFR09</td>
+<td>T10–T13</td>
+</tr>
+</tbody></table>
+<p>최종 제출 시 구매 모델·핀맵·버전·설정·시험 결과를 실제 구현과 맞춘다. 이 문서의 수용 기준을 변경하면 변경 이유와 재시험 대상을 남긴다. 실제 하드웨어가 없는 현재 단계의 성과는 계획 개정과 소프트웨어 목업까지다.</p>
+</main><button class="print" onclick="window.print()">인쇄 및 PDF 저장</button></body></html>

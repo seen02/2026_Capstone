@@ -1,0 +1,1 @@
+const fs=require('fs');const s=fs.readFileSync('tmp/hwp-detail-work/image-diagnostic.svg','utf8');console.log(JSON.stringify({svgLength:s.length,image:s.match(/<image[^>]{0,400}/g)?.map(x=>x.replace(/data:image[^\"]+/g,'[image]')),hasImageURI:s.includes('data:image'),transforms:s.match(/transform=\"[^\"]*\"/g)?.slice(0,12)}));

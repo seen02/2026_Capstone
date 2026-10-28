@@ -1,0 +1,563 @@
+{
+  "map_id": "EDU-32x24-v5",
+  "purpose": "v5 설계용 설정 초안 / 교육·연구동 화재 대피 / 실물 구현·시험 완료 아님",
+  "units": "metres",
+  "coordinate_system": "northwest origin; x east; y south",
+  "building": {
+    "width_m": 32,
+    "depth_m": 24,
+    "floors": 1
+  },
+  "nodes": [
+    {
+      "id": "J",
+      "position": [
+        14,
+        19
+      ],
+      "is_exit": false
+    },
+    {
+      "id": "L",
+      "position": [
+        8,
+        9
+      ],
+      "is_exit": false
+    },
+    {
+      "id": "R",
+      "position": [
+        24,
+        9
+      ],
+      "is_exit": false
+    },
+    {
+      "id": "EL",
+      "position": [
+        0,
+        9
+      ],
+      "is_exit": true
+    },
+    {
+      "id": "ER",
+      "position": [
+        32,
+        9
+      ],
+      "is_exit": true
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "J",
+      "to": "L",
+      "length_m": 16,
+      "width_m": 3,
+      "area_m2": 48,
+      "source": "S1",
+      "points": [
+        [
+          14,
+          19
+        ],
+        [
+          8,
+          19
+        ],
+        [
+          8,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    },
+    {
+      "id": "e2",
+      "from": "J",
+      "to": "R",
+      "length_m": 20,
+      "width_m": 3,
+      "area_m2": 60,
+      "source": "S1",
+      "points": [
+        [
+          14,
+          19
+        ],
+        [
+          24,
+          19
+        ],
+        [
+          24,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    },
+    {
+      "id": "e3",
+      "from": "L",
+      "to": "EL",
+      "length_m": 8,
+      "width_m": 2.4,
+      "area_m2": 19.2,
+      "source": "S2",
+      "points": [
+        [
+          8,
+          9
+        ],
+        [
+          0,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    },
+    {
+      "id": "e4",
+      "from": "R",
+      "to": "ER",
+      "length_m": 8,
+      "width_m": 2.4,
+      "area_m2": 19.2,
+      "source": "S3",
+      "points": [
+        [
+          24,
+          9
+        ],
+        [
+          32,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    },
+    {
+      "id": "e5",
+      "from": "L",
+      "to": "R",
+      "length_m": 16,
+      "width_m": 2.4,
+      "area_m2": 38.4,
+      "source": "S2",
+      "points": [
+        [
+          8,
+          9
+        ],
+        [
+          24,
+          9
+        ]
+      ],
+      "input_kind": "SIMULATED_LOCAL_SENSOR"
+    }
+  ],
+  "signs": [
+    {
+      "id": "S1",
+      "node": "J",
+      "directions": {
+        "e1": "LEFT",
+        "e2": "RIGHT"
+      },
+      "owned_edges": [
+        "e1",
+        "e2"
+      ],
+      "local_input_transport": "USB_SERIAL",
+      "remote_state_transport": "ESP_NOW_ONLY"
+    },
+    {
+      "id": "S2",
+      "node": "L",
+      "directions": {
+        "e3": "LEFT",
+        "e5": "RIGHT"
+      },
+      "owned_edges": [
+        "e3",
+        "e5"
+      ],
+      "local_input_transport": "USB_SERIAL",
+      "remote_state_transport": "ESP_NOW_ONLY"
+    },
+    {
+      "id": "S3",
+      "node": "R",
+      "directions": {
+        "e4": "RIGHT"
+      },
+      "owned_edges": [
+        "e4"
+      ],
+      "local_input_transport": "USB_SERIAL",
+      "remote_state_transport": "ESP_NOW_ONLY"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "101",
+      "name": "강의실 A",
+      "bounds_m": [
+        0,
+        0,
+        10.5,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 7.2
+      }
+    },
+    {
+      "id": "102",
+      "name": "세미나실",
+      "bounds_m": [
+        10.5,
+        0,
+        10.5,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 4
+      }
+    },
+    {
+      "id": "103",
+      "name": "컴퓨터실",
+      "bounds_m": [
+        21,
+        0,
+        11,
+        7.8
+      ],
+      "door": {
+        "side": "bottom",
+        "offset_m": 3
+      }
+    },
+    {
+      "id": "104",
+      "name": "교수연구실",
+      "bounds_m": [
+        0,
+        10.2,
+        6.5,
+        5
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "105",
+      "name": "준비실",
+      "bounds_m": [
+        0,
+        15.2,
+        6.5,
+        5.3
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "106",
+      "name": "프로젝트실 A",
+      "bounds_m": [
+        9.5,
+        10.2,
+        6.5,
+        7.3
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 4
+      }
+    },
+    {
+      "id": "107",
+      "name": "프로젝트실 B",
+      "bounds_m": [
+        16,
+        10.2,
+        6.5,
+        7.3
+      ],
+      "door": {
+        "side": "right",
+        "offset_m": 4
+      }
+    },
+    {
+      "id": "108",
+      "name": "공용 화장실",
+      "bounds_m": [
+        25.5,
+        10.2,
+        6.5,
+        5
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "109",
+      "name": "설비실",
+      "bounds_m": [
+        25.5,
+        15.2,
+        6.5,
+        5.3
+      ],
+      "door": {
+        "side": "left",
+        "offset_m": 2
+      }
+    },
+    {
+      "id": "110",
+      "name": "자료실",
+      "bounds_m": [
+        0,
+        20.5,
+        9.5,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 7.4
+      }
+    },
+    {
+      "id": "111",
+      "name": "다목적 홀 · 출발 대기",
+      "bounds_m": [
+        9.5,
+        20.5,
+        13,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 4.5
+      }
+    },
+    {
+      "id": "112",
+      "name": "학생 라운지",
+      "bounds_m": [
+        22.5,
+        20.5,
+        9.5,
+        3.5
+      ],
+      "door": {
+        "side": "top",
+        "offset_m": 1.5
+      }
+    }
+  ],
+  "people": 60,
+  "cost": {
+    "alpha": 2,
+    "density_reference_per_m2": 1,
+    "q_max": 3
+  },
+  "notes": [
+    "Provided geometry retained: rooms are backdrop; P1 people start at WAIT_J; room-door evacuation edges are not inferred.",
+    "P1 uses the supplied directed acyclic graph. No R-to-L or return-to-J path; S3 has only RIGHT/X/UNKNOWN outputs.",
+    "All five edges have simulated local inputs. e2/e5 STATIC_TEST_CLEAR is superseded.",
+    "Local sensor substitution is separate from central management. PC-wide failure is not covered by central-off continuity.",
+    "Edge areas are nominal aggregation areas, not a non-overlapping floor-area sum.",
+    "Design-only model assumptions; no measured evacuation efficacy or completed hardware acceptance test."
+  ],
+  "source_map_id": "EDU-32x24-v1",
+  "source_file_sha256": "99191d3ff1820ac6fcbf0d5b4d678a5fe6166102044c33514cd57ad9b9dd6cd9",
+  "schema_version": "5.0",
+  "algorithm": {
+    "name": "A_STAR",
+    "heuristic": "MIN_EUCLIDEAN_TO_EXIT",
+    "cost_scale": 1000,
+    "cost_rounding": "CEIL",
+    "heuristic_rounding": "FLOOR",
+    "heuristic_consistency_check": true,
+    "invalid_heuristic": "ZERO_OR_REJECT_MAP",
+    "tie_break": [
+      "TOTAL_COST",
+      "EXIT_ID",
+      "EDGE_ID_SEQUENCE"
+    ],
+    "benchmark_only": "DIJKSTRA",
+    "dynamic_updates": "RESTART_FROM_IMMUTABLE_SNAPSHOT"
+  },
+  "state_policy": {
+    "clear_ttl_s": 3,
+    "crowd_ttl_s": 5,
+    "report_ttl_s": 3,
+    "risk_blocked": "LATCH_UNTIL_EXPLICIT_FRESH_CLEAR",
+    "publish_period_s": 1,
+    "expiration_check_period_s": 0.1,
+    "minimum_improvement": 0.15,
+    "candidate_hold_s": 5,
+    "minimum_direction_hold_s": 5,
+    "duplicate_refreshes_ttl": false,
+    "central_loss_expires_local_input": false,
+    "crowd_application": "COMPLETE_SAME_RUN_AND_SNAPSHOT_FROM_ALL_OWNERS",
+    "crowd_expiry_reference": "OLDEST_OBSERVATION_IN_LAST_COMPLETE_SNAPSHOT",
+    "report_period_s": 1,
+    "central_heartbeat_period_s": 1,
+    "central_heartbeat_ttl_s": 3
+  },
+  "simulation": {
+    "modes": [
+      "SIM_BASELINE",
+      "HIL_NORMAL",
+      "HIL_CENTRAL_OFF"
+    ],
+    "initial_people": 60,
+    "initial_zone": "WAIT_J",
+    "fixed_seed": null,
+    "dt_s": 0.1,
+    "speed_mps": 1,
+    "release_per_second": 2,
+    "exit_capacity_per_second": {
+      "EL": 0.5,
+      "ER": 0.5
+    },
+    "horizon_s": 180,
+    "baseline_policy": "LOCAL_REPLAN",
+    "baseline_local_search_delay_s": 3,
+    "in_edge_blocked_policy": "STOP_AND_COUNT_AS_NOT_EVACUATED",
+    "hil_direction_source": "ACTUAL_SIGN_REPORT",
+    "hil_speed_multiplier": 1,
+    "queue_policy": "FIFO",
+    "exit_queue_counted_in_approach_edge": true
+  },
+  "central_management": {
+    "gateway": "G",
+    "role": "OBSERVATION_LOGGING_HEALTH_ONLY",
+    "direction_commands": false,
+    "remote_state_injection": false,
+    "disconnect": [
+      "POWER_OFF_G",
+      "STOP_CENTRAL_MANAGER"
+    ],
+    "retained": [
+      "SIMULATOR",
+      "SENSOR_BRIDGE",
+      "SIGN_LOCAL_USB",
+      "SIGN_POWER",
+      "ESP_NOW"
+    ]
+  },
+  "physical_model": {
+    "scale_denominator": 50,
+    "building_mm": [
+      640,
+      480
+    ],
+    "base_mm": [
+      800,
+      600
+    ],
+    "signs_to_scale": false,
+    "linked_modes": [
+      "HIL_NORMAL",
+      "HIL_CENTRAL_OFF"
+    ]
+  },
+  "static_test_scenarios": [
+    {
+      "id": "normal",
+      "blocked": [],
+      "crowd": {},
+      "wait_j": 60,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    },
+    {
+      "id": "crowd",
+      "blocked": [],
+      "crowd": {
+        "e3": 30
+      },
+      "wait_j": 30,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    },
+    {
+      "id": "left",
+      "blocked": [
+        "e3"
+      ],
+      "crowd": {},
+      "wait_j": 60,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    },
+    {
+      "id": "right",
+      "blocked": [
+        "e4"
+      ],
+      "crowd": {
+        "e3": 30
+      },
+      "wait_j": 30,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    },
+    {
+      "id": "both",
+      "blocked": [
+        "e3",
+        "e4"
+      ],
+      "crowd": {},
+      "wait_j": 60,
+      "usage": "INPUT_ONLY; COMPUTE_DIRECTION_IN_ENGINE"
+    }
+  ],
+  "evacuation_scenarios": [
+    {
+      "id": "F00",
+      "events": []
+    },
+    {
+      "id": "F01",
+      "events": [
+        {
+          "time_s": 20,
+          "edge": "e3",
+          "state": "BLOCKED"
+        }
+      ]
+    },
+    {
+      "id": "F02",
+      "events": [
+        {
+          "time_s": 20,
+          "edge": "e4",
+          "state": "BLOCKED"
+        }
+      ]
+    }
+  ],
+  "central_off_comparison": {
+    "central_off_time_s": 10,
+    "preserve_fire_events": true
+  },
+  "map_hash": "c3d6e54e4fcbf7be7b4315b9433be4064adafe205dd719ff140587f3eda43880"
+}

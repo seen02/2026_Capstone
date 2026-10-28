@@ -1,0 +1,54 @@
+{
+  "tables": [
+    {
+      "para": 11,
+      "ctrl": 0,
+      "hash": "e122436bfd7b0ec14f5512123cdd10b9b0fab8586cb7bd52df63e97194458493"
+    },
+    {
+      "para": 17,
+      "ctrl": 0,
+      "hash": "84ef26b3005db4d066674c75c0945c4b3a297a100ff487af7986d98b042c19ff"
+    },
+    {
+      "para": 21,
+      "ctrl": 0,
+      "hash": "2558fb9a7696b3faa771592ea31f2d964008d0fe707f30ac9adc60688bf95435"
+    },
+    {
+      "para": 24,
+      "ctrl": 0,
+      "hash": "84bad0e4ac70969f346eccbbe3b22d6e3347e4cbb3647a8946f5d044c754c81a"
+    },
+    {
+      "para": 27,
+      "ctrl": 0,
+      "hash": "d041da325b274b73641d967a043e9d3d45fd889091c42f89cb2f14bb2aeb3b50"
+    },
+    {
+      "para": 31,
+      "ctrl": 0,
+      "hash": "d9cbb94a1f4c42b2d043f722f89906014ee9fe30ef22120a7f636145dd4de726"
+    },
+    {
+      "para": 34,
+      "ctrl": 0,
+      "hash": "52beb6afd05c9e4d5de1e3ab50ee9f07f1d503dbcadf22ac44535a97f403dd85"
+    },
+    {
+      "para": 38,
+      "ctrl": 0,
+      "hash": "42c12150f167fd10eaedb5e9647e11415087732091e5b89ac74e2ba7319243d6"
+    },
+    {
+      "para": 45,
+      "ctrl": 0,
+      "hash": "9afb64d033df856e8e9bb4938c2caf5c7bab3961bbb50bff60168a05fa31df81"
+    },
+    {
+      "para": 46,
+      "ctrl": 0,
+      "hash": "99656565b98a43ea9c8b24be6336d565737a3cf2ae23be5f384da17b34a0fb78"
+    }
+  ]
+}

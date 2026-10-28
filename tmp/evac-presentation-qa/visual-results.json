@@ -1,0 +1,142 @@
+{
+  "errors": [],
+  "desktop": {
+    "width": 1440,
+    "height": 900,
+    "scrollWidth": 1440,
+    "scrollHeight": 900,
+    "state": {
+      "version": "presentation-v3",
+      "hardware_connected": false,
+      "scene": 4,
+      "automatic": false,
+      "paused": false,
+      "elapsed": 0,
+      "total": 0,
+      "explore": false,
+      "custom": false,
+      "model": {
+        "crowd": 30,
+        "waiting": 30,
+        "gatewayDown": false,
+        "s3Down": false,
+        "stale": false,
+        "risks": {
+          "e1": "CLEAR",
+          "e2": "CLEAR",
+          "e3": "BLOCKED",
+          "e4": "BLOCKED",
+          "e5": "CLEAR"
+        },
+        "signs": {
+          "S1": {
+            "status": "stop",
+            "direction": "none",
+            "path": [],
+            "cost": null,
+            "pendingSeconds": 0,
+            "pendingDirection": null
+          },
+          "S2": {
+            "status": "stop",
+            "direction": "none",
+            "path": [],
+            "cost": null,
+            "pendingSeconds": 0,
+            "pendingDirection": null
+          },
+          "S3": {
+            "status": "stop",
+            "direction": "none",
+            "path": [],
+            "cost": null,
+            "pendingSeconds": 0,
+            "pendingDirection": null
+          }
+        },
+        "events": [
+          {
+            "at": 0,
+            "kind": "ready",
+            "message": "소프트웨어 계산 모델 · 가상 인원 60명 · 실제 장치 미연결"
+          },
+          {
+            "at": 0,
+            "kind": "people",
+            "message": "e3 30명 · WAIT_J 30명"
+          },
+          {
+            "at": 0,
+            "kind": "candidate",
+            "message": "S1 · J → R → ER · 개선 후보 5초 확인"
+          },
+          {
+            "at": 0,
+            "kind": "candidate",
+            "message": "S2 · L → R → ER · 개선 후보 5초 확인"
+          },
+          {
+            "at": 6000,
+            "kind": "route",
+            "message": "S1 · J → R → ER · 15% 개선·후보 5초·방향 유지 5초 충족"
+          },
+          {
+            "at": 6000,
+            "kind": "route",
+            "message": "S2 · L → R → ER · 15% 개선·후보 5초·방향 유지 5초 충족"
+          },
+          {
+            "at": 6000,
+            "kind": "input",
+            "message": "e4 위험 입력 BLOCKED"
+          },
+          {
+            "at": 6000,
+            "kind": "risk",
+            "message": "e4 · BLOCKED"
+          },
+          {
+            "at": 6000,
+            "kind": "route",
+            "message": "S1 · J → L → EL · 위험 경로 즉시 제외 / 안내 복구"
+          },
+          {
+            "at": 6000,
+            "kind": "route",
+            "message": "S2 · L → EL · 위험 경로 즉시 제외 / 안내 복구"
+          },
+          {
+            "at": 6000,
+            "kind": "route",
+            "message": "S3 · X 안전 경로 없음 · 안전 경로 없음"
+          },
+          {
+            "at": 6000,
+            "kind": "input",
+            "message": "e3 위험 입력 BLOCKED"
+          },
+          {
+            "at": 6000,
+            "kind": "route",
+            "message": "S1 · X 안전 경로 없음 · 안전 경로 없음"
+          },
+          {
+            "at": 6000,
+            "kind": "route",
+            "message": "S2 · X 안전 경로 없음 · 안전 경로 없음"
+          }
+        ]
+      }
+    }
+  },
+  "hd": {
+    "width": 1280,
+    "height": 720,
+    "scrollWidth": 1280,
+    "scrollHeight": 720
+  },
+  "mobile": {
+    "width": 390,
+    "scrollWidth": 390
+  }
+}

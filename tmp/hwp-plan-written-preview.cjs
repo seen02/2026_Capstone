@@ -1,0 +1,5 @@
+
+const fs=require('fs'),path=require('path');
+const{chromium}=require('C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+(async()=>{const dir=path.resolve('tmp/hwp-plan-work');fs.mkdirSync(dir,{recursive:true});const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});try{const page=await browser.newPage({viewport:{width:1300,height:1200},deviceScaleFactor:1.5});const source=path.resolve('컴퓨터공학_종합설계_과제지원신청서_과제계획서_작성본.hwp');await page.goto('http://127.0.0.1:3737/?path='+encodeURIComponent(source));await page.waitForSelector('.hwp-page[data-page-num="3"]',{timeout:60000});await page.locator('.hwp-page[data-page-num="3"]').screenshot({path:path.join(dir,'written-page-3.png')});console.log(JSON.stringify({previewPages:await page.locator('.hwp-page').count(),page3Screenshot:path.join(dir,'source-page-3.png')}));}finally{await browser.close();}})().catch(e=>{console.error(e.message);process.exitCode=1});
+

@@ -1,0 +1,20 @@
+const path=require('path');
+const fs=require('fs');
+const {pathToFileURL}=require('url');
+const {chromium}=require('C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+(async()=>{
+ const dir=path.resolve('tmp/chair_plan_qa');fs.mkdirSync(dir,{recursive:true});
+ const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+ const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1});
+ const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ await page.goto(pathToFileURL(path.resolve('착석_습관_휴식_코칭_프로젝트_계획서.html')).href);
+ await page.screenshot({path:path.join(dir,'opening.png')});
+ const diagrams=page.locator('.diagram');
+ for(let i=0;i<await diagrams.count();i++) await diagrams.nth(i).screenshot({path:path.join(dir,`diagram-${i+1}.png`)});
+ const desktop=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:innerWidth,tables:document.querySelectorAll('table').length,diagrams:document.querySelectorAll('svg').length,textLength:document.querySelector('main').innerText.length}));
+ await page.pdf({path:path.join(dir,'print.pdf'),format:'A4',printBackground:true,preferCSSPageSize:true});
+ await page.setViewportSize({width:390,height:844});
+ const mobile=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:innerWidth}));
+ console.log(JSON.stringify({desktop,mobile,errors}));
+ await browser.close();
+})();

@@ -1,0 +1,65 @@
+{
+  "allOtherFormTextUnchanged": true,
+  "allRequirementParagraphsPresent": true,
+  "requirementIds": [
+    {
+      "id": "R01",
+      "count": 1
+    },
+    {
+      "id": "R02",
+      "count": 1
+    },
+    {
+      "id": "R03",
+      "count": 1
+    },
+    {
+      "id": "R04",
+      "count": 1
+    },
+    {
+      "id": "R05",
+      "count": 1
+    },
+    {
+      "id": "R06",
+      "count": 1
+    },
+    {
+      "id": "R07",
+      "count": 1
+    },
+    {
+      "id": "R08",
+      "count": 1
+    },
+    {
+      "id": "R09",
+      "count": 1
+    },
+    {
+      "id": "R10",
+      "count": 1
+    },
+    {
+      "id": "R11",
+      "count": 1
+    },
+    {
+      "id": "R12",
+      "count": 1
+    }
+  ],
+  "tableCount": 11,
+  "cellCount": 116,
+  "bodyFormats": [
+    {
+      "font": "굴림",
+      "sizePt": 11,
+      "charRatio": 100,
+      "lineSpacing": 160
+    }
+  ],
+  "nonBodyStreamsUnchanged": true
+}

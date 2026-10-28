@@ -1,0 +1,37 @@
+{
+  "svg": {
+    "parserError": false,
+    "seats": 90,
+    "rooms": 12,
+    "signs": 3,
+    "viewBox": "0 0 1020 940",
+    "clippedText": []
+  },
+  "desktop": {
+    "scrollWidth": 1500,
+    "viewport": 1500,
+    "brokenAnchors": [],
+    "unloadedImages": [],
+    "floorplans": 1
+  },
+  "mobile": {
+    "scrollWidth": 390,
+    "viewport": 390
+  },
+  "print": {
+    "bodyWidth": 800,
+    "navVisible": false,
+    "floorplanVisible": true
+  },
+  "embeddedMatches": true,
+  "missingFiles": [],
+  "errors": [],
+  "map": {
+    "id": "CINEMA-32x24-v6",
+    "junctions": 3,
+    "exits": 2,
+    "edgesPreserved": true,
+    "nodePositionsPreserved": true,
+    "hashValid": true
+  }
+}

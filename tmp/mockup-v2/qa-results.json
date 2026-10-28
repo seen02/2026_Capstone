@@ -1,0 +1,3005 @@
+{
+  "pass": true,
+  "errors": [],
+  "widths": {
+    "scroll": 390,
+    "client": 390
+  },
+  "states": [
+    {
+      "name": "normal",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 1,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "CLEAR",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": false,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 20,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 10,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "route",
+          "path": [
+            "e4"
+          ],
+          "cost": 12,
+          "direction": "→ RIGHT",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "crowd-pending",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 1,
+      "crowd_e3": 30,
+      "wait_j": 30,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "CLEAR",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": false,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 50,
+          "direction": "← LEFT",
+          "pending": {
+            "path": [
+              "e2",
+              "e4"
+            ],
+            "remaining_seconds": 4.978200000017881
+          }
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 40,
+          "direction": "← LEFT",
+          "pending": {
+            "path": [
+              "e5",
+              "e4"
+            ],
+            "remaining_seconds": 4.978200000017881
+          }
+        },
+        "S3": {
+          "node": "R",
+          "status": "route",
+          "path": [
+            "e4"
+          ],
+          "cost": 12,
+          "direction": "→ RIGHT",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "crowd",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 1,
+      "crowd_e3": 30,
+      "wait_j": 30,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "CLEAR",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": false,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e2",
+            "e4"
+          ],
+          "cost": 24,
+          "direction": "→ RIGHT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e5",
+            "e4"
+          ],
+          "cost": 24,
+          "direction": "→ RIGHT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "route",
+          "path": [
+            "e4"
+          ],
+          "cost": 12,
+          "direction": "→ RIGHT",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "hazard",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 1,
+      "crowd_e3": 30,
+      "wait_j": 30,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": true
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "BLOCKED",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": false,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 50,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 40,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "all-blocked",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 1,
+      "crowd_e3": 30,
+      "wait_j": 30,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": true,
+        "e4": true
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "BLOCKED",
+        "e4": "BLOCKED",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": false,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "reset-run-preserve-risk",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 2,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": true,
+        "e4": true
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "BLOCKED",
+        "e4": "BLOCKED",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": false,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "blocked-then-offline",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 2,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": true,
+        "e4": true
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "BLOCKED",
+        "e4": "BLOCKED",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": true,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "stop",
+          "path": [],
+          "cost": null,
+          "direction": "X",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "offline",
+          "path": [],
+          "cost": null,
+          "direction": "OFF",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "clear-owner-while-offline",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 2,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "BLOCKED",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": true,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 20,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 10,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "offline",
+          "path": [],
+          "cost": null,
+          "direction": "OFF",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9509,
+          "run_id": 2,
+          "kind": "위험 해제",
+          "message": "소유자 TEST 입력 CLEAR · 인원·연결 유지 · e4는 S3 재동기화 전 마지막 상태 유지"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "restore",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 2,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "CLEAR",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": false,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 20,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 10,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "route",
+          "path": [
+            "e4"
+          ],
+          "cost": 12,
+          "direction": "→ RIGHT",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 9542,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9541,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9509,
+          "run_id": 2,
+          "kind": "위험 해제",
+          "message": "소유자 TEST 입력 CLEAR · 인원·연결 유지 · e4는 S3 재동기화 전 마지막 상태 유지"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "clear-expiry-unknown",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 2,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "UNKNOWN",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": true,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 20,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 10,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "offline",
+          "path": [
+            "e4"
+          ],
+          "cost": null,
+          "direction": "OFF",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 12607,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 위험 정보 3초 만료 · UNKNOWN"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 9570,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 9542,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9541,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9509,
+          "run_id": 2,
+          "kind": "위험 해제",
+          "message": "소유자 TEST 입력 CLEAR · 인원·연결 유지 · e4는 S3 재동기화 전 마지막 상태 유지"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "unknown-only-route",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 2,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": true,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "BLOCKED",
+        "e4": "UNKNOWN",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": true,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "unknown",
+          "path": [],
+          "cost": null,
+          "direction": "?",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "unknown",
+          "path": [],
+          "cost": null,
+          "direction": "?",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "offline",
+          "path": [
+            "e4"
+          ],
+          "cost": null,
+          "direction": "OFF",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "위험 입력",
+          "message": "e3 소유자 TEST 입력 BLOCKED"
+        },
+        {
+          "elapsed_ms": 12607,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 위험 정보 3초 만료 · UNKNOWN"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 9570,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 9542,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9541,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9509,
+          "run_id": 2,
+          "kind": "위험 해제",
+          "message": "소유자 TEST 입력 CLEAR · 인원·연결 유지 · e4는 S3 재동기화 전 마지막 상태 유지"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "gateway-expiry-immediate",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 2,
+      "crowd_e3": 30,
+      "wait_j": 30,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "CLEAR",
+        "e5": "CLEAR"
+      },
+      "gateway_down": true,
+      "s3_down": false,
+      "crowd_stale": true,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 20,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 10,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "route",
+          "path": [
+            "e4"
+          ],
+          "cost": 12,
+          "direction": "→ RIGHT",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 23511,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 혼잡 정보 만료 · 거리 기준 즉시 적용"
+        },
+        {
+          "elapsed_ms": 23510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 혼잡 정보 만료 · 거리 기준 즉시 적용"
+        },
+        {
+          "elapsed_ms": 23510,
+          "run_id": 2,
+          "kind": "데이터 상태",
+          "message": "혼잡 TTL 5초 만료 · 거리 기준 α=0 즉시 재계산"
+        },
+        {
+          "elapsed_ms": 18423,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "G 단절 · 마지막 혼잡 입력 유지 후 5초 만료"
+        },
+        {
+          "elapsed_ms": 18112,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 18111,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 13071,
+          "run_id": 2,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 13071,
+          "run_id": 2,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 13070,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 13044,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13044,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 상태 재동기화 · CLEAR"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "위험 입력",
+          "message": "e3 소유자 TEST 입력 BLOCKED"
+        },
+        {
+          "elapsed_ms": 12607,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 위험 정보 3초 만료 · UNKNOWN"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 9570,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 9542,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9541,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9509,
+          "run_id": 2,
+          "kind": "위험 해제",
+          "message": "소유자 TEST 입력 CLEAR · 인원·연결 유지 · e4는 S3 재동기화 전 마지막 상태 유지"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "reset-preserve-connections",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 3,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "CLEAR",
+        "e5": "CLEAR"
+      },
+      "gateway_down": true,
+      "s3_down": true,
+      "crowd_stale": true,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 20,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 10,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "offline",
+          "path": [
+            "e4"
+          ],
+          "cost": null,
+          "direction": "OFF",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 23687,
+          "run_id": 3,
+          "kind": "인원 초기화",
+          "message": "RUN 3 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지 · G 복구 전 마지막 수신값/만료 정책 유지"
+        },
+        {
+          "elapsed_ms": 23667,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 23667,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 23511,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 혼잡 정보 만료 · 거리 기준 즉시 적용"
+        },
+        {
+          "elapsed_ms": 23510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 혼잡 정보 만료 · 거리 기준 즉시 적용"
+        },
+        {
+          "elapsed_ms": 23510,
+          "run_id": 2,
+          "kind": "데이터 상태",
+          "message": "혼잡 TTL 5초 만료 · 거리 기준 α=0 즉시 재계산"
+        },
+        {
+          "elapsed_ms": 18423,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "G 단절 · 마지막 혼잡 입력 유지 후 5초 만료"
+        },
+        {
+          "elapsed_ms": 18112,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 18111,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 13071,
+          "run_id": 2,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 13071,
+          "run_id": 2,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 13070,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 13044,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13044,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 상태 재동기화 · CLEAR"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "위험 입력",
+          "message": "e3 소유자 TEST 입력 BLOCKED"
+        },
+        {
+          "elapsed_ms": 12607,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 위험 정보 3초 만료 · UNKNOWN"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 9570,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 9542,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9541,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9509,
+          "run_id": 2,
+          "kind": "위험 해제",
+          "message": "소유자 TEST 입력 CLEAR · 인원·연결 유지 · e4는 S3 재동기화 전 마지막 상태 유지"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "preset-preserve-connections",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 3,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "CLEAR",
+        "e5": "CLEAR"
+      },
+      "gateway_down": true,
+      "s3_down": true,
+      "crowd_stale": true,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e1",
+            "e3"
+          ],
+          "cost": 20,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e3"
+          ],
+          "cost": 10,
+          "direction": "← LEFT",
+          "pending": null
+        },
+        "S3": {
+          "node": "R",
+          "status": "offline",
+          "path": [
+            "e4"
+          ],
+          "cost": null,
+          "direction": "OFF",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 23717,
+          "run_id": 3,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 23687,
+          "run_id": 3,
+          "kind": "인원 초기화",
+          "message": "RUN 3 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지 · G 복구 전 마지막 수신값/만료 정책 유지"
+        },
+        {
+          "elapsed_ms": 23667,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 23667,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 23511,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 혼잡 정보 만료 · 거리 기준 즉시 적용"
+        },
+        {
+          "elapsed_ms": 23510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 혼잡 정보 만료 · 거리 기준 즉시 적용"
+        },
+        {
+          "elapsed_ms": 23510,
+          "run_id": 2,
+          "kind": "데이터 상태",
+          "message": "혼잡 TTL 5초 만료 · 거리 기준 α=0 즉시 재계산"
+        },
+        {
+          "elapsed_ms": 18423,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "G 단절 · 마지막 혼잡 입력 유지 후 5초 만료"
+        },
+        {
+          "elapsed_ms": 18112,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 18111,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 13071,
+          "run_id": 2,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 13071,
+          "run_id": 2,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 13070,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 13044,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13044,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 상태 재동기화 · CLEAR"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "위험 입력",
+          "message": "e3 소유자 TEST 입력 BLOCKED"
+        },
+        {
+          "elapsed_ms": 12607,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 위험 정보 3초 만료 · UNKNOWN"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 9570,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 9542,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9541,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9509,
+          "run_id": 2,
+          "kind": "위험 해제",
+          "message": "소유자 TEST 입력 CLEAR · 인원·연결 유지 · e4는 S3 재동기화 전 마지막 상태 유지"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    },
+    {
+      "name": "reset-restarts-candidate",
+      "version": "v2",
+      "software_mockup": true,
+      "hardware_connected": false,
+      "run_id": 4,
+      "crowd_e3": 0,
+      "wait_j": 60,
+      "total_population": 60,
+      "risk_inputs": {
+        "e1": false,
+        "e3": false,
+        "e4": false
+      },
+      "risk_effective": {
+        "e1": "CLEAR",
+        "e2": "CLEAR",
+        "e3": "CLEAR",
+        "e4": "CLEAR",
+        "e5": "CLEAR"
+      },
+      "gateway_down": false,
+      "s3_down": false,
+      "crowd_stale": false,
+      "signs": {
+        "S1": {
+          "node": "J",
+          "status": "route",
+          "path": [
+            "e2",
+            "e4"
+          ],
+          "cost": 24,
+          "direction": "→ RIGHT",
+          "pending": {
+            "path": [
+              "e1",
+              "e3"
+            ],
+            "remaining_seconds": 4.9895
+          }
+        },
+        "S2": {
+          "node": "L",
+          "status": "route",
+          "path": [
+            "e5",
+            "e4"
+          ],
+          "cost": 24,
+          "direction": "→ RIGHT",
+          "pending": {
+            "path": [
+              "e3"
+            ],
+            "remaining_seconds": 4.9895
+          }
+        },
+        "S3": {
+          "node": "R",
+          "status": "route",
+          "path": [
+            "e4"
+          ],
+          "cost": 12,
+          "direction": "→ RIGHT",
+          "pending": null
+        }
+      },
+      "logs": [
+        {
+          "elapsed_ms": 30661,
+          "run_id": 4,
+          "kind": "후보 대기",
+          "message": "S2 · L → EL · 비용 58% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 30661,
+          "run_id": 4,
+          "kind": "후보 대기",
+          "message": "S1 · J → L → EL · 비용 17% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 30661,
+          "run_id": 4,
+          "kind": "인원 초기화",
+          "message": "RUN 4 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 29124,
+          "run_id": 3,
+          "kind": "후보 대기",
+          "message": "S2 · L → EL · 비용 58% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 29124,
+          "run_id": 3,
+          "kind": "후보 대기",
+          "message": "S1 · J → L → EL · 비용 17% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 29123,
+          "run_id": 3,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 28812,
+          "run_id": 3,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 28811,
+          "run_id": 3,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 23779,
+          "run_id": 3,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 23779,
+          "run_id": 3,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 23778,
+          "run_id": 3,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 23752,
+          "run_id": 3,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 23752,
+          "run_id": 3,
+          "kind": "데이터 상태",
+          "message": "혼잡 데이터 시험 연결 재동기화 · α=2 적용"
+        },
+        {
+          "elapsed_ms": 23752,
+          "run_id": 3,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 23717,
+          "run_id": 3,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 23687,
+          "run_id": 3,
+          "kind": "인원 초기화",
+          "message": "RUN 3 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지 · G 복구 전 마지막 수신값/만료 정책 유지"
+        },
+        {
+          "elapsed_ms": 23667,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 23667,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 23511,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 혼잡 정보 만료 · 거리 기준 즉시 적용"
+        },
+        {
+          "elapsed_ms": 23510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 혼잡 정보 만료 · 거리 기준 즉시 적용"
+        },
+        {
+          "elapsed_ms": 23510,
+          "run_id": 2,
+          "kind": "데이터 상태",
+          "message": "혼잡 TTL 5초 만료 · 거리 기준 α=0 즉시 재계산"
+        },
+        {
+          "elapsed_ms": 18423,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "G 단절 · 마지막 혼잡 입력 유지 후 5초 만료"
+        },
+        {
+          "elapsed_ms": 18112,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 18111,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 13071,
+          "run_id": 2,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 13071,
+          "run_id": 2,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 13070,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 13044,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13044,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 상태 재동기화 · CLEAR"
+        },
+        {
+          "elapsed_ms": 13043,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · ? 상태 미확인 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 12841,
+          "run_id": 2,
+          "kind": "위험 입력",
+          "message": "e3 소유자 TEST 입력 BLOCKED"
+        },
+        {
+          "elapsed_ms": 12607,
+          "run_id": 2,
+          "kind": "위험 상태",
+          "message": "e4 위험 정보 3초 만료 · UNKNOWN"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 9599,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 CLEAR"
+        },
+        {
+          "elapsed_ms": 9570,
+          "run_id": 2,
+          "kind": "입력 교체",
+          "message": "정상 조건 · e3 0명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 9542,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S3 · R → ER · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9541,
+          "run_id": 2,
+          "kind": "전체 복구",
+          "message": "위험 입력 CLEAR · G/S3 연결 복구 · 현재 입력 재동기화 · 인원·RUN 유지"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9510,
+          "run_id": 2,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 9509,
+          "run_id": 2,
+          "kind": "위험 해제",
+          "message": "소유자 TEST 입력 CLEAR · 인원·연결 유지 · e4는 S3 재동기화 전 마지막 상태 유지"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "장치 모의",
+          "message": "S3 출력 OFF · 전원·통신 단절 시험"
+        },
+        {
+          "elapsed_ms": 6280,
+          "run_id": 2,
+          "kind": "연결 입력",
+          "message": "S3 단절 · 마지막 수신 상태 BLOCKED"
+        },
+        {
+          "elapsed_ms": 6216,
+          "run_id": 2,
+          "kind": "인원 초기화",
+          "message": "RUN 2 · e3 0명 / WAIT_J 60명 · 후보·유지 이력 초기화 · 위험·연결 상태 유지"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 6041,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "양쪽 출구 차단 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S3 · X 경로 없음 · 안전 경로 없음"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → L → EL · 경로 무효화 / 복구"
+        },
+        {
+          "elapsed_ms": 5966,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "오른쪽 출구 위험 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S2 · L → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 5510,
+          "run_id": 1,
+          "kind": "경로 변경",
+          "message": "S1 · J → R → ER · 혼잡 전환 조건 충족"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S2 · L → R → ER · 비용 40% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "후보 대기",
+          "message": "S1 · J → R → ER · 비용 52% 개선 · 다음 방향 5초 유지 확인"
+        },
+        {
+          "elapsed_ms": 501,
+          "run_id": 1,
+          "kind": "입력 교체",
+          "message": "왼쪽 통로 혼잡 · e3 30명 · 인원·위험 TEST 입력 교체 · 연결 단절 유지"
+        },
+        {
+          "elapsed_ms": 1,
+          "run_id": 1,
+          "kind": "세션 시작",
+          "message": "소프트웨어 목업 · 가상 인원 60명 고정 배정 · ID 중복 제거는 설계 단계 · 실제 장치 미연결"
+        }
+      ]
+    }
+  ]
+}

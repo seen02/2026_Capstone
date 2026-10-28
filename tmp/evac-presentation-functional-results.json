@@ -1,0 +1,71 @@
+{
+  "passed": 16,
+  "failed": 0,
+  "results": [
+    {
+      "name": "Scene 01 shows L/L/R and correct 60-person distribution",
+      "pass": true
+    },
+    {
+      "name": "Scene 02 genuinely waits 5 seconds before R/R/R",
+      "pass": true
+    },
+    {
+      "name": "Scene 03 immediately shows L/L/X with crowd retained",
+      "pass": true
+    },
+    {
+      "name": "Scene 04 immediately shows X/X/X",
+      "pass": true
+    },
+    {
+      "name": "Previous/next buttons and arrow/number shortcuts select scenes",
+      "pass": true
+    },
+    {
+      "name": "Space starts, pauses, and resumes automatic timeline",
+      "pass": true
+    },
+    {
+      "name": "Notes dialog freezes both timeline and pending calculation; remains paused after close",
+      "pass": true
+    },
+    {
+      "name": "Complete automatic run visits all four stages, ends at 90 seconds, and never loops",
+      "pass": true
+    },
+    {
+      "name": "Manual scene selection cancels auto advance and discards old candidate timers",
+      "pass": true
+    },
+    {
+      "name": "Entering explore stops auto advance",
+      "pass": true
+    },
+    {
+      "name": "Explore G disconnect retains previous crowd, then immediately falls back after 5 seconds",
+      "pass": true
+    },
+    {
+      "name": "Explore S3 disconnect makes OFF immediately and UNKNOWN after 3 seconds",
+      "pass": true
+    },
+    {
+      "name": "People reset preserves hazard inputs and both disconnected devices",
+      "pass": true
+    },
+    {
+      "name": "Offline BLOCKED survives local clear until source recovery",
+      "pass": true
+    },
+    {
+      "name": "Record download is valid JSON with mockup scope and current state",
+      "pass": true
+    },
+    {
+      "name": "All browser interactions produced no uncaught JavaScript errors",
+      "pass": true
+    }
+  ],
+  "consoleErrors": []
+}

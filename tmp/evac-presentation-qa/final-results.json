@@ -1,0 +1,71 @@
+{
+  "sizes": [
+    {
+      "width": 320,
+      "height": 800,
+      "scrollWidth": 320,
+      "scrollHeight": 1371,
+      "stageBottom": 991.765625,
+      "reasonTop": 1004.765625
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 1348,
+      "stageBottom": 968.59375,
+      "reasonTop": 981.59375
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "scrollWidth": 768,
+      "scrollHeight": 1240,
+      "stageBottom": 1010.546875,
+      "reasonTop": 1026.546875
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "scrollHeight": 768,
+      "stageBottom": 537.109375,
+      "reasonTop": 553.109375
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "scrollWidth": 1280,
+      "scrollHeight": 720,
+      "stageBottom": 530,
+      "reasonTop": 541
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768,
+      "stageBottom": 537.109375,
+      "reasonTop": 553.109375
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "scrollHeight": 900,
+      "stageBottom": 669.109375,
+      "reasonTop": 685.109375
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "stageBottom": 807.0625,
+      "reasonTop": 827.0625
+    }
+  ],
+  "gatePass": true,
+  "cleanModePass": true,
+  "errors": []
+}
