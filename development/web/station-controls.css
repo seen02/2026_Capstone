@@ -1,0 +1,20 @@
+/* gaehwasan.html / station_base.css / gaehwasan.css 기반.
+   재생 ▶ · 일시정지 ❚❚ · 재시작 ↺, 목록은 persona-list, 안내는 팝업 형식. */
+button,input,select{font:inherit}
+button{cursor:pointer;border:1px solid var(--line);border-radius:4px;color:#e7e9ee;background:#233940;padding:10px 15px}
+button:hover{border-color:var(--mint)}
+button:disabled{cursor:wait;opacity:.5}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.playback{gap:8px}
+.playback button{padding:6px 10px;min-width:31px;background:#34373e;font-size:12px}
+.zone-row{display:block;width:100%;padding:8px;border:0;border-left:2px solid transparent;border-radius:0;background:none;text-align:left;color:#c3c8d1;margin:0}
+.zone-row:hover{background:#30343c;border-left-color:transparent}
+.zone-row.selected{background:#303c4c;border-left-color:#f6ce69;color:#fff}
+
+
+
+
+
+#all-programs{columns:1}
+
+.icon-button{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:6px;background:#34373e;flex-shrink:0}.icon-button svg{display:block}

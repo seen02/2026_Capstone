@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {activePrograms} from '../web/programs.mjs';
+const programs=[{start:'10:00',duration_minutes:15},{start:'10:10',duration_minutes:15},{start:'10:20',duration_minutes:20}];
+assert.equal(activePrograms(programs,35999).length,0);
+assert.deepEqual(activePrograms(programs,36000),[programs[0]]);
+assert.deepEqual(activePrograms(programs,36600),programs.slice(0,2));
+assert.deepEqual(activePrograms(programs,36900),[programs[1]]);
+assert.deepEqual(activePrograms(programs,37200),programs.slice(1));
+assert.deepEqual(activePrograms(programs,38400),[]);
+console.log('통과: 공연 시작·종료 경계와 동시 진행 회차');
