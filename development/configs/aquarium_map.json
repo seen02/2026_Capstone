@@ -1,0 +1,3133 @@
+{
+  "schema_version": 8,
+  "name": "가상 아쿠아리움 · 연속 갤러리",
+  "coordinate_system": "1 모델 단위 = 1m",
+  "geometry_status": {
+    "status": "synthetic_design",
+    "render_3d": true,
+    "verified_scale": false,
+    "length_unit": "m",
+    "reason": "공식 안내도의 연속 관람 유형을 참고한 가상 설계. 실제 치수 아님."
+  },
+  "floors": [
+    {
+      "id": "1F",
+      "name": "1층 전체",
+      "elevation": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "lobby",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 12,
+      "z": 53,
+      "kind": "junction"
+    },
+    {
+      "id": "fresh_s",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 12,
+      "z": 46,
+      "kind": "junction"
+    },
+    {
+      "id": "fresh_n",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 12,
+      "z": 33,
+      "kind": "junction"
+    },
+    {
+      "id": "coast_s",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 12,
+      "z": 27,
+      "kind": "junction"
+    },
+    {
+      "id": "coast_e",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 23,
+      "z": 26,
+      "kind": "junction"
+    },
+    {
+      "id": "west",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 27,
+      "z": 28,
+      "kind": "junction"
+    },
+    {
+      "id": "reef_w",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 32,
+      "z": 28,
+      "kind": "junction"
+    },
+    {
+      "id": "reef_front",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 42,
+      "z": 28,
+      "kind": "junction"
+    },
+    {
+      "id": "reef_e",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 52,
+      "z": 28,
+      "kind": "junction"
+    },
+    {
+      "id": "deep_s",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 58,
+      "z": 26,
+      "kind": "junction"
+    },
+    {
+      "id": "deep_n",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 58,
+      "z": 17,
+      "kind": "junction"
+    },
+    {
+      "id": "deep_e",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 62,
+      "z": 17,
+      "kind": "junction"
+    },
+    {
+      "id": "jelly_n",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 62,
+      "z": 30,
+      "kind": "junction"
+    },
+    {
+      "id": "jelly_m",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 62,
+      "z": 34,
+      "kind": "junction"
+    },
+    {
+      "id": "east",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 58,
+      "z": 38,
+      "kind": "junction"
+    },
+    {
+      "id": "show_front",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 43,
+      "z": 34,
+      "kind": "junction"
+    },
+    {
+      "id": "south",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 27,
+      "z": 34,
+      "kind": "junction"
+    },
+    {
+      "id": "return",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 25,
+      "z": 53,
+      "kind": "junction"
+    },
+    {
+      "id": "show_out_1",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 62,
+      "z": 41,
+      "kind": "junction"
+    },
+    {
+      "id": "show_out_2",
+      "name": "연결 관람길",
+      "floor": "1F",
+      "x": 62,
+      "z": 39,
+      "kind": "junction"
+    },
+    {
+      "id": "entry",
+      "name": "입구",
+      "floor": "1F",
+      "x": 10,
+      "z": 57,
+      "kind": "entry"
+    },
+    {
+      "id": "exit",
+      "name": "출구",
+      "floor": "1F",
+      "x": 25,
+      "z": 57,
+      "kind": "exit"
+    },
+    {
+      "id": "queue_A",
+      "name": "A 관람 접근",
+      "floor": "1F",
+      "x": 10.0,
+      "z": 26.5,
+      "kind": "queue",
+      "zone": "A"
+    },
+    {
+      "id": "A",
+      "name": "A 연안",
+      "floor": "1F",
+      "x": 15.0,
+      "z": 21.5,
+      "kind": "exhibit",
+      "zone": "A",
+      "tag": "coast",
+      "capacity": 50,
+      "dwell_minutes": [
+        8,
+        16
+      ],
+      "size": [
+        18,
+        13
+      ],
+      "area_m2": 234,
+      "queue_node": "queue_A",
+      "access_mode": "open_gallery",
+      "program": "물범 생태설명",
+      "capacity_evidence": "가상 관람 상한. 법정 수용인원이나 실측치 아님"
+    },
+    {
+      "id": "queue_B",
+      "name": "B 관람 접근",
+      "floor": "1F",
+      "x": 28.5,
+      "z": 27.0,
+      "kind": "queue",
+      "zone": "B"
+    },
+    {
+      "id": "B",
+      "name": "B 산호",
+      "floor": "1F",
+      "x": 41.5,
+      "z": 27.0,
+      "kind": "exhibit",
+      "zone": "B",
+      "tag": "coral",
+      "capacity": 60,
+      "dwell_minutes": [
+        8,
+        16
+      ],
+      "size": [
+        30,
+        10
+      ],
+      "area_m2": 300,
+      "queue_node": "queue_B",
+      "access_mode": "open_gallery",
+      "program": "다이버 먹이주기",
+      "capacity_evidence": "가상 관람 상한. 법정 수용인원이나 실측치 아님"
+    },
+    {
+      "id": "queue_C",
+      "name": "C 관람 접근",
+      "floor": "1F",
+      "x": 56.0,
+      "z": 26.0,
+      "kind": "queue",
+      "zone": "C"
+    },
+    {
+      "id": "C",
+      "name": "C 심해",
+      "floor": "1F",
+      "x": 57.5,
+      "z": 18.0,
+      "kind": "exhibit",
+      "zone": "C",
+      "tag": "deep",
+      "capacity": 35,
+      "dwell_minutes": [
+        6,
+        12
+      ],
+      "size": [
+        10,
+        17
+      ],
+      "area_m2": 170,
+      "queue_node": "queue_C",
+      "access_mode": "open_gallery",
+      "program": null,
+      "capacity_evidence": "가상 관람 상한. 법정 수용인원이나 실측치 아님"
+    },
+    {
+      "id": "queue_D",
+      "name": "D 관람 접근",
+      "floor": "1F",
+      "x": 58.0,
+      "z": 37.0,
+      "kind": "queue",
+      "zone": "D"
+    },
+    {
+      "id": "D",
+      "name": "D 해파리",
+      "floor": "1F",
+      "x": 63.0,
+      "z": 35.5,
+      "kind": "exhibit",
+      "zone": "D",
+      "tag": "jellyfish",
+      "capacity": 20,
+      "dwell_minutes": [
+        6,
+        12
+      ],
+      "size": [
+        10,
+        13
+      ],
+      "area_m2": 130,
+      "queue_node": "queue_D",
+      "access_mode": "open_gallery",
+      "program": null,
+      "capacity_evidence": "가상 관람 상한. 법정 수용인원이나 실측치 아님"
+    },
+    {
+      "id": "queue_E",
+      "name": "E 관람 접근",
+      "floor": "1F",
+      "x": 16.0,
+      "z": 44.0,
+      "kind": "queue",
+      "zone": "E"
+    },
+    {
+      "id": "E",
+      "name": "E 민물",
+      "floor": "1F",
+      "x": 9.0,
+      "z": 39.0,
+      "kind": "exhibit",
+      "zone": "E",
+      "tag": "freshwater",
+      "capacity": 40,
+      "dwell_minutes": [
+        6,
+        12
+      ],
+      "size": [
+        14,
+        18
+      ],
+      "area_m2": 252,
+      "queue_node": "queue_E",
+      "access_mode": "open_gallery",
+      "program": null,
+      "capacity_evidence": "가상 관람 상한. 법정 수용인원이나 실측치 아님"
+    },
+    {
+      "id": "queue_F",
+      "name": "F 공연 대기",
+      "floor": "1F",
+      "x": 42.6,
+      "z": 39.5,
+      "kind": "queue",
+      "zone": "F"
+    },
+    {
+      "id": "F",
+      "name": "F 공연",
+      "floor": "1F",
+      "x": 49.5,
+      "z": 46.5,
+      "kind": "exhibit",
+      "zone": "F",
+      "tag": "interactive",
+      "capacity": 80,
+      "dwell_minutes": [
+        8,
+        16
+      ],
+      "size": [
+        34,
+        17
+      ],
+      "area_m2": 578,
+      "queue_node": "queue_F",
+      "access_mode": "controlled_show",
+      "program": "해양 공연 프로그램",
+      "capacity_evidence": "가상 관람 상한. 법정 수용인원이나 실측치 아님"
+    },
+    {
+      "id": "show_lobby",
+      "name": "공연장 입퇴장",
+      "floor": "1F",
+      "x": 56,
+      "z": 39.7,
+      "kind": "room_path",
+      "zone": "F"
+    },
+    {
+      "id": "show_before",
+      "name": "공연장 입퇴장",
+      "floor": "1F",
+      "x": 36,
+      "z": 39.7,
+      "kind": "room_path",
+      "zone": "F"
+    },
+    {
+      "id": "show_gate",
+      "name": "공연장 입퇴장",
+      "floor": "1F",
+      "x": 36,
+      "z": 41,
+      "kind": "door",
+      "zone": "F"
+    },
+    {
+      "id": "show_after",
+      "name": "공연장 입퇴장",
+      "floor": "1F",
+      "x": 36,
+      "z": 43,
+      "kind": "room_path",
+      "zone": "F"
+    },
+    {
+      "id": "show_leave",
+      "name": "공연장 입퇴장",
+      "floor": "1F",
+      "x": 62,
+      "z": 46,
+      "kind": "room_path",
+      "zone": "F"
+    }
+  ],
+  "edges": [
+    {
+      "id": "lobby--fresh_s",
+      "a": "lobby",
+      "b": "fresh_s",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 7.0,
+      "seconds": 5.833333333333334,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "fresh_s--fresh_n",
+      "a": "fresh_s",
+      "b": "fresh_n",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 13.0,
+      "seconds": 10.833333333333334,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "fresh_n--coast_s",
+      "a": "fresh_n",
+      "b": "coast_s",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 6.0,
+      "seconds": 5.0,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "coast_s--coast_e",
+      "a": "coast_s",
+      "b": "coast_e",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 11.045361017187261,
+      "seconds": 9.204467514322719,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "coast_e--west",
+      "a": "coast_e",
+      "b": "west",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 4.47213595499958,
+      "seconds": 3.72677996249965,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "west--reef_w",
+      "a": "west",
+      "b": "reef_w",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 5.0,
+      "seconds": 4.166666666666667,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "reef_w--reef_front",
+      "a": "reef_w",
+      "b": "reef_front",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 10.0,
+      "seconds": 8.333333333333334,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "reef_front--reef_e",
+      "a": "reef_front",
+      "b": "reef_e",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 10.0,
+      "seconds": 8.333333333333334,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "reef_e--deep_s",
+      "a": "reef_e",
+      "b": "deep_s",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 6.324555320336759,
+      "seconds": 5.2704627669473,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "deep_s--deep_n",
+      "a": "deep_s",
+      "b": "deep_n",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 9.0,
+      "seconds": 7.5,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "deep_n--deep_e",
+      "a": "deep_n",
+      "b": "deep_e",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 4.0,
+      "seconds": 3.3333333333333335,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "deep_e--jelly_n",
+      "a": "deep_e",
+      "b": "jelly_n",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 13.0,
+      "seconds": 10.833333333333334,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "jelly_n--jelly_m",
+      "a": "jelly_n",
+      "b": "jelly_m",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 4.0,
+      "seconds": 3.3333333333333335,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "jelly_m--east",
+      "a": "jelly_m",
+      "b": "east",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 5.656854249492381,
+      "seconds": 4.714045207910317,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "east--show_front",
+      "a": "east",
+      "b": "show_front",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 15.524174696260024,
+      "seconds": 12.936812246883354,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "show_front--south",
+      "a": "show_front",
+      "b": "south",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 16.0,
+      "seconds": 13.333333333333334,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "south--return",
+      "a": "south",
+      "b": "return",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 19.1049731745428,
+      "seconds": 15.920810978785667,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "return--lobby",
+      "a": "return",
+      "b": "lobby",
+      "kind": "promenade",
+      "directed": false,
+      "length_m": 13.0,
+      "seconds": 10.833333333333334,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "west--south",
+      "a": "west",
+      "b": "south",
+      "kind": "shortcut",
+      "directed": false,
+      "length_m": 6.0,
+      "seconds": 5.0,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "reef_front--show_front",
+      "a": "reef_front",
+      "b": "show_front",
+      "kind": "shortcut",
+      "directed": false,
+      "length_m": 6.082762530298219,
+      "seconds": 5.068968775248516,
+      "width_assumption": 4,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "entry--lobby",
+      "a": "entry",
+      "b": "lobby",
+      "kind": "lobby",
+      "directed": true,
+      "length_m": 4.47213595499958,
+      "seconds": 3.72677996249965,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "return--exit",
+      "a": "return",
+      "b": "exit",
+      "kind": "lobby",
+      "directed": true,
+      "length_m": 4.0,
+      "seconds": 3.3333333333333335,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "coast_s--queue_A",
+      "a": "coast_s",
+      "b": "queue_A",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 2.0615528128088303,
+      "seconds": 1.717960677340692,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "queue_A--A",
+      "a": "queue_A",
+      "b": "A",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 7.0710678118654755,
+      "seconds": 5.892556509887896,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "A--coast_e",
+      "a": "A",
+      "b": "coast_e",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 9.17877987534291,
+      "seconds": 7.648983229452425,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "west--queue_B",
+      "a": "west",
+      "b": "queue_B",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 1.8027756377319946,
+      "seconds": 1.5023130314433288,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "queue_B--B",
+      "a": "queue_B",
+      "b": "B",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 13.0,
+      "seconds": 10.833333333333334,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "B--reef_e",
+      "a": "B",
+      "b": "reef_e",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 10.547511554864494,
+      "seconds": 8.78959296238708,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "deep_s--queue_C",
+      "a": "deep_s",
+      "b": "queue_C",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 2.0,
+      "seconds": 1.6666666666666667,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "queue_C--C",
+      "a": "queue_C",
+      "b": "C",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 8.139410298049853,
+      "seconds": 6.782841915041544,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "C--deep_e",
+      "a": "C",
+      "b": "deep_e",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 4.6097722286464435,
+      "seconds": 3.84147685720537,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "east--queue_D",
+      "a": "east",
+      "b": "queue_D",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 1.0,
+      "seconds": 0.8333333333333334,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "queue_D--D",
+      "a": "queue_D",
+      "b": "D",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 5.220153254455275,
+      "seconds": 4.350127712046063,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "D--jelly_n",
+      "a": "D",
+      "b": "jelly_n",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 5.5901699437494745,
+      "seconds": 4.658474953124562,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "fresh_s--queue_E",
+      "a": "fresh_s",
+      "b": "queue_E",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 4.47213595499958,
+      "seconds": 3.72677996249965,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "queue_E--E",
+      "a": "queue_E",
+      "b": "E",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 8.602325267042627,
+      "seconds": 7.168604389202189,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "E--fresh_n",
+      "a": "E",
+      "b": "fresh_n",
+      "kind": "gallery_access",
+      "directed": false,
+      "length_m": 6.708203932499369,
+      "seconds": 5.5901699437494745,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "east--show_lobby",
+      "a": "east",
+      "b": "show_lobby",
+      "kind": "show_approach",
+      "directed": false,
+      "length_m": 2.6248809496813394,
+      "seconds": 2.1874007914011164,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "show_lobby--queue_F",
+      "a": "show_lobby",
+      "b": "queue_F",
+      "kind": "show_approach",
+      "directed": false,
+      "length_m": 13.401492454200762,
+      "seconds": 11.167910378500634,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "queue_F--show_before",
+      "a": "queue_F",
+      "b": "show_before",
+      "kind": "admission",
+      "directed": true,
+      "length_m": 6.603029607687673,
+      "seconds": 5.502524673073061,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "show_before--show_gate",
+      "a": "show_before",
+      "b": "show_gate",
+      "kind": "admission",
+      "directed": true,
+      "length_m": 1.2999999999999972,
+      "seconds": 1.083333333333331,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "show_gate--show_after",
+      "a": "show_gate",
+      "b": "show_after",
+      "kind": "admission",
+      "directed": true,
+      "length_m": 2.0,
+      "seconds": 1.6666666666666667,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "show_after--F",
+      "a": "show_after",
+      "b": "F",
+      "kind": "admission",
+      "directed": true,
+      "length_m": 13.946325680981353,
+      "seconds": 11.62193806748446,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "F--show_leave",
+      "a": "F",
+      "b": "show_leave",
+      "kind": "exit_path",
+      "directed": true,
+      "length_m": 12.509996003196804,
+      "seconds": 10.424996669330671,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "show_leave--show_out_1",
+      "a": "show_leave",
+      "b": "show_out_1",
+      "kind": "exit_path",
+      "directed": true,
+      "length_m": 5.0,
+      "seconds": 4.166666666666667,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "show_out_1--show_out_2",
+      "a": "show_out_1",
+      "b": "show_out_2",
+      "kind": "exit_path",
+      "directed": true,
+      "length_m": 2.0,
+      "seconds": 1.6666666666666667,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    },
+    {
+      "id": "show_out_2--east",
+      "a": "show_out_2",
+      "b": "east",
+      "kind": "exit_path",
+      "directed": true,
+      "length_m": 4.123105625617661,
+      "seconds": 3.435921354681384,
+      "width_assumption": 3,
+      "evidence": "가상 설계 길이 / 가정 보행속도 1.2m/s"
+    }
+  ],
+  "geometry": {
+    "bounds": [
+      0,
+      0,
+      72,
+      60
+    ],
+    "footprint": [
+      [
+        0,
+        0
+      ],
+      [
+        72,
+        0
+      ],
+      [
+        72,
+        60
+      ],
+      [
+        0,
+        60
+      ]
+    ],
+    "walkable_areas": [
+      {
+        "kind": "gallery",
+        "bounds": [
+          6,
+          18,
+          18,
+          13
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          24,
+          23,
+          30,
+          10
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          54,
+          12,
+          10,
+          17
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          56,
+          29,
+          10,
+          13
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          6,
+          31,
+          14,
+          18
+        ]
+      },
+      {
+        "kind": "show",
+        "bounds": [
+          32,
+          41,
+          34,
+          17
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          24,
+          29,
+          6,
+          24
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          24,
+          33,
+          34,
+          8
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          20,
+          27,
+          4,
+          8
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          50,
+          24,
+          8,
+          5
+        ]
+      },
+      {
+        "kind": "lobby",
+        "bounds": [
+          4,
+          49,
+          26,
+          9
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          20,
+          45,
+          6,
+          6
+        ]
+      }
+    ],
+    "building_floor_areas": [
+      {
+        "kind": "tank_floor",
+        "bounds": [
+          5,
+          6,
+          20,
+          13
+        ]
+      },
+      {
+        "kind": "tank_floor",
+        "bounds": [
+          29,
+          6,
+          24,
+          18
+        ]
+      },
+      {
+        "kind": "tank_floor",
+        "bounds": [
+          53,
+          5,
+          17,
+          8
+        ]
+      },
+      {
+        "kind": "tank_floor",
+        "bounds": [
+          63,
+          11,
+          7,
+          17
+        ]
+      },
+      {
+        "kind": "tank_floor",
+        "bounds": [
+          65,
+          29,
+          6,
+          13
+        ]
+      },
+      {
+        "kind": "tank_floor",
+        "bounds": [
+          1,
+          32,
+          6,
+          13
+        ]
+      },
+      {
+        "kind": "tank_floor",
+        "bounds": [
+          19,
+          34,
+          6,
+          11
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          6,
+          18,
+          18,
+          13
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          24,
+          23,
+          30,
+          10
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          54,
+          12,
+          10,
+          17
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          56,
+          29,
+          10,
+          13
+        ]
+      },
+      {
+        "kind": "gallery",
+        "bounds": [
+          6,
+          31,
+          14,
+          18
+        ]
+      },
+      {
+        "kind": "show",
+        "bounds": [
+          32,
+          41,
+          34,
+          17
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          24,
+          29,
+          6,
+          24
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          24,
+          33,
+          34,
+          8
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          20,
+          27,
+          4,
+          8
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          50,
+          24,
+          8,
+          5
+        ]
+      },
+      {
+        "kind": "lobby",
+        "bounds": [
+          4,
+          49,
+          26,
+          9
+        ]
+      },
+      {
+        "kind": "corridor",
+        "bounds": [
+          20,
+          45,
+          6,
+          6
+        ]
+      }
+    ],
+    "wall_height_m": 2.8,
+    "rooms": [
+      {
+        "id": "A",
+        "name": "A 연안",
+        "bounds": [
+          6,
+          18,
+          18,
+          13
+        ],
+        "polygon": [
+          [
+            6,
+            18
+          ],
+          [
+            24,
+            18
+          ],
+          [
+            24,
+            31
+          ],
+          [
+            6,
+            31
+          ]
+        ],
+        "color": "#218e99",
+        "program": "물범 생태설명",
+        "access_mode": "open_gallery",
+        "view_area": [
+          9,
+          19,
+          12,
+          5
+        ],
+        "queue_area": [
+          8,
+          25,
+          4,
+          3
+        ],
+        "label_position": [
+          14,
+          29
+        ],
+        "feature": {
+          "kind": "tank",
+          "style": "coast",
+          "bounds": [
+            6,
+            7,
+            18,
+            11
+          ],
+          "polygon": [
+            [
+              6,
+              7
+            ],
+            [
+              24,
+              7
+            ],
+            [
+              24,
+              18
+            ],
+            [
+              6,
+              18
+            ]
+          ],
+          "height": 2.2
+        },
+        "features": [
+          {
+            "kind": "tank",
+            "style": "coast",
+            "bounds": [
+              6,
+              7,
+              18,
+              11
+            ],
+            "polygon": [
+              [
+                6,
+                7
+              ],
+              [
+                24,
+                7
+              ],
+              [
+                24,
+                18
+              ],
+              [
+                6,
+                18
+              ]
+            ],
+            "height": 2.2
+          }
+        ],
+        "queue_node": "queue_A",
+        "entry_door": null,
+        "exit_door": null
+      },
+      {
+        "id": "B",
+        "name": "B 산호",
+        "bounds": [
+          24,
+          23,
+          30,
+          10
+        ],
+        "polygon": [
+          [
+            24,
+            23
+          ],
+          [
+            54,
+            23
+          ],
+          [
+            54,
+            33
+          ],
+          [
+            24,
+            33
+          ]
+        ],
+        "color": "#c47f42",
+        "program": "다이버 먹이주기",
+        "access_mode": "open_gallery",
+        "view_area": [
+          33,
+          24,
+          17,
+          6
+        ],
+        "queue_area": [
+          27,
+          25,
+          3,
+          4
+        ],
+        "label_position": [
+          41,
+          31
+        ],
+        "feature": {
+          "kind": "tank",
+          "style": "reef",
+          "bounds": [
+            30,
+            7,
+            22,
+            16
+          ],
+          "polygon": [
+            [
+              30,
+              7
+            ],
+            [
+              52,
+              7
+            ],
+            [
+              52,
+              23
+            ],
+            [
+              30,
+              23
+            ]
+          ],
+          "height": 4.2
+        },
+        "features": [
+          {
+            "kind": "tank",
+            "style": "reef",
+            "bounds": [
+              30,
+              7,
+              22,
+              16
+            ],
+            "polygon": [
+              [
+                30,
+                7
+              ],
+              [
+                52,
+                7
+              ],
+              [
+                52,
+                23
+              ],
+              [
+                30,
+                23
+              ]
+            ],
+            "height": 4.2
+          }
+        ],
+        "queue_node": "queue_B",
+        "entry_door": null,
+        "exit_door": null
+      },
+      {
+        "id": "C",
+        "name": "C 심해",
+        "bounds": [
+          54,
+          12,
+          10,
+          17
+        ],
+        "polygon": [
+          [
+            54,
+            12
+          ],
+          [
+            64,
+            12
+          ],
+          [
+            64,
+            29
+          ],
+          [
+            54,
+            29
+          ]
+        ],
+        "color": "#526ab6",
+        "program": null,
+        "access_mode": "open_gallery",
+        "view_area": [
+          55,
+          14,
+          5,
+          8
+        ],
+        "queue_area": [
+          54,
+          24,
+          4,
+          4
+        ],
+        "label_position": [
+          59,
+          23
+        ],
+        "feature": {
+          "kind": "tank",
+          "style": "wall",
+          "bounds": [
+            54,
+            6,
+            15,
+            21
+          ],
+          "polygon": [
+            [
+              54,
+              6
+            ],
+            [
+              69,
+              6
+            ],
+            [
+              69,
+              27
+            ],
+            [
+              64,
+              27
+            ],
+            [
+              64,
+              12
+            ],
+            [
+              54,
+              12
+            ]
+          ],
+          "height": 3,
+          "collision_bounds": [
+            [
+              54,
+              6,
+              15,
+              6
+            ],
+            [
+              64,
+              12,
+              5,
+              15
+            ]
+          ]
+        },
+        "features": [
+          {
+            "kind": "tank",
+            "style": "wall",
+            "bounds": [
+              54,
+              6,
+              15,
+              21
+            ],
+            "polygon": [
+              [
+                54,
+                6
+              ],
+              [
+                69,
+                6
+              ],
+              [
+                69,
+                27
+              ],
+              [
+                64,
+                27
+              ],
+              [
+                64,
+                12
+              ],
+              [
+                54,
+                12
+              ]
+            ],
+            "height": 3,
+            "collision_bounds": [
+              [
+                54,
+                6,
+                15,
+                6
+              ],
+              [
+                64,
+                12,
+                5,
+                15
+              ]
+            ]
+          }
+        ],
+        "queue_node": "queue_C",
+        "entry_door": null,
+        "exit_door": null
+      },
+      {
+        "id": "D",
+        "name": "D 해파리",
+        "bounds": [
+          56,
+          29,
+          10,
+          13
+        ],
+        "polygon": [
+          [
+            56,
+            29
+          ],
+          [
+            66,
+            29
+          ],
+          [
+            66,
+            42
+          ],
+          [
+            56,
+            42
+          ]
+        ],
+        "color": "#9565be",
+        "program": null,
+        "access_mode": "open_gallery",
+        "view_area": [
+          61,
+          32,
+          4,
+          7
+        ],
+        "queue_area": [
+          56,
+          35,
+          4,
+          4
+        ],
+        "label_position": [
+          60,
+          30
+        ],
+        "feature": {
+          "kind": "tank",
+          "style": "jelly",
+          "bounds": [
+            66,
+            30,
+            4,
+            11
+          ],
+          "polygon": [
+            [
+              66,
+              30
+            ],
+            [
+              70,
+              30
+            ],
+            [
+              70,
+              41
+            ],
+            [
+              66,
+              41
+            ]
+          ],
+          "height": 2.7
+        },
+        "features": [
+          {
+            "kind": "tank",
+            "style": "jelly",
+            "bounds": [
+              66,
+              30,
+              4,
+              11
+            ],
+            "polygon": [
+              [
+                66,
+                30
+              ],
+              [
+                70,
+                30
+              ],
+              [
+                70,
+                41
+              ],
+              [
+                66,
+                41
+              ]
+            ],
+            "height": 2.7
+          }
+        ],
+        "queue_node": "queue_D",
+        "entry_door": null,
+        "exit_door": null
+      },
+      {
+        "id": "E",
+        "name": "E 민물",
+        "bounds": [
+          6,
+          31,
+          14,
+          18
+        ],
+        "polygon": [
+          [
+            6,
+            31
+          ],
+          [
+            20,
+            31
+          ],
+          [
+            20,
+            49
+          ],
+          [
+            6,
+            49
+          ]
+        ],
+        "color": "#43866a",
+        "program": null,
+        "access_mode": "open_gallery",
+        "view_area": [
+          7,
+          35,
+          4,
+          8
+        ],
+        "queue_area": [
+          14,
+          42,
+          4,
+          4
+        ],
+        "label_position": [
+          14,
+          39
+        ],
+        "feature": {
+          "kind": "tank",
+          "style": "fresh",
+          "bounds": [
+            2,
+            33,
+            4,
+            11
+          ],
+          "polygon": [
+            [
+              2,
+              33
+            ],
+            [
+              6,
+              33
+            ],
+            [
+              6,
+              44
+            ],
+            [
+              2,
+              44
+            ]
+          ],
+          "height": 2.3
+        },
+        "features": [
+          {
+            "kind": "tank",
+            "style": "fresh",
+            "bounds": [
+              2,
+              33,
+              4,
+              11
+            ],
+            "polygon": [
+              [
+                2,
+                33
+              ],
+              [
+                6,
+                33
+              ],
+              [
+                6,
+                44
+              ],
+              [
+                2,
+                44
+              ]
+            ],
+            "height": 2.3
+          },
+          {
+            "kind": "tank",
+            "style": "fresh",
+            "bounds": [
+              20,
+              35,
+              4,
+              9
+            ],
+            "polygon": [
+              [
+                20,
+                35
+              ],
+              [
+                24,
+                35
+              ],
+              [
+                24,
+                44
+              ],
+              [
+                20,
+                44
+              ]
+            ],
+            "height": 2.3
+          }
+        ],
+        "queue_node": "queue_E",
+        "entry_door": null,
+        "exit_door": null
+      },
+      {
+        "id": "F",
+        "name": "F 공연",
+        "bounds": [
+          32,
+          41,
+          34,
+          17
+        ],
+        "polygon": [
+          [
+            32,
+            41
+          ],
+          [
+            66,
+            41
+          ],
+          [
+            66,
+            58
+          ],
+          [
+            32,
+            58
+          ]
+        ],
+        "color": "#b38b32",
+        "program": "해양 공연 프로그램",
+        "access_mode": "controlled_show",
+        "view_area": [
+          41,
+          43,
+          17,
+          7
+        ],
+        "queue_area": [
+          26.6,
+          38.35,
+          32,
+          2.3
+        ],
+        "label_position": [
+          49,
+          50.5
+        ],
+        "feature": {
+          "kind": "stage",
+          "style": "stage",
+          "bounds": [
+            40,
+            52,
+            20,
+            5
+          ],
+          "polygon": [
+            [
+              40,
+              52
+            ],
+            [
+              60,
+              52
+            ],
+            [
+              60,
+              57
+            ],
+            [
+              40,
+              57
+            ]
+          ],
+          "height": 0.65
+        },
+        "features": [
+          {
+            "kind": "stage",
+            "style": "stage",
+            "bounds": [
+              40,
+              52,
+              20,
+              5
+            ],
+            "polygon": [
+              [
+                40,
+                52
+              ],
+              [
+                60,
+                52
+              ],
+              [
+                60,
+                57
+              ],
+              [
+                40,
+                57
+              ]
+            ],
+            "height": 0.65
+          }
+        ],
+        "queue_node": "queue_F",
+        "entry_door": "show_gate",
+        "exit_door": "show_out_1",
+        "queue_slots": [
+          [
+            35.8,
+            40.0
+          ],
+          [
+            36.6,
+            40.0
+          ],
+          [
+            35.0,
+            40.0
+          ],
+          [
+            37.4,
+            40.0
+          ],
+          [
+            34.2,
+            40.0
+          ],
+          [
+            38.2,
+            40.0
+          ],
+          [
+            33.4,
+            40.0
+          ],
+          [
+            39.0,
+            40.0
+          ],
+          [
+            32.6,
+            40.0
+          ],
+          [
+            39.8,
+            40.0
+          ],
+          [
+            40.6,
+            40.0
+          ],
+          [
+            41.4,
+            40.0
+          ],
+          [
+            42.2,
+            40.0
+          ],
+          [
+            43.0,
+            40.0
+          ],
+          [
+            43.8,
+            40.0
+          ],
+          [
+            44.6,
+            40.0
+          ],
+          [
+            45.4,
+            40.0
+          ],
+          [
+            46.2,
+            40.0
+          ],
+          [
+            47.0,
+            40.0
+          ],
+          [
+            47.8,
+            40.0
+          ],
+          [
+            48.6,
+            40.0
+          ],
+          [
+            49.4,
+            40.0
+          ],
+          [
+            50.2,
+            40.0
+          ],
+          [
+            51.0,
+            40.0
+          ],
+          [
+            51.8,
+            40.0
+          ],
+          [
+            52.6,
+            40.0
+          ],
+          [
+            53.4,
+            40.0
+          ],
+          [
+            54.2,
+            40.0
+          ],
+          [
+            55.0,
+            40.0
+          ],
+          [
+            55.8,
+            40.0
+          ],
+          [
+            56.6,
+            40.0
+          ],
+          [
+            57.4,
+            40.0
+          ],
+          [
+            58.2,
+            40.0
+          ],
+          [
+            31.8,
+            40.0
+          ],
+          [
+            31.0,
+            40.0
+          ],
+          [
+            30.2,
+            40.0
+          ],
+          [
+            35.8,
+            38.8
+          ],
+          [
+            36.6,
+            38.8
+          ],
+          [
+            35.0,
+            38.8
+          ],
+          [
+            37.4,
+            38.8
+          ],
+          [
+            34.2,
+            38.8
+          ],
+          [
+            38.2,
+            38.8
+          ],
+          [
+            33.4,
+            38.8
+          ],
+          [
+            39.0,
+            38.8
+          ],
+          [
+            32.6,
+            38.8
+          ],
+          [
+            39.8,
+            38.8
+          ],
+          [
+            40.6,
+            38.8
+          ],
+          [
+            41.4,
+            38.8
+          ],
+          [
+            42.2,
+            38.8
+          ],
+          [
+            43.0,
+            38.8
+          ],
+          [
+            43.8,
+            38.8
+          ],
+          [
+            44.6,
+            38.8
+          ],
+          [
+            45.4,
+            38.8
+          ],
+          [
+            46.2,
+            38.8
+          ],
+          [
+            47.0,
+            38.8
+          ],
+          [
+            47.8,
+            38.8
+          ],
+          [
+            48.6,
+            38.8
+          ],
+          [
+            49.4,
+            38.8
+          ],
+          [
+            50.2,
+            38.8
+          ],
+          [
+            51.0,
+            38.8
+          ],
+          [
+            51.8,
+            38.8
+          ],
+          [
+            52.6,
+            38.8
+          ],
+          [
+            53.4,
+            38.8
+          ],
+          [
+            54.2,
+            38.8
+          ],
+          [
+            55.0,
+            38.8
+          ],
+          [
+            55.8,
+            38.8
+          ],
+          [
+            56.6,
+            38.8
+          ],
+          [
+            57.4,
+            38.8
+          ],
+          [
+            58.2,
+            38.8
+          ],
+          [
+            31.8,
+            38.8
+          ],
+          [
+            31.0,
+            38.8
+          ],
+          [
+            29.4,
+            40.0
+          ],
+          [
+            30.2,
+            38.8
+          ],
+          [
+            29.4,
+            38.8
+          ],
+          [
+            28.6,
+            40.0
+          ],
+          [
+            28.6,
+            38.8
+          ],
+          [
+            27.8,
+            40.0
+          ],
+          [
+            27.8,
+            38.8
+          ],
+          [
+            27.0,
+            40.0
+          ],
+          [
+            27.0,
+            38.8
+          ]
+        ],
+        "queue_rows": [
+          [
+            [
+              27,
+              40.0
+            ],
+            [
+              58.2,
+              40.0
+            ]
+          ],
+          [
+            [
+              27,
+              38.8
+            ],
+            [
+              58.2,
+              38.8
+            ]
+          ]
+        ],
+        "queue_spacing_m": 0.8
+      }
+    ],
+    "walls": [
+      {
+        "a": [
+          53,
+          5
+        ],
+        "b": [
+          70,
+          5
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          5,
+          6
+        ],
+        "b": [
+          25,
+          6
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          29,
+          6
+        ],
+        "b": [
+          53,
+          6
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          53,
+          13
+        ],
+        "b": [
+          54,
+          13
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          5,
+          19
+        ],
+        "b": [
+          6,
+          19
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          24,
+          19
+        ],
+        "b": [
+          25,
+          19
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          24,
+          23
+        ],
+        "b": [
+          29,
+          23
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          53,
+          23
+        ],
+        "b": [
+          54,
+          23
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          64,
+          28
+        ],
+        "b": [
+          70,
+          28
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          54,
+          29
+        ],
+        "b": [
+          56,
+          29
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          64,
+          29
+        ],
+        "b": [
+          71,
+          29
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          1,
+          32
+        ],
+        "b": [
+          6,
+          32
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          54,
+          33
+        ],
+        "b": [
+          56,
+          33
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          30,
+          41
+        ],
+        "b": [
+          32,
+          41
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          66,
+          42
+        ],
+        "b": [
+          71,
+          42
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          1,
+          45
+        ],
+        "b": [
+          6,
+          45
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          4,
+          49
+        ],
+        "b": [
+          6,
+          49
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          4,
+          58
+        ],
+        "b": [
+          7,
+          58
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          16,
+          58
+        ],
+        "b": [
+          23,
+          58
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          28,
+          58
+        ],
+        "b": [
+          30,
+          58
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          32,
+          58
+        ],
+        "b": [
+          66,
+          58
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          1,
+          32
+        ],
+        "b": [
+          1,
+          45
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          4,
+          49
+        ],
+        "b": [
+          4,
+          58
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          5,
+          6
+        ],
+        "b": [
+          5,
+          19
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          6,
+          19
+        ],
+        "b": [
+          6,
+          32
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          6,
+          45
+        ],
+        "b": [
+          6,
+          49
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          24,
+          19
+        ],
+        "b": [
+          24,
+          23
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          25,
+          6
+        ],
+        "b": [
+          25,
+          19
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          29,
+          6
+        ],
+        "b": [
+          29,
+          23
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          30,
+          41
+        ],
+        "b": [
+          30,
+          58
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          32,
+          41
+        ],
+        "b": [
+          32,
+          58
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          53,
+          5
+        ],
+        "b": [
+          53,
+          6
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          53,
+          13
+        ],
+        "b": [
+          53,
+          23
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          54,
+          13
+        ],
+        "b": [
+          54,
+          23
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          54,
+          29
+        ],
+        "b": [
+          54,
+          33
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          56,
+          29
+        ],
+        "b": [
+          56,
+          33
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          64,
+          28
+        ],
+        "b": [
+          64,
+          29
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          66,
+          42
+        ],
+        "b": [
+          66,
+          58
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          70,
+          5
+        ],
+        "b": [
+          70,
+          28
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          71,
+          29
+        ],
+        "b": [
+          71,
+          42
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          6,
+          31
+        ],
+        "b": [
+          9,
+          31
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          15,
+          31
+        ],
+        "b": [
+          20,
+          31
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          54,
+          29
+        ],
+        "b": [
+          59,
+          29
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          65,
+          29
+        ],
+        "b": [
+          66,
+          29
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          30,
+          33
+        ],
+        "b": [
+          39,
+          33
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          46,
+          33
+        ],
+        "b": [
+          54,
+          33
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "partition"
+      },
+      {
+        "a": [
+          32,
+          41
+        ],
+        "b": [
+          34,
+          41
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "show_wall"
+      },
+      {
+        "a": [
+          38,
+          41
+        ],
+        "b": [
+          60,
+          41
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "show_wall"
+      },
+      {
+        "a": [
+          64,
+          41
+        ],
+        "b": [
+          66,
+          41
+        ],
+        "thickness": 0.3,
+        "height": 2.8,
+        "kind": "show_wall"
+      },
+      {
+        "a": [
+          27,
+          38.35
+        ],
+        "b": [
+          54.8,
+          38.35
+        ],
+        "thickness": 0.1,
+        "height": 0.95,
+        "kind": "queue_rail"
+      }
+    ],
+    "doors": [
+      {
+        "id": "show_gate",
+        "room": "F",
+        "x": 36,
+        "z": 41,
+        "width": 4,
+        "axis": "x",
+        "role": "admission"
+      },
+      {
+        "id": "show_out_1",
+        "room": "F",
+        "x": 62,
+        "z": 41,
+        "width": 4,
+        "axis": "x",
+        "role": "exit"
+      }
+    ],
+    "service_areas": [],
+    "human_height_m": 1.7,
+    "human_radius_m": 0.23,
+    "labels": [
+      {
+        "text": "공용 로비",
+        "x": 17,
+        "z": 51
+      }
+    ]
+  },
+  "signs": [
+    {
+      "id": "S01",
+      "node": "west",
+      "name": "메인수조 / 공연장 분기"
+    },
+    {
+      "id": "S02",
+      "node": "reef_front",
+      "name": "심해 / 공연장 분기"
+    },
+    {
+      "id": "S03",
+      "node": "east",
+      "name": "해파리 / 공연장 분기"
+    }
+  ],
+  "reference_programs": [
+    {
+      "node": "A",
+      "name": "물범 생태설명",
+      "start": "10:00",
+      "duration_minutes": 15
+    },
+    {
+      "node": "B",
+      "name": "다이버 먹이주기",
+      "start": "10:10",
+      "duration_minutes": 15
+    },
+    {
+      "node": "F",
+      "name": "해양 공연 프로그램",
+      "start": "10:20",
+      "duration_minutes": 20
+    },
+    {
+      "node": "A",
+      "name": "물범 생태설명",
+      "start": "12:00",
+      "duration_minutes": 15
+    },
+    {
+      "node": "B",
+      "name": "다이버 먹이주기",
+      "start": "12:10",
+      "duration_minutes": 15
+    },
+    {
+      "node": "F",
+      "name": "해양 공연 프로그램",
+      "start": "12:20",
+      "duration_minutes": 20
+    },
+    {
+      "node": "A",
+      "name": "물범 생태설명",
+      "start": "14:00",
+      "duration_minutes": 15
+    },
+    {
+      "node": "B",
+      "name": "다이버 먹이주기",
+      "start": "14:10",
+      "duration_minutes": 15
+    },
+    {
+      "node": "F",
+      "name": "해양 공연 프로그램",
+      "start": "14:20",
+      "duration_minutes": 20
+    },
+    {
+      "node": "A",
+      "name": "물범 생태설명",
+      "start": "16:00",
+      "duration_minutes": 15
+    },
+    {
+      "node": "B",
+      "name": "다이버 먹이주기",
+      "start": "16:10",
+      "duration_minutes": 15
+    },
+    {
+      "node": "F",
+      "name": "해양 공연 프로그램",
+      "start": "16:20",
+      "duration_minutes": 20
+    }
+  ],
+  "sources": [],
+  "program_status": "A·B·F 회차별 모집·선착순 정원 확보·순차 입장·동시 공연 종료 적용. A·B는 일반 관람과 정원을 공유하며 F는 공연 회차로만 입장.",
+  "assumptions": [
+    "단층 가상 설계: 6개 테마의 연속 갤러리. 보행 바닥과 수조 뒤 비관람 영역을 구분한다.",
+    "일반 전시는 넓은 개구부로 연결하며, F 공연장만 별도 입장 대기와 측면 퇴장을 둔다.",
+    "민물→연안→산호→심해→해파리→공연장 앞→로비의 주동선과 두 개의 연결 통로. 이동은 양방향이다.",
+    "벽·수조·무대는 장애물이다. 지도에 칠해진 보행면 밖으로 이동할 수 없다.",
+    "정원은 가상 관람 상한이다. 공용 관람길의 통행객은 선택 관람 인원에 포함하지 않는다.",
+    "모든 치수·정원·시간표·입장률은 가상 실험 설정이며 실제 통계가 아니다.",
+    "사람 키 1.7m·폭 0.46m. 사람 간 충돌·실제 면적 밀도·문별 통과량은 미구현."
+  ]
+}

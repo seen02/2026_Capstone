@@ -1,0 +1,17 @@
+[project]
+name = "aquarium-persona-sim"
+version = "0.1.0"
+description = "가상 1층 아쿠아리움의 6개 전시실 관람 시뮬레이션"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+aquarium-sim = "aquarium_sim.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["aquarium_sim*"]
+

@@ -1,0 +1,30 @@
+{
+  "synthetic_peaks": {
+    "model": "conditional_poisson_minutes",
+    "intensity": "synthetic_peaks",
+    "baseline": 0.15,
+    "peaks": [
+      {
+        "hour": 10.5,
+        "sigma_hours": 0.65,
+        "weight": 1
+      },
+      {
+        "hour": 14,
+        "sigma_hours": 0.85,
+        "weight": 0.8
+      }
+    ],
+    "label": "가상 오전·오후 피크",
+    "calibration_status": "synthetic_not_observed",
+    "source": "가상 실험 설정",
+    "limitations": "실제 시설 통계로 보정되지 않은 합성 분포"
+  },
+  "uniform_baseline": {
+    "model": "conditional_poisson_minutes",
+    "intensity": "uniform_baseline",
+    "label": "균등 입장률 비교 기준",
+    "calibration_status": "synthetic_not_observed",
+    "source": "가상 실험 설정"
+  }
+}

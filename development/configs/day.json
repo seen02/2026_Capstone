@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "seed": 20261104,
+  "daily_visitors": 1000,
+  "opening": "09:30",
+  "last_entry": "17:30",
+  "closing": "18:00",
+  "stay_minutes": [
+    90,
+    180
+  ],
+  "arrivals": {
+    "model": "conditional_poisson_minutes",
+    "intensity": "synthetic_peaks",
+    "baseline": 0.15,
+    "peaks": [
+      {
+        "hour": 10.5,
+        "sigma_hours": 0.65,
+        "weight": 1
+      },
+      {
+        "hour": 14,
+        "sigma_hours": 0.85,
+        "weight": 0.8
+      }
+    ],
+    "label": "가상 오전·오후 피크",
+    "calibration_status": "synthetic_not_observed",
+    "source": "가상 실험 설정",
+    "limitations": "실제 시설 통계로 보정되지 않은 합성 분포"
+  },
+  "provenance": {
+    "daily_visitors": "설정된 하루 입장객 수는 가상 실험 부하이며 실제 시설 통계가 아님.",
+    "arrivals": "분마다 다른 합성 기대 입장률에 따른 무작위 입장. 오전·오후 피크는 조정 가능한 가정.",
+    "stay_minutes": "균등분포 90~180분 가정. 전시를 모두 마치면 먼저 퇴장할 수 있음.",
+    "hours": "가상 운영 설정: 09:30 개장, 17:30 입장 종료, 18:00 폐장.",
+    "motion": "설계 길이 / 가정 보행속도 1.2m/s 및 연결 인원 보정. 미시 보행 충돌은 미구현."
+  },
+  "performances": {
+    "queue_lead_minutes": 10,
+    "admission_lead_minutes": 2,
+    "admission_interval_seconds": 1
+  }
+}
