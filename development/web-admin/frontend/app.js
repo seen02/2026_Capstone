@@ -1,6 +1,6 @@
 (()=>{
  let view=location.hash==='#operator'?'operator':'visitor';
- function render(keepPosition=false){const y=scrollY;document.querySelector('#app').innerHTML=view==='visitor'?MareaVisitor.render():MareaOperator.render();document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);b.setAttribute('aria-pressed',b.dataset.view===view)});document.title=`MAREA — ${view==='visitor'?'나의 속도로 만나는 바다':'운영자 대시보드'}`;if(keepPosition)window.scrollTo(0,y)}
+ function render(keepPosition=false){const y=scrollY;const focused=document.activeElement;const focusKey=focused?.dataset.zone?`button[data-zone="${focused.dataset.zone}"]`:focused?.dataset.period?`button[data-period="${focused.dataset.period}"]`:null;document.querySelector('#app').innerHTML=view==='visitor'?MareaVisitor.render():MareaOperator.render();document.querySelectorAll('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===view);b.setAttribute('aria-pressed',b.dataset.view===view)});document.title=`MAREA — ${view==='visitor'?'나의 속도로 만나는 바다':'운영자 대시보드'}`;if(keepPosition){window.scrollTo(0,y);if(focusKey)document.querySelector(focusKey)?.focus({preventScroll:true})}}
  document.addEventListener('click',e=>{
  const b=e.target.closest('button,a,[data-zone]');if(!b)return;
  if(b.dataset.view){document.querySelector('#dialog').close();view=b.dataset.view;history.replaceState(null,'',`#${view}`);render();window.scrollTo(0,0);return}

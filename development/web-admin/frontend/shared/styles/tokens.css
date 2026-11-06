@@ -1,1 +1,7 @@
-:root{--ink:#142f35;--muted:#6b7b7e;--teal:#175b59;--deep:#103e43;--mint:#e9f3ec;--lime:#dcf59e;--paper:#f8f9f5;--white:#fff;--line:#dfe6e0;--calm:#26725b;--moderate:#986218;--busy:#b3463d;--radius:24px;--font:"Pretendard","SUIT","Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+:root {
+--ink:#1f3034; --secondary:#526166; --muted:#68767a; --teal:#175b59; --deep:#103e43;
+--paper:#f8f9f6; --white:#fff; --line:#dee4e1; --raised:#f0f3f1;
+--calm:#32664c; --moderate:#8a601d; --busy:#a44135;
+--radius:16px; --ease:cubic-bezier(.22,1,.36,1);
+--font:'Pretendard','SUIT','Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
