@@ -17,11 +17,12 @@
 <rect x="190" y="334" width="216" height="156" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
 <rect x="406" y="394" width="360" height="120" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
 <rect x="766" y="262" width="120" height="204" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
-<rect x="790" y="466" width="120" height="156" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
+<rect x="790" y="466" width="120" height="180" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
 <rect x="190" y="490" width="168" height="216" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
-<rect x="502" y="610" width="408" height="204" rx="0" fill="#e0dfd5" stroke="none" stroke-width="1"/>
+<rect x="550" y="646" width="360" height="168" rx="0" fill="#e0dfd5" stroke="none" stroke-width="1"/>
 <rect x="406" y="466" width="72" height="288" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
-<rect x="406" y="514" width="408" height="96" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
+<rect x="406" y="514" width="408" height="132" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
+<rect x="478" y="646" width="72" height="168" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
 <rect x="358" y="442" width="48" height="96" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
 <rect x="718" y="406" width="96" height="60" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
 <rect x="166" y="706" width="312" height="108" rx="0" fill="#dbe4df" stroke="none" stroke-width="1"/>
@@ -54,14 +55,12 @@
 <line x1="886" y1="466" x2="970" y2="466" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="130" y1="502" x2="190" y2="502" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="766" y1="514" x2="790" y2="514" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="478" y1="610" x2="502" y2="610" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="910" y1="622" x2="970" y2="622" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="130" y1="658" x2="190" y2="658" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="166" y1="706" x2="190" y2="706" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="166" y1="814" x2="202" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="310" y1="814" x2="394" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="454" y1="814" x2="478" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="502" y1="814" x2="910" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="454" y1="814" x2="910" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="130" y1="502" x2="130" y2="658" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="166" y1="706" x2="166" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="178" y1="190" x2="178" y2="346" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
@@ -70,8 +69,6 @@
 <line x1="406" y1="346" x2="406" y2="394" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="418" y1="190" x2="418" y2="346" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="466" y1="190" x2="466" y2="394" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="478" y1="610" x2="478" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="502" y1="610" x2="502" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="754" y1="178" x2="754" y2="190" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="754" y1="274" x2="754" y2="394" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="766" y1="274" x2="766" y2="394" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
@@ -87,18 +84,34 @@
 <line x1="898" y1="466" x2="910" y2="466" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="478" y1="514" x2="586" y2="514" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
 <line x1="670" y1="514" x2="766" y2="514" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="502" y1="610" x2="526" y2="610" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="574" y1="610" x2="838" y2="610" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="886" y1="610" x2="910" y2="610" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
-<line x1="442" y1="578.2" x2="775.6" y2="578.2" stroke="#967f52" stroke-width="2" stroke-linecap="round"/>
-<circle cx="442" cy="578.2" r="3" fill="#334b5e"/>
-<circle cx="489.657" cy="578.2" r="3" fill="#334b5e"/>
-<circle cx="537.314" cy="578.2" r="3" fill="#334b5e"/>
-<circle cx="584.971" cy="578.2" r="3" fill="#334b5e"/>
-<circle cx="632.629" cy="578.2" r="3" fill="#334b5e"/>
-<circle cx="680.286" cy="578.2" r="3" fill="#334b5e"/>
-<circle cx="727.943" cy="578.2" r="3" fill="#334b5e"/>
-<circle cx="775.6" cy="578.2" r="3" fill="#334b5e"/>
+<line x1="550" y1="646" x2="574" y2="646" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="622" y1="646" x2="838" y2="646" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="886" y1="646" x2="910" y2="646" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="550" y1="646" x2="550" y2="814" stroke="#526a75" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="598" y1="607" x2="838" y2="607" stroke="#967f52" stroke-width="2" stroke-linecap="round"/>
+<circle cx="598" cy="607" r="3" fill="#334b5e"/>
+<circle cx="628" cy="607" r="3" fill="#334b5e"/>
+<circle cx="658" cy="607" r="3" fill="#334b5e"/>
+<circle cx="688" cy="607" r="3" fill="#334b5e"/>
+<circle cx="718" cy="607" r="3" fill="#334b5e"/>
+<circle cx="748" cy="607" r="3" fill="#334b5e"/>
+<circle cx="778" cy="607" r="3" fill="#334b5e"/>
+<circle cx="808" cy="607" r="3" fill="#334b5e"/>
+<circle cx="838" cy="607" r="3" fill="#334b5e"/>
+<line x1="838" y1="607" x2="838" y2="643" stroke="#967f52" stroke-width="2" stroke-linecap="round"/>
+<circle cx="838" cy="607" r="3" fill="#334b5e"/>
+<circle cx="838" cy="625" r="3" fill="#334b5e"/>
+<circle cx="838" cy="643" r="3" fill="#334b5e"/>
+<line x1="598" y1="626.2" x2="818.8" y2="626.2" stroke="#967f52" stroke-width="2" stroke-linecap="round"/>
+<circle cx="598" cy="626.2" r="3" fill="#334b5e"/>
+<circle cx="625.6" cy="626.2" r="3" fill="#334b5e"/>
+<circle cx="653.2" cy="626.2" r="3" fill="#334b5e"/>
+<circle cx="680.8" cy="626.2" r="3" fill="#334b5e"/>
+<circle cx="708.4" cy="626.2" r="3" fill="#334b5e"/>
+<circle cx="736" cy="626.2" r="3" fill="#334b5e"/>
+<circle cx="763.6" cy="626.2" r="3" fill="#334b5e"/>
+<circle cx="791.2" cy="626.2" r="3" fill="#334b5e"/>
+<circle cx="818.8" cy="626.2" r="3" fill="#334b5e"/>
 <line x1="262" y1="733" x2="262" y2="699.4" stroke="#849a9e" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrow)"/>
 <line x1="262" y1="496" x2="262" y2="467.2" stroke="#849a9e" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrow)"/>
 <line x1="406" y1="436" x2="425.2" y2="445.6" stroke="#849a9e" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrow)"/>
@@ -110,16 +123,16 @@
 <line x1="436" y1="583" x2="426.4" y2="674.2" stroke="#849a9e" stroke-width="1.8" stroke-linecap="round" marker-end="url(#arrow)"/>
 <line x1="442" y1="454" x2="442" y2="526" stroke="#328c76" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
 <line x1="622" y1="454" x2="634" y2="526" stroke="#328c76" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-<line x1="629.2" y1="592" x2="550" y2="594.4" stroke="#338d77" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
-<line x1="550" y1="594.4" x2="550" y2="610" stroke="#338d77" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
-<line x1="550" y1="610" x2="550" y2="634" stroke="#338d77" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
-<line x1="550" y1="634" x2="712" y2="676" stroke="#338d77" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
-<line x1="712" y1="676" x2="862" y2="670" stroke="#ab753e" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
-<line x1="862" y1="670" x2="862" y2="610" stroke="#ab753e" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
-<line x1="862" y1="610" x2="862" y2="586" stroke="#ab753e" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="598" y1="635.8" x2="598" y2="641.2" stroke="#338d77" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="598" y1="641.2" x2="598" y2="646" stroke="#338d77" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="598" y1="646" x2="598" y2="670" stroke="#338d77" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="598" y1="670" x2="712" y2="700" stroke="#338d77" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="712" y1="700" x2="862" y2="694" stroke="#ab753e" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="862" y1="694" x2="862" y2="646" stroke="#ab753e" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="862" y1="646" x2="862" y2="586" stroke="#ab753e" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
 <line x1="862" y1="586" x2="814" y2="574" stroke="#ab753e" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
-<line x1="526" y1="610" x2="574" y2="610" stroke="#49a68e" stroke-width="4" stroke-linecap="round"/>
-<line x1="838" y1="610" x2="886" y2="610" stroke="#b37b44" stroke-width="4" stroke-linecap="round"/>
+<line x1="574" y1="646" x2="622" y2="646" stroke="#49a68e" stroke-width="4" stroke-linecap="round"/>
+<line x1="838" y1="646" x2="886" y2="646" stroke="#b37b44" stroke-width="4" stroke-linecap="round"/>
 <rect x="251.44" y="452" width="69.12" height="26" rx="5" fill="#f4f7f1"/>
 <text x="286" y="471" fill="#1e3b49" font-size="16" font-weight="600" text-anchor="middle">A 연안</text>
 <rect x="575.44" y="476" width="69.12" height="26" rx="5" fill="#f4f7f1"/>
@@ -132,12 +145,15 @@
 <text x="286" y="591" fill="#1e3b49" font-size="16" font-weight="600" text-anchor="middle">E 민물</text>
 <rect x="671.44" y="710" width="69.12" height="26" rx="5" fill="#f4f7f1"/>
 <text x="706" y="729" fill="#1e3b49" font-size="16" font-weight="600" text-anchor="middle">F 공연</text>
-<rect x="596.3" y="578" width="65.8" height="26" rx="5" fill="#f0dfbb"/>
-<text x="629.2" y="597" fill="#5a4829" font-size="12" font-weight="600" text-anchor="middle">공연 대기</text>
-<rect x="518" y="620" width="64" height="26" rx="5" fill="#daeee5"/>
-<text x="550" y="639" fill="#27715d" font-size="11" font-weight="600" text-anchor="middle">입구</text>
-<rect x="830" y="620" width="64" height="26" rx="5" fill="#f2dfc8"/>
-<text x="862" y="639" fill="#935e2c" font-size="11" font-weight="600" text-anchor="middle">출구</text>
+<line x1="586" y1="616.6" x2="828.4" y2="616.6" stroke="#338d77" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="828.4" y1="616.6" x2="828.4" y2="635.8" stroke="#338d77" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="828.4" y1="635.8" x2="598" y2="635.8" stroke="#338d77" stroke-width="1.3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="682.1" y="611" width="65.8" height="26" rx="5" fill="#f0dfbb"/>
+<text x="715" y="630" fill="#5a4829" font-size="12" font-weight="600" text-anchor="middle">공연 대기</text>
+<rect x="566" y="656" width="64" height="26" rx="5" fill="#daeee5"/>
+<text x="598" y="675" fill="#27715d" font-size="11" font-weight="600" text-anchor="middle">입구</text>
+<rect x="830" y="656" width="64" height="26" rx="5" fill="#f2dfc8"/>
+<text x="862" y="675" fill="#935e2c" font-size="11" font-weight="600" text-anchor="middle">출구</text>
 <rect x="284.95" y="716" width="74.1" height="26" rx="5" fill="#eef3ee"/>
 <text x="322" y="735" fill="#435c69" font-size="14" font-weight="600" text-anchor="middle">공용 로비</text>
 <circle cx="442" cy="454" r="11" fill="#235b66" stroke="#b7e5d7" stroke-width="1.2"/>

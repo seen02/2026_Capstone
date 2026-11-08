@@ -1,6 +1,7 @@
 """지도 JSON에서 공유용 평면 SVG를 생성한다. 모든 좌표와 장애물은 지도와 동일하다."""
 import html
 import json
+import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,8 +66,9 @@ def export_plan(map_data):
     for wall in g['walls']:
         line(wall['a'],wall['b'],'#967f52' if wall['kind']=='queue_rail' else '#526a75',max(2,wall['thickness']*scale))
         if wall['kind']=='queue_rail':
-            for i in range(8):
-                px,py=point(wall['a'][0]+(wall['b'][0]-wall['a'][0])*i/7,wall['a'][1])
+            count=max(1,math.ceil(math.dist(wall['a'],wall['b'])/2.5))
+            for i in range(count+1):
+                px,py=point(*(a+(b-a)*i/count for a,b in zip(wall['a'],wall['b'])))
                 out.append(f'<circle cx="{px:g}" cy="{py:g}" r="3" fill="#334b5e"/>')
     # 대표 관람 방향만 표시한다. 일반 관람 경로는 양방향이다.
     route_index=0
@@ -88,10 +90,11 @@ def export_plan(map_data):
         line(a,b,'#b37b44' if door['role']=='exit' else '#49a68e',4)
     for r in g['rooms']:
         pill(r['name'],*r['label_position'])
-    q=next(r for r in g['rooms'] if r['id']=='F')['queue_area']
+    show=next(r for r in g['rooms'] if r['id']=='F');q=show['queue_area']
+    for a,b in zip(show['queue_path'],show['queue_path'][1:]):line(a,b,'#338d77',1.3,arrow=True)
     pill('공연 대기',q[0]+q[2]/2,q[1]+q[3]/2,'#f0dfbb','#5a4829',12)
-    pill('입구',36,43,'#daeee5','#27715d',11)
-    pill('출구',62,43,'#f2dfc8','#935e2c',11)
+    for door in g['doors']:
+        pill('출구' if door['role']=='exit' else '입구',door['x'],door['z']+2,'#f2dfc8' if door['role']=='exit' else '#daeee5','#935e2c' if door['role']=='exit' else '#27715d',11)
     pill('공용 로비',17,51,'#eef3ee','#435c69',14)
     for s in map_data['signs']:
         n=nodes[s['node']];px,py=point(n['x'],n['z'])

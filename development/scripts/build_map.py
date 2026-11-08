@@ -25,7 +25,7 @@ def build_map():
             'coast_e':(23,26),'west':(27,28),'reef_w':(32,28),'reef_front':(42,28),
             'reef_e':(52,28),'deep_s':(58,26),'deep_n':(58,17),'deep_e':(62,17),
             'jelly_n':(62,30),'jelly_m':(62,34),'east':(58,38),'show_front':(43,34),
-            'south':(27,34),'return':(25,53),'show_out_1':(62,41),'show_out_2':(62,39)}
+            'south':(27,34),'return':(25,53),'show_out_1':(62,44),'show_out_2':(62,39)}
     for id,p in points.items():node(id,'연결 관람길',p)
     loop=['lobby','fresh_s','fresh_n','coast_s','coast_e','west','reef_w','reef_front','reef_e',
           'deep_s','deep_n','deep_e','jelly_n','jelly_m','east','show_front','south','return','lobby']
@@ -37,10 +37,10 @@ def build_map():
       dict(id='A',name='연안',tag='coast',color='#218e99',cap=50,program='물범 생태설명',
            bounds=[6,18,18,13],view=[9,19,12,5],queue=[8,25,4,3],approach='coast_s',other='coast_e',label=[14,29],
            features=[('coast',[6,7,18,11],2.2)]),
-      dict(id='B',name='산호',tag='coral',color='#c47f42',cap=60,program='다이버 먹이주기',
+      dict(id='B',name='산호',tag='coral',color='#c47f42',cap=80,program='다이버 먹이주기',
            bounds=[24,23,30,10],view=[33,24,17,6],queue=[27,25,3,4],approach='west',other='reef_e',label=[41,31],
            features=[('reef',[30,7,22,16],4.2)]),
-      dict(id='C',name='심해',tag='deep',color='#526ab6',cap=35,program=None,
+      dict(id='C',name='심해',tag='deep',color='#526ab6',cap=40,program=None,
            bounds=[54,12,10,17],view=[55,14,5,8],queue=[54,24,4,4],approach='deep_s',other='deep_e',label=[59,23],
            features=[('wall',[54,6,15,21],3)]),
       dict(id='D',name='해파리',tag='jellyfish',color='#9565be',cap=20,program=None,
@@ -49,8 +49,8 @@ def build_map():
       dict(id='E',name='민물',tag='freshwater',color='#43866a',cap=40,program=None,
            bounds=[6,31,14,18],view=[7,35,4,8],queue=[14,42,4,4],approach='fresh_s',other='fresh_n',label=[14,39],
            features=[('fresh',[2,33,4,11],2.3),('fresh',[20,35,4,9],2.3)]),
-      dict(id='F',name='공연',tag='interactive',color='#b38b32',cap=80,program='해양 공연 프로그램',
-           bounds=[32,41,34,17],view=[41,43,17,7],queue=[26.6,38.35,32,2.3],approach='east',other='show_out_1',label=[49,50.5],
+      dict(id='F',name='공연',tag='interactive',color='#b38b32',cap=50,program='해양 공연 프로그램',
+           bounds=[36,44,30,14],view=[41,46,17,5],queue=[39.5,40.85,20.5,2.8],approach='show_front',other='show_out_1',label=[49,50.5],
            features=[('stage',[40,52,20,5],.65)])]
     for s in specs:
         id=s['id'];q=s['queue'];v=s['view'];controlled=id=='F'
@@ -60,13 +60,13 @@ def build_map():
              queue_node=queue_id,access_mode='controlled_show' if controlled else 'open_gallery',program=s['program'],
              capacity_evidence='가상 관람 상한. 법정 수용인원이나 실측치 아님')
         if controlled:
-            for nid,p in [('show_lobby',(56,39.7)),('show_before',(36,39.7)),('show_gate',(36,41)),
-                          ('show_after',(36,43)),('show_leave',(62,46))]:node(nid,'공연장 입퇴장',p,'door' if nid=='show_gate' else 'room_path',zone=id)
+            for nid,p in [('show_lobby',(37.5,41.55)),('show_before',(40,43.6)),('show_gate',(40,44)),
+                          ('show_after',(40,46)),('show_leave',(62,48))]:node(nid,'공연장 입퇴장',p,'door' if nid=='show_gate' else 'room_path',zone=id)
             for a,b in [(s['approach'],'show_lobby'),('show_lobby',queue_id)]:edge(a,b,'show_approach',3)
             for a,b in [(queue_id,'show_before'),('show_before','show_gate'),('show_gate','show_after'),('show_after',id)]:edge(a,b,'admission',3,True)
             for a,b in [(id,'show_leave'),('show_leave','show_out_1'),('show_out_1','show_out_2'),('show_out_2','east')]:edge(a,b,'exit_path',3,True)
-            doors=[dict(id='show_gate',room=id,x=36,z=41,width=4,axis='x',role='admission'),
-                   dict(id='show_out_1',room=id,x=62,z=41,width=4,axis='x',role='exit')]
+            doors=[dict(id='show_gate',room=id,x=40,z=44,width=4,axis='x',role='admission'),
+                   dict(id='show_out_1',room=id,x=62,z=44,width=4,axis='x',role='exit')]
         else:
             edge(s['approach'],queue_id,'gallery_access',3);edge(queue_id,id,'gallery_access',3);edge(id,s['other'],'gallery_access',3)
         features=[dict(kind='stage' if style=='stage' else 'tank',style=style,bounds=b,polygon=rectangle(b),height=h) for style,b,h in s['features']]
@@ -77,20 +77,27 @@ def build_map():
                           access_mode='controlled_show' if controlled else 'open_gallery',view_area=v,queue_area=q,label_position=s['label'],
                           feature=features[0],features=features,queue_node=queue_id,
                           entry_door='show_gate' if controlled else None,exit_door='show_out_1' if controlled else None))
+        # 수조 전면을 따라 분포하는 관람 영역. 민물은 양쪽 수조를 모두 관람한다.
+        rooms[-1]['view_areas']={
+            'A':[[6.8,18.7,16.6,7.8]],'B':[[30.7,23.7,20.6,8.6]],
+            'C':[[54.7,12.7,8.6,11.3]],'D':[[61,30.7,4.3,9.6]],
+            'E':[[6.7,33.7,4.8,10],[15,35.7,4.3,7.6]],
+            'F':[[40.6,45,18.8,6.3]],
+        }[id]
         if controlled:
-            slots=[[round(27+i*.8,2),z] for z in [40.0,38.8] for i in range(40)]
-            # 공연 구역까지의 거리, 입구까지의 거리 순으로 빈자리를 배정한다.
-            def priority(p):
-                x,z=p;bx,bz,bw,bd=s['bounds']
-                distance=max(bx-x,0,x-bx-bw)**2+max(bz-z,0,z-bz-bd)**2
-                return (round(distance,6),(x-36)**2+(z-41)**2,x)
-            rooms[-1]['queue_slots']=sorted(slots,key=priority)
-            rooms[-1]['queue_rows']=[[[27,z],[58.2,z]] for z in [40.0,38.8]]
+            # 앞자리는 입구 쪽 아래 줄. 뒤쪽은 오른쪽에서 접어 위 줄로 이어진다.
+            rooms[-1]['queue_slots']=[[round(40+i*.8,2),43.15] for i in range(25)]+[[round(40+i*.8,2),41.55] for i in reversed(range(25))]
+            rooms[-1]['queue_rows']=[[[40,43.15],[59.2,43.15]],[[40,41.55],[59.2,41.55]]]
+            rooms[-1]['queue_path']=[[39,41.55],[59.2,41.55],[59.2,43.15],[40,43.15]]
+            rooms[-1]['queue_access_area']=[37.75,40.85,22.25,2.8]
+            rooms[-1]['queue_capacity']=50
             rooms[-1]['queue_spacing_m']=.8
+            # 논리 대기 노드는 중앙 벨트 위가 아닌 앞자리와 일치시킨다.
+            next(n for n in nodes if n['id']==queue_id).update(x=40,z=43.15)
     # 건물 전체를 관람 바닥으로 칠하지 않는다. 실제 연결된 갤러리/통로의 합집합이다.
     areas=[('gallery',[6,18,18,13]),('gallery',[24,23,30,10]),('gallery',[54,12,10,17]),
-           ('gallery',[56,29,10,13]),('gallery',[6,31,14,18]),('show',[32,41,34,17]),
-           ('corridor',[24,29,6,24]),('corridor',[24,33,34,8]),('corridor',[20,27,4,8]),
+           ('gallery',[56,29,10,15]),('gallery',[6,31,14,18]),('show',[36,44,30,14]),
+           ('corridor',[24,29,6,24]),('corridor',[24,33,34,11]),('corridor',[30,44,6,14]),('corridor',[20,27,4,8]),
            ('corridor',[50,24,8,5]),('lobby',[4,49,26,9]),('corridor',[20,45,6,6])]
     walkable=[dict(kind=k,bounds=b) for k,b in areas]
     cells=set()
@@ -124,12 +131,19 @@ def build_map():
     # 전시실 경계의 넓은 개구부, 차광 입구, 공연실 입퇴장 문.
     for a,b in [((6,31),(9,31)),((15,31),(20,31)),((54,29),(59,29)),((65,29),(66,29)),
                 ((30,33),(39,33)),((46,33),(54,33))]:wall(a,b)
-    for a,b in [((32,41),(34,41)),((38,41),(60,41)),((64,41),(66,41))]:wall(a,b,'show_wall')
-    wall((27,38.35),(54.8,38.35),'queue_rail',.95,.1)
+    for a,b in [((36,44),(38,44)),((42,44),(60,44)),((64,44),(66,44)),((36,44),(36,58))]:wall(a,b,'show_wall')
+    for a,b in [((40,40.75),(60,40.75)),((60,40.75),(60,43.75)),((40,42.35),(58.4,42.35))]:wall(a,b,'queue_rail',.95,.1)
+    # 경로 길이는 최종 지점 좌표를 기준으로 다시 계산한다.
+    by_id={n['id']:n for n in nodes}
+    for e in edges:
+        a,b=by_id[e['a']],by_id[e['b']]
+        if e['a']=='show_lobby' and e['b']=='queue_F':e['via']=[[59.2,41.55],[59.2,43.15]]
+        points=[[a['x'],a['z']]]+e.get('via',[])+[[b['x'],b['z']]]
+        e['length_m']=sum(math.dist(p,q) for p,q in zip(points,points[1:]));e['seconds']=e['length_m']/1.2
     programs=[]
     for nid,name,offset,duration in [('A','물범 생태설명',0,15),('B','다이버 먹이주기',10,15),('F','해양 공연 프로그램',20,20)]:
         for hour in [10,12,14,16]:programs.append(dict(node=nid,name=name,start=f'{hour:02}:{offset:02}',duration_minutes=duration))
-    return dict(schema_version=8,name='가상 아쿠아리움 · 연속 갤러리',coordinate_system='1 모델 단위 = 1m',
+    return dict(schema_version=9,name='가상 아쿠아리움 · 연속 갤러리',coordinate_system='1 모델 단위 = 1m',
         geometry_status=dict(status='synthetic_design',render_3d=True,verified_scale=False,length_unit='m',reason='공식 안내도의 연속 관람 유형을 참고한 가상 설계. 실제 치수 아님.'),
         floors=[dict(id='1F',name='1층 전체',elevation=0)],nodes=nodes,edges=edges,
         geometry=dict(bounds=[0,0,72,60],footprint=[[0,0],[72,0],[72,60],[0,60]],walkable_areas=walkable,
@@ -145,7 +159,7 @@ def build_map():
                      '벽·수조·무대는 장애물이다. 지도에 칠해진 보행면 밖으로 이동할 수 없다.',
                      '정원은 가상 관람 상한이다. 공용 관람길의 통행객은 선택 관람 인원에 포함하지 않는다.',
                      '모든 치수·정원·시간표·입장률은 가상 실험 설정이며 실제 통계가 아니다.',
-                     '사람 키 1.7m·폭 0.46m. 사람 간 충돌·실제 면적 밀도·문별 통과량은 미구현.'])
+                     '사람 키 1.7m·폭 0.46m. 중심 간 최소 0.54m 간격으로 충돌을 회피한다. 실측 밀도·문별 통과량 보정은 미적용.'])
 
 if __name__=='__main__':
     (ROOT/'configs/aquarium_map.json').write_text(json.dumps(build_map(),ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

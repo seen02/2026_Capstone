@@ -64,12 +64,14 @@ for(const room of map.geometry.rooms)for(const p of room.polygon)assert.ok(inFoo
 for(const wall of map.geometry.walls)assert.ok(inFootprint(wall.a)&&inFootprint(wall.b),'부분 벽이 바닥 밖');
 for(const edge of map.edges){
   const a=nodes[edge.a],b=nodes[edge.b];
-  check([a.x,a.z],[b.x,b.z],edge.id);
-  assert.ok(Math.abs(Math.hypot(a.x-b.x,a.z-b.z)-edge.length_m)<1e-9);
+  const points=[[a.x,a.z],...(edge.via??[]),[b.x,b.z]];
+  let length=0;for(let i=1;i<points.length;i++){check(points[i-1],points[i],edge.id);length+=Math.hypot(points[i][0]-points[i-1][0],points[i][1]-points[i-1][1]);}
+  assert.ok(Math.abs(length-edge.length_m)<1e-9);
 }
 // 표시 위치가 흩어지는 대기/관람 노드의 모든 연결을 양끝에서 검사한다.
 for(const edge of map.edges){
   if(![nodes[edge.a].kind,nodes[edge.b].kind].some(k=>['queue','exhibit'].includes(k)))continue;
+  if([edge.a,edge.b].includes('queue_F'))continue; // 접힌 대기 경로는 아래에서 실제 경유점으로 검사한다.
   for(let id=1;id<=3300;id++){
     const v={id,node:edge.a,next_node:edge.b,state:'walking',progress:0};
     const a=visitorPosition(v,nodes,rooms);v.progress=1;
@@ -89,16 +91,21 @@ for(const room of map.geometry.rooms){
 }
 console.log('통과: 공용 관람길·공연 입퇴장 경로에서 3,300명 표시 위치가 벽·전시물을 통과하지 않음');
 const show=rooms.F;
-assert.equal(show.queue_slots.length,80);
+assert.equal(show.queue_slots.length,50);
 assert.equal(new Set(show.queue_slots.map(p=>p[1])).size,2,'두 줄');
-for(let rank=0;rank<80;rank++){
-  const p=visitorPosition({id:rank+1,node:show.queue_node,state:'queueing',queue_slot:rank,queue_count:80},nodes,rooms);
+for(let rank=0;rank<50;rank++){
+  const p=visitorPosition({id:rank+1,node:show.queue_node,state:'queueing',queue_slot:rank,queue_count:50},nodes,rooms);
   assert.deepEqual(p,show.queue_slots[rank]);
   assert.deepEqual(p,visitorPosition({id:rank+1,node:show.queue_node,state:'queueing',queue_slot:rank,queue_count:1},nodes,rooms),'인원이 줄어도 자리 고정');
-  check(p,[nodes.show_lobby.x,nodes.show_lobby.z],'대기 줄 합류·포기');
-  check(p,[nodes.show_before.x,nodes.show_before.z],'줄에서 입구로 이동');
+  const joining=[[nodes.show_lobby.x,nodes.show_lobby.z],...(rank<25?show.queue_path.slice(1,3):[]),p];
+  for(let i=1;i<joining.length;i++)check(joining[i-1],joining[i],'두 줄로 접힌 합류');
+  const boarding=[p,...(rank>=25?[show.queue_path[1],show.queue_path[2]]:[]),show.queue_slots[0],[nodes.show_before.x,nodes.show_before.z]];
+  for(let i=1;i<boarding.length;i++)check(boarding[i-1],boarding[i],'입구까지 순서대로 이동');
   for(let j=0;j<rank;j++)assert.ok(Math.hypot(p[0]-show.queue_slots[j][0],p[1]-show.queue_slots[j][1])>=.8-1e-9,'최소 0.8m 간격');
 }
-const distance=p=>Math.hypot(Math.max(32-p[0],0,p[0]-66),Math.max(41-p[1],0,p[1]-58));
-assert.ok(show.queue_slots.every((p,i)=>i===0||distance(p)>=distance(show.queue_slots[i-1])-1e-9),'공연 구역 가까운 자리 우선');
-console.log('통과: 두 줄 80자리, 최소 0.8m 간격, 공연 구역 가까운 순서, 고정 자리');
+assert.equal(new Set(show.queue_slots.slice(0,25).map(p=>p[1])).size,1);
+assert.ok(show.queue_slots.slice(0,25).every((p,i,rows)=>!i||p[0]>rows[i-1][0]),'아래 줄 입구부터 채움');
+assert.ok(show.queue_slots.slice(25).every((p,i,rows)=>!i||p[0]<rows[i-1][0]),'오른쪽에서 접혀 위쪽 줄로 이어짐');
+assert.equal(nodes.F.capacity,50);assert.equal(nodes.B.capacity,80);assert.equal(nodes.C.capacity,40);
+assert.deepEqual(show.bounds,[36,44,30,14]);
+console.log('통과: 축소 공연장 50명, 두 줄 25+25자리, 0.8m 간격, 오른쪽 회전 경로');

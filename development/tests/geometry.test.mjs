@@ -20,6 +20,8 @@ const deep=map.geometry.rooms.find(r=>r.id==='C');
 assert.equal(deep.features.length,1,'심해 수조는 하나');
 assert.equal(deep.features[0].polygon.length,6,'ㄱ자 외곽');
 assert.ok(map.geometry.walls.some(w=>w.a[0]===71&&w.b[0]===71&&w.a[1]<=30&&w.b[1]>=41),'해파리 수조 외측 벽');
+assert.ok(map.geometry.walls.some(w=>w.a[1]===58&&w.b[1]===58&&w.a[0]===28&&w.b[0]>=36),'아쿠아리움 출구 옆 외벽과 공연장 왼쪽 벽 연결');
+for(let x=30;x<36;x++)for(let z=44;z<58;z++)assert.ok(cells.has(`${x},${z}`),'출구와 공연장 사이 바닥 연결');
 assert.ok(!map.geometry.labels.some(l=>l.text==='공연 대기'),'공연 대기 추가 라벨 없음');
 const dimensions=personDimensions(map.geometry);
 const human=new CapsuleGeometry(dimensions.radius,dimensions.cylinderLength,4,6);human.computeBoundingBox();

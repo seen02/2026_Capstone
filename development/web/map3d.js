@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {OrbitControls} from './vendor/three/OrbitControls.js';
-import {visitorPosition} from './spatial.mjs?v=queue-2';
+import {visitorPosition} from './spatial.mjs?v=viewing-2';
 import {floorTiles,FLOOR_Y,personDimensions} from './geometry.mjs';
 
 function textLabel(text,color='#dcefeb',size=2){
@@ -128,6 +128,10 @@ export class AquariumMap{
       const name=this.label(r.name,p[0],3.6,p[1],r.color,2.15);name.userData.node=r.id;this.pickables.push(name);
       if(r.id==='F'){
         for(const [a,b] of r.queue_rows??[])this.band({x:a[0],z:a[1]},{x:b[0],z:b[1]},.035,'#baa981',FLOOR_Y+.02);
+        for(let i=1;i<(r.queue_path?.length??0);i++){
+          const a=r.queue_path[i-1],b=r.queue_path[i];
+          this.arrow({x:a[0],z:a[1]},{x:b[0],z:b[1]},0x358e7a,1.1);
+        }
         const q=r.queue_area;
         this.label('공연 대기',q[0]+q[2]/2,2.2,q[1]+q[3]/2,'#ffe6b6',1.3);
       }
