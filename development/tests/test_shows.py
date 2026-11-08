@@ -26,7 +26,7 @@ class ShowTests(unittest.TestCase):
         return a
 
     def test_venue_waiting_locations_and_capacity(self):
-        for zone,capacity in [('A',50),('B',60),('F',80)]:
+        for zone,capacity in [('A',50),('B',80),('F',50)]:
             with self.subTest(zone=zone):
                 sim,show=self.empty_show(zone)
                 visitors=[self.join(sim,show,i) for i in range(1,capacity+2)]
@@ -42,6 +42,9 @@ class ShowTests(unittest.TestCase):
                     self.assertFalse(show.queue)
                 sim.advance_to(show.start)
                 self.assertEqual(sim.occupancy[zone],capacity)
+                # 정원은 입장 때 확보하지만 실제 보행·대기로 착석은 늦어질 수 있다.
+                self.assertLessEqual(len(show.attended),capacity)
+                sim.advance_to(show.start+180)
                 self.assertEqual(len(show.attended),capacity)
                 self.assertTrue(all(sim.active[i].state=='viewing' for i in show.reserved))
                 sim.advance_to(show.end)
@@ -183,7 +186,7 @@ class ShowTests(unittest.TestCase):
         self.assertTrue(all(r['attended']>0 for r in rows))
         self.assertTrue(all(r['attended']==r['completed'] for r in rows))
         self.assertTrue(all(r['peak_reserved']<=r['capacity'] for r in rows))
-        self.assertTrue(any(r['node']=='F' and r['peak_reserved']==80 and r['full_redirects']>0 for r in rows))
+        self.assertTrue(any(r['node']=='F' and r['peak_reserved']==50 and r['full_redirects']>0 for r in rows))
         self.assertEqual(sim.exited,CONFIG['daily_visitors'])
         self.assertTrue(all(not s.reserved for s in sim.shows.values()))
         stepped=Simulation(MAP,CONFIG)

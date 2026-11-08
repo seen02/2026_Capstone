@@ -144,6 +144,7 @@ class ShowOperations:
         if self.now>=s.start or s.end>a.deadline:self._reject_show(a,"late");return
         if not self._has_show_space(a,s):self._reject_show(a,"full");return
         if not self._claim_queue_slot(a,s):self._reject_show(a,"full");return
+        self.movement.ensure(a)
         s.reserved.add(a.id);s.peak_reserved=max(s.peak_reserved,len(s.reserved))
         if len(s.reserved)==s.capacity:self._log(f"{s.name} 정원 {s.capacity}명 마감")
         if self._gallery_show(s):
@@ -151,6 +152,7 @@ class ShowOperations:
             self._admit(a,s.zone)
         else:
             a.state="queueing";a.queued_at=self.now;s.queue.append(a.id)
+            s.queue=deque(sorted(s.queue,key=lambda id:self.active[id].queue_slot))
             self._schedule_boarding(s)
 
     def _schedule_boarding(self,s):

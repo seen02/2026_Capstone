@@ -61,7 +61,7 @@ class PlaybackApiTests(unittest.TestCase):
             full=post('/api/advance',{'seconds':2,'motion':True})
             post('/api/seek',{'target':37800})
             compact=post('/api/advance',{'seconds':2,'motion':True,'motion_format':'compact-v1'})
-            fields=['id','persona','state','node','next_node','progress','queue_rank','queue_count','queue_slot']
+            fields=['id','persona','state','node','next_node','progress','queue_rank','queue_count','queue_slot','position','motion_status']
             self.assertEqual(compact['motion_format'],'compact-v1')
             for a,b in zip(full['motion_frames'],compact['motion_frames']):
                 self.assertEqual(a['time'],b['time'])

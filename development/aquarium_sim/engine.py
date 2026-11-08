@@ -6,6 +6,7 @@ import math
 import random
 from .hashing import stable_seed, sha256_value
 from .shows import ShowOperations
+from .movement import Movement, STEP
 from .personas import PROFILES, RuleProvider, validate_preferences
 
 
@@ -155,6 +156,12 @@ class Visitor:
     replan_after_edge: bool = False
     skipped_shows: set = field(default_factory=set)
     seen_shows: set = field(default_factory=set)
+    position: tuple | None = None
+    move_goal: tuple | None = None
+    motion_status: str = "still"
+    blocked_for: float = 0
+    movement_wait_seconds: float = 0
+    avoidance_steps: int = 0
 
 
 class Simulation(ShowOperations):
@@ -176,6 +183,8 @@ class Simulation(ShowOperations):
         self.history = []
         self.recent = deque(maxlen=12)
         self.exit_reasons = Counter()
+        self.movement=Movement(self)
+        self.actual_arrivals=[]
         self._init_shows()
         for id,t in enumerate(self.schedule,1):self._push(t,"birth",id)
         self._push(self.closing,"close")
@@ -190,10 +199,16 @@ class Simulation(ShowOperations):
         self.recent.appendleft({"time":clock_text(self.now),"text":text})
 
     def _birth(self, id):
+        point=self.movement.spawn('entry')
+        if point is None:
+            self._push(self.now+STEP,'birth',id)
+            return
         rng = random.Random(stable_seed(self.config["seed"],id,"visitor-v1"))
         persona = rng.randrange(len(PROFILES))
         deadline = min(self.closing,self.now+rng.uniform(*self.config["stay_minutes"])*60)
         a = Visitor(id,persona,self.now,deadline,rng)
+        a.position=point
+        self.actual_arrivals.append(self.now)
         self.active[id]=a
         self.entered+=1
         self.peak=max(self.peak,len(self.active))
@@ -273,7 +288,12 @@ class Simulation(ShowOperations):
         a.edge,a.next_node=eid,nxt
         a.move_start,a.move_end=self.now,self.now+duration
         self.edge_load[eid]+=1
-        self._push(a.move_end,"arrive",a.id,a.token)
+        self.movement.begin(a)
+        if a.move_goal is None and self.graph.nodes[nxt]['kind']=='queue':
+            # 대기 공간이 통로까지 넘치기 전에 다른 전시를 선택한다.
+            self.edge_load[eid]-=1;a.edge=a.next_node=None
+            if a.show_id:self._reject_show(a,'full')
+            else:self._choose(a,exclude=self.movement.full_queues()|{self.graph.nodes[nxt]['zone']})
 
     def _at_exhibit(self,a):
         if a.must_exit:
@@ -340,11 +360,27 @@ class Simulation(ShowOperations):
             raise RuntimeError("출구에 도착하기 전에는 퇴장 처리할 수 없습니다.")
         self.completed.append(dict(id=a.id,persona=PROFILES[a.persona]["id"],entered_at=a.entered_at,
                                    exited_at=self.now,stay_minutes=(self.now-a.entered_at)/60,
-                                   wait_seconds=a.wait_seconds,visits=a.visits,skipped_shows=sorted(a.skipped_shows),reason=a.exit_reason))
+                                   wait_seconds=a.wait_seconds,movement_wait_seconds=a.movement_wait_seconds,avoidance_steps=a.avoidance_steps,visits=a.visits,skipped_shows=sorted(a.skipped_shows),reason=a.exit_reason))
+        self.movement.claims.pop(a.id,None);self.movement.paths.pop(a.id,None)
+        self.movement.detours.pop(a.id,None);self.movement.stalls.pop(a.id,None)
+        self.movement.queue_paths.pop(a.id,None)
         del self.active[a.id]
         self.exited+=1
         self.exit_reasons[a.exit_reason]+=1
         if self.exited==1 or self.exited%100==0:self._log(f"누적 {self.exited:,}명 퇴장")
+
+    def _arrived(self,a):
+        self.edge_load[a.edge]-=1
+        a.node=a.next_node
+        a.edge=a.next_node=None
+        if a.must_exit:self._go_exit(a)
+        elif a.redirect_show:self._route_to_show(a)
+        elif a.replan_after_edge:
+            a.replan_after_edge=False
+            if a.admitted_zone:
+                zone=a.admitted_zone;self.occupancy[zone]-=1;a.admitted_zone=None;self._release_queue(zone)
+            self._choose(a)
+        else:self._walk(a)
 
     def advance_to(self,target):
         if type(target) not in (int,float) or not math.isfinite(target) or target<self.now:
@@ -352,7 +388,8 @@ class Simulation(ShowOperations):
         target=min(target,self.horizon)
         while self.events and self.events[0][0]<=target:
             self.now,_,kind,id,token=heapq.heappop(self.events)
-            if kind.startswith("show_"):self._show_event(kind,id)
+            if kind=="movement":self.movement.step()
+            elif kind.startswith("show_"):self._show_event(kind,id)
             elif kind=="birth":self._birth(id)
             elif kind=="sample":
                 self.history.append(dict(time=self.now,entered=self.entered,inside=len(self.active),exited=self.exited))
@@ -364,19 +401,7 @@ class Simulation(ShowOperations):
                 if a is None:continue
                 if kind=="deadline":self._deadline(a)
                 elif token==a.token:
-                    if kind=="arrive":
-                        self.edge_load[a.edge]-=1
-                        a.node=a.next_node
-                        a.edge=a.next_node=None
-                        if a.must_exit:self._go_exit(a)
-                        elif a.redirect_show:self._route_to_show(a)
-                        elif a.replan_after_edge:
-                            a.replan_after_edge=False
-                            if a.admitted_zone:
-                                zone=a.admitted_zone;self.occupancy[zone]-=1;a.admitted_zone=None;self._release_queue(zone)
-                            self._choose(a)
-                        else:self._walk(a)
-                    elif kind=="view_end":
+                    if kind=="view_end":
                         self._leave_view(a)
                         self._choose(a)
         self.now=target
@@ -394,10 +419,11 @@ class Simulation(ShowOperations):
                 progress=max(0,min(1,(self.now-a.move_start)/(a.move_end-a.move_start)))
             if compact:
                 visitors.append([a.id,a.persona,a.state,a.node,a.next_node,progress,
-                                 queue_order.get(a.id),queue_counts.get(node.get("zone"),0),a.queue_slot])
+                                 queue_order.get(a.id),queue_counts.get(node.get("zone"),0),a.queue_slot,list(a.position) if a.position is not None else None,a.motion_status])
                 continue
             visitors.append(dict(id=a.id,persona=a.persona,state=a.state,node=a.node,next_node=a.next_node,
                                  queue_rank=queue_order.get(a.id),queue_count=queue_counts.get(node.get("zone"),0),queue_slot=a.queue_slot,
+                                 position=list(a.position) if a.position is not None else None,motion_status=a.motion_status,
                                  progress=progress,destination=a.destination,entered_at=a.entered_at,
                                  floor=node["floor"],visited=len(a.visited),edge=a.edge,
                                  transition_kind=self.graph.edges[a.edge]["kind"] if a.edge else None))
@@ -410,7 +436,7 @@ class Simulation(ShowOperations):
                for n,d in self.graph.nodes.items() if d["kind"] in {"exhibit","rest"}]
         done=self.entered==self.config["daily_visitors"] and not self.active
         weights=arrival_weights(self.config);total=sum(weights);opening=clock_seconds(self.config["opening"])
-        minute_counts=Counter(int((t-opening)//60) for t in self.schedule if t<=self.now)
+        minute_counts=Counter(int((t-opening)//60) for t in self.actual_arrivals if t<=self.now)
         arrival_series=[dict(time=opening+i*60,expected=self.config["daily_visitors"]*w/total,
                              actual=minute_counts[i] if opening+(i+1)*60<=self.now else None) for i,w in enumerate(weights)]
         return dict(shows=self._show_snapshots(),time=self.now,clock=clock_text(self.now),opening=clock_seconds(self.config["opening"]),
