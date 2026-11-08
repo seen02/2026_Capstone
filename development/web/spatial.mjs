@@ -1,5 +1,6 @@
 // 미터 단위 가상 도면의 표시 좌표. 엔진의 경로와 같은 출입문을 통과한다.
 export function visitorPosition(visitor,nodes,rooms){
+  if(visitor.position)return visitor.position;
   const point=id=>{
     const n=nodes[id],room=rooms[n.zone];
     if(!room || !["queue","exhibit"].includes(n.kind))return [n.x,n.z];

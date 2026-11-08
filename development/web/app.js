@@ -1,5 +1,5 @@
-import {AquariumMap} from './map3d.js?v=queue-2';
-import {Playback,decodeMotionFrames} from './playback.mjs?v=queue-2';
+import {AquariumMap} from './map3d.js?v=viewing-2';
+import {Playback,decodeMotionFrames} from './playback.mjs?v=viewing-2';
 import {activePrograms} from './programs.mjs';
 const $=id=>document.getElementById(id);
 let meta,state,map,playback,running=false,busy=false,selected=null,mutating=false,scrubbing=false,batchPromise=null;
@@ -160,8 +160,8 @@ function animate(now){
       if(changed)render(false);
       if(!playback.active&&serverDone)setRunning(false);
     }
-    // 60초분이 남으면 선읽기한다. 100배에서는 실제 재생 약 0.6초분이다.
-    if(running&&!busy&&!serverDone&&(playback?.remaining??0)<=60)batchPromise=fetchBatch();
+    // 군중 충돌 계산이 집중되는 구간에 대비해 실제 재생 3초분을 선읽기한다.
+    if(running&&!busy&&!serverDone&&(playback?.remaining??0)<=Math.max(60,speed*3))batchPromise=fetchBatch();
   }
   requestAnimationFrame(animate);
 }
