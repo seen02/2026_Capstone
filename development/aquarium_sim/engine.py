@@ -182,6 +182,7 @@ class Simulation(ShowOperations):
         self.queues = {n:deque() for n in self.graph.nodes}
         self.history = []
         self.recent = deque(maxlen=12)
+        self.program_events = deque(maxlen=24)
         self.exit_reasons = Counter()
         self.movement=Movement(self)
         self.actual_arrivals=[]
@@ -195,8 +196,9 @@ class Simulation(ShowOperations):
         self.serial+=1
         heapq.heappush(self.events,(time,self.serial,kind,id,token))
 
-    def _log(self, text):
-        self.recent.appendleft({"time":clock_text(self.now),"text":text})
+    def _log(self, text, kind='flow'):
+        target=self.program_events if kind=='show' else self.recent
+        target.appendleft({"time":clock_text(self.now),"text":text})
 
     def _birth(self, id):
         point=self.movement.spawn('entry')

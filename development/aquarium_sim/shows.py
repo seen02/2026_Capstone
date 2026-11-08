@@ -146,7 +146,7 @@ class ShowOperations:
         if not self._claim_queue_slot(a,s):self._reject_show(a,"full");return
         self.movement.ensure(a)
         s.reserved.add(a.id);s.peak_reserved=max(s.peak_reserved,len(s.reserved))
-        if len(s.reserved)==s.capacity:self._log(f"{s.name} 정원 {s.capacity}명 마감")
+        if len(s.reserved)==s.capacity:self._log(f"{s.name} 정원 {s.capacity}명 마감",'show')
         if self._gallery_show(s):
             # 접근 지점에서는 멈추지 않고 평소 관람 공간으로 바로 이동한다.
             self._admit(a,s.zone)
@@ -186,7 +186,7 @@ class ShowOperations:
     def _show_event(self,kind,key):
         s=self.shows[key]
         if kind=="show_call":
-            self._log(f"{s.name} 대기 모집 시작")
+            self._log(f"{s.name} 대기 모집 시작",'show')
             for a in list(self.active.values()):
                 if a.show_id or a.must_exit or a.admitted_zone and a.state!="viewing":continue
                 if not self._show_reachable(a,s):continue
@@ -198,7 +198,7 @@ class ShowOperations:
         elif kind=="show_admit":self._schedule_boarding(s)
         elif kind=="show_board":self._board_show(s)
         elif kind=="show_start":
-            self._log(f"{s.name} 시작")
+            self._log(f"{s.name} 시작",'show')
             for a in list(self.active.values()):
                 if a.show_id!=key:continue
                 if a.state in {"seated","show_waiting"}:self._begin_show_view(a)
@@ -208,7 +208,7 @@ class ShowOperations:
                     else:self._reject_show(a,"late")
                 elif a.state=="queueing":self._reject_show(a,"late")
         elif kind=="show_end":
-            self._log(f"{s.name} 종료 · 다음 관람 이동")
+            self._log(f"{s.name} 종료 · 다음 관람 이동",'show')
             for a in list(self.active.values()):
                 if a.show_id!=key:continue
                 if a.state=="viewing":

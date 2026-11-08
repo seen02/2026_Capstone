@@ -185,6 +185,14 @@ class MovementTests(unittest.TestCase):
         self.assertGreater(len(show.full),0)
         self.assertFalse(any(a.show_id==show.key and a.edge for a in sim.active.values()))
 
+    def test_entry_exit_log_excludes_show_messages(self):
+        sim=Simulation(MAP,{**CONFIG,'daily_visitors':0})
+        sim._log('누적 1명 입장')
+        sim.advance_to(sim.shows['F@10:20'].end)
+        texts=[r['text'] for r in sim.snapshot()['recent']]
+        self.assertEqual(texts,['누적 1명 입장'])
+        self.assertTrue(sim.program_events)
+
     def test_show_queue_entrance_does_not_block_following_visitors(self):
         sim=Simulation(MAP,CONFIG)
         sim.advance_to(clock_seconds('10:22'))
