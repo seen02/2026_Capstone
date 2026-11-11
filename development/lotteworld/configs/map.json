@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "scenario_id": "magic-island",
+  "status": "planned",
+  "geometry": null,
+  "facilities": [
+    {"id": "atlantis", "name": "아트란티스"},
+    {"id": "gyro-drop", "name": "자이로드롭"},
+    {"id": "gyro-swing", "name": "자이로스윙"},
+    {"id": "gyro-spin", "name": "자이로스핀"},
+    {"id": "comet-express", "name": "혜성특급"},
+    {"id": "arcana-ride", "name": "아르카나라이드"}
+  ],
+  "provenance": "시설 목록만 확정. 실제 형상·좌표·보행 경로는 체크리스트 2번에서 구현한다."
+}

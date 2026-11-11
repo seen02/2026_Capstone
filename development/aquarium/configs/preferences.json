@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "scenario_id": "aquarium",
+  "tags": ["coast", "coral", "deep", "jellyfish", "freshwater", "interactive"],
+  "profiles": [
+    {"id":"explorer","name":"탐구형","color":"#56cfc1","preferences":{"deep":2.5,"freshwater":2.2}},
+    {"id":"animal","name":"해양동물 선호형","color":"#b69af7","preferences":{"coast":3.0,"coral":1.8}},
+    {"id":"experience","name":"공연 선호형","color":"#ffba70","preferences":{"interactive":3.0,"coast":2.0,"coral":2.0}},
+    {"id":"calm","name":"감상형","color":"#7faaf7","preferences":{"coral":2.0,"jellyfish":3.0}}
+  ]
+}

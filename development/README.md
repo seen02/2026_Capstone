@@ -1,42 +1,48 @@
-# 아쿠아리움 페르소나 관람 시뮬레이션
+# 시나리오별 시뮬레이션 개발
 
-발표 자료의 **A 연안 · B 산호 · C 심해 · D 해파리 · E 민물 · F 공연**을 유지하는 가상 1층 아쿠아리움입니다. 공개 안내도의 전시 연결 방식만 참고하며 특정 시설 지도·치수·입장 통계를 복제하지 않습니다.
+아쿠아리움과 롯데월드를 독립 프로젝트로 분리했다. Python 3.11 이상을 사용하며 추가 Python 패키지는 필요하지 않다. 기존 팀 자료와 상위 작업 공간의 이전 원본은 보존한다.
 
-## 실행
+| 위치 | 실행 상태 | 기본 포트 |
+| --- | --- | --- |
+| [aquarium/](aquarium/README.md) | 기존 아쿠아리움 시뮬레이션·CLI·정적 시안 | 8765 (정적 시안8766) |
+| [lotteworld/](lotteworld/README.md) | 매직아일랜드 설정 로드·검증·상태 확인 서버 | 8767 |
+| [docs/](docs/design.md) | 매직아일랜드 명세·운영 조사·체크리스트·인계·검증 기록 | — |
 
-프로젝트 폴더의 PowerShell에서 `./run.ps1`을 실행하고 http://127.0.0.1:8765 를 엽니다. Python 3.11 이상이면 `python -m aquarium_sim.server`로도 실행할 수 있습니다. 추가 Python 패키지는 필요하지 않습니다.
+각 프로젝트의 코드·지도·운영·선호·테스트·실행 스크립트는 해당 폴더 안에 있다. 두 폴더는 서로의 런타임을 가져오지 않으며 각 폴더만 복사해도 실행할 수 있다. 기존 아쿠아리움 설계·재사용 기록과 `web-admin` 문서는 모두 `aquarium/` 아래에 있다.
 
-화면의 **시작·일시정지**, **재시작** 버튼과 드래그 가능한 시간 진행바로 조작합니다. 재시작은 입력한 설정을 적용해 처음부터 재생합니다. 진행바로 앞뒤 시각을 선택하면 해당 시각의 상태를 계산하고 일시정지합니다. 과거로 이동해도 같은 설정·시드의 결과를 재현합니다. 지도를 드래그해 회전하고 휠로 확대할 수 있으며, 전시 구역을 선택하면 관람·대기 인원이 표시됩니다.
+## 시나리오 선택
+
+이 `development/` 폴더에서 실행한다. 루트 진입점은 시나리오를 명시적으로 선택해야 한다.
 
 ```powershell
-python -m aquarium_sim.cli --visitors 1000 --seed 20261104 --output output/day-report.json
+./run.ps1 --scenario aquarium
+./run.ps1 --scenario magic-island
+./run.ps1 --scenario aquarium --mode cli --visitors 1000 --output aquarium/output/day-report.json
+./run.ps1 --scenario magic-island --mode cli --validate-only --output lotteworld/output/scenario-metadata.json
+```
+
+`python run.py`에도 같은 인자를 사용할 수 있다. `--mode`의 기본값은 `server`다. `--config 경로`와 `--output 경로`는 호출한 폴더 기준으로 해석하고, 생략한 각 프로젝트의 기본 경로는 해당 프로젝트 폴더를 기준으로 한다. 서버·CLI는 `--validate-only`로 실제 실행 없이 입력 검증을 할 수 있다. 시나리오를 바꾸려면 원하는 시나리오로 별도 실행한다.
+
+아쿠아리움의 기존 `./run.ps1`, `python -m aquarium_sim.server`, CLI 명령은 이제 `aquarium/`에서 사용한다. 롯데월드는 `lotteworld/`의 `./run.ps1`, `python -m lotteworld_sim.server`로 독립 실행한다.
+
+## 매직아일랜드 현재 범위
+
+[체크리스트](docs/implementation-checklist.md)1번을 완료했다. 관측10:00~19:00, 계획 유입10,350명, 대기 포함 개인 예정 체류120~240분과6개 시설의 독립 설정을 검증한다. [설정 계약](lotteworld/docs/configuration.md)에 API와 검증 규칙을 정리했다.
+
+실제 지도·유입·보행·시설 운행·재생은 후속 단계다. 매직아일랜드 서버는 `runnable: false`로 준비 상태를 제공하고 재생 요청은409로 거절한다. CLI의 내보내기는 설정 메타데이터이며 시뮬레이션 보고서가 아니다. 입력 근거·가정은 [개발 명세](docs/design.md)와 [운영 조사](docs/magic-island-research.md)를 따른다. 19시는 관측 종료이며 폐장이 아니다.
+
+## 검증
+
+각 명령은 해당 폴더에서 실행한다.
+
+```powershell
+# development/
 python -m unittest discover -s tests -v
-node tests/spatial.test.mjs
+# development/lotteworld/
+python -m unittest discover -s tests -v
+# development/aquarium/
+python -m unittest discover -s tests -v
+Get-ChildItem tests/*.test.mjs | ForEach-Object { node $_.FullName }
 ```
 
-## 공간과 입퇴장
-
-- 72×60m 범위의 단층에 벽면 수조를 따라 이어지는 갤러리를 배치했습니다. 밝은 보행 바닥과 어두운 비관람 영역을 구분하며, 주동선은 E 민물 → A 연안 → B 산호 → C 심해 → D 해파리 → F 공연장 앞 → 로비로 이어집니다. 양방향 이동과 두 연결 통로로 순환·지름길 선택을 제공합니다. 갈림길 3곳에 안내판을 뒀습니다.
-- A~E는 넓은 개구부로 이어지고, F는 30×14m·정원 50명으로 무대·관람 공간·입장 대기·측면 퇴장을 구분합니다. 공연 대기는 입구 오른쪽의 두 줄(25+25명)을 오른쪽 끝에서 접어 연결합니다. 산호 정원은 80명, 심해는 40명입니다. 보행면 경계의 구획벽과 수조가 통로를 형성합니다. 3D의 낮은 벽은 내부를 보여 주는 절개 표현이며 실제 모델의 벽 높이를 변경한 것이 아닙니다. 사람 키 1.7m·폭 0.46m는 공간과 동일한 미터 단위입니다.
-- 시작 시 내부 인원은 0명입니다. 하루 1,000명을 09:30~17:30 사이에 순차 입장시키고, 관람 완료·체류시간 종료·폐장 시 출구로 이동시킵니다. 1,000명은 가상 기본 실험 부하입니다.
-- 입장률은 10:30과 14:00 부근에 피크가 있는 **가상 분포**입니다. 분별 인원은 총인원 조건부 다항분포로 추출하고, 각 분 안의 입장 시각도 무작위로 지정합니다. 시드가 같으면 재현되며 균등 분포와 비교할 수 있습니다.
-- 개인 체류 한도 90~180분, 정원, 보행속도 1.2m/s는 실험 가정입니다. 전시를 모두 마치면 먼저 퇴장할 수 있습니다. 19:00은 잔여 퇴장을 처리하는 계산 종료 시각입니다.
-
-## 구현 범위
-
-현재 구현은 규칙 기반 선호 4종, 선호 전시 선택, 그래프 이동, 입장 중 인원을 포함하는 관람 상한과 대기, 점진적 입퇴장, 3D 표시, 분별 입장 그래프, CLI 결과 JSON 및 안내판 상태 API(`/api/signs`)입니다. 서버가 0.25초마다 실제 좌표를 계산합니다. 사람 폭 0.46m에 여유 0.08m를 더해 이동 중 겹침·통과를 막고, 감속·대기·우회를 반영합니다. 일반 대기는 공용 통로를 비운 한정된 자리에서 기다리며 자리가 없으면 다른 전시를 선택합니다. 충돌로 늦어진 시간은 관람·공연 도착에도 반영됩니다. 실측 밀도·출입문 통과 유량으로 보정한 모형은 아닙니다.
-
-A에는 물범 생태설명, B에는 다이버 먹이주기, F에는 해양 공연 프로그램 장소와 가상 시간표가 있습니다. 세 구역 모두 공연 10분 전 대기 모집, 2분 전부터 1초 간격 입장, 정시 시작·동시 종료를 적용합니다. 대기줄 도착 순서로 정원을 확보하며 만석·지각·관람 제한 시간 부족이면 다른 전시를 선택합니다. A·B는 일반 관람객과 정원을 공유하고 F는 회차가 없을 때 입장하지 않습니다. 공연 후 다음 전시로 이동하며 F는 전용 퇴장 동선을 이용합니다. 설정은 `configs/day.json`의 `performances`에서 변경합니다. LLM 분류, 안내판의 행동 변화 효과, 하드웨어 송수신, 별도 사용자 안내 웹도 후속 구현 범위입니다.
-
-공간 및 공연 설정은 [설계 명세](docs/design.md), 기존 코드 재사용은 [재사용 내역](docs/reuse.md)을 참고하세요. `scripts/build_map.py`를 수정하고 실행하면 `configs/aquarium_map.json`이 생성됩니다. 입장 분포는 `configs/day.json`과 `configs/arrival_profiles.json`에 있습니다. `scripts/import_arrivals.py`는 향후 사용자가 제공하는 분별 CSV를 가져오는 범용 도구이며 프로젝트에 실제 관측 자료는 포함하지 않습니다.
-
-지도만 확인하려면 http://127.0.0.1:8765/floorplan.svg 를 엽니다. 이 평면도는 같은 지도 JSON에서 생성됩니다. 지도 수정 뒤 아래 두 명령을 차례로 실행합니다.
-
-```powershell
-python scripts/build_map.py
-python scripts/export_plan.py
-```
-
-일반 관람객은 수조 전면의 빈자리를 선호하며 규칙적인 줄로 배치하지 않습니다. 민물의 양쪽 수조를 모두 관람합니다. 입퇴장 기록에는 공연 이벤트가 표시되지 않습니다.
-
-아쿠아리움 출구 옆 외벽은 공연장 왼쪽 벽까지 이어지며, 그 사이 바닥도 연결되어 있습니다.
+WindowsApps의 `python` 별칭이 실행되지 않으면 `run.ps1`이 우선 사용하는 `C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe`를 사용한다. 실제 검증 결과는 [검증 기록](docs/verification/scenario-isolation.md)에 있다.

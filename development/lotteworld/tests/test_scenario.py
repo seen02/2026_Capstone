@@ -1,0 +1,115 @@
+from copy import deepcopy
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import threading
+import unittest
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
+
+from lotteworld_sim.scenario import ROOT, load_inputs, validate
+from lotteworld_sim.server import make_server
+
+
+class ScenarioTests(unittest.TestCase):
+    def test_defaults_and_independent_loads(self):
+        scenario = load_inputs()
+        self.assertEqual(scenario.config["arrivals"]["planned_total"], 10350)
+        self.assertEqual(scenario.config["stay"]["minutes"], [120, 240])
+        self.assertEqual(scenario.config["observation"]["end"], "19:00")
+        slots = scenario.config["arrivals"]["slots"]
+        self.assertEqual(sum(s["count"] for s in slots[3:6]), 4600)
+        self.assertEqual(max(s["count"] for s in slots), 1610)
+        self.assertFalse(scenario.metadata()["runnable"])
+        self.assertIsNone(scenario.map["geometry"])
+        self.assertEqual(scenario.metadata()["hashes"], load_inputs().metadata()["hashes"])
+        scenario.config["seed"] += 1
+        self.assertNotEqual(scenario.metadata()["hashes"], load_inputs().metadata()["hashes"])
+
+    def test_invalid_structures_and_cross_references(self):
+        scenario = load_inputs()
+        def change(group, keys, value):
+            parts = [deepcopy(scenario.map), deepcopy(scenario.config), deepcopy(scenario.preferences)]
+            node = parts[group]
+            for key in keys[:-1]:
+                node = node[key]
+            node[keys[-1]] = value
+            return parts
+        cases = [
+            (0, ["scenario_id"], "aquarium"), (0, ["facilities", 0, "id"], "gyro-drop"),
+            (0, ["geometry"], {}), (0, ["facilities"], None),
+            (1, ["schema_version"], True), (1, ["seed"], True),
+            (1, ["observation", "end"], "25:00"), (1, ["observation", "end"], "09:00"),
+            (1, ["observation", "force_exit"], True), (1, ["stay", "clip_at_observation_end"], True),
+            (1, ["stay", "minutes"], [240, 120]), (1, ["stay", "minutes"], [0, 1]),
+            (1, ["stay", "minutes"], [120, float("nan")]), (1, ["stay", "includes_waiting"], False),
+            (1, ["arrivals", "planned_total"], 11500), (1, ["arrivals", "observation_share"], 1),
+            (1, ["arrivals", "slots", 0, "count"], -1), (1, ["arrivals", "slots", 0, "count"], True),
+            (1, ["arrivals", "slots", 0, "share"], float("inf")),
+            (1, ["arrivals", "slots", 1, "start"], "10:00"),
+            (1, ["arrivals", "slots"], []), (1, ["arrivals"], {}),
+            (2, ["tags", 0], "coast"), (2, ["profiles", 0, "preferences", "atlantis"], 6),
+            (2, ["profiles", 0, "preferences", "atlantis"], True),
+            (2, ["profiles", 0, "preferences", "atlantis"], float("nan")),
+            (2, ["profiles"], []), (2, ["profiles", 0, "preferences"], {}),
+        ]
+        for group, keys, value in cases:
+            with self.subTest(group=group, keys=keys, value=value), self.assertRaises(ValueError):
+                validate(*change(group, keys, value))
+
+    def test_custom_config_errors_and_hashes(self):
+        scenario = load_inputs()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "custom.json"
+            config = deepcopy(scenario.config)
+            config["seed"] = 12
+            path.write_text(json.dumps(config), encoding="utf-8")
+            loaded = load_inputs(config_path=path)
+            self.assertEqual(loaded.config["seed"], 12)
+            self.assertEqual(loaded.metadata()["hashes"]["map"], scenario.metadata()["hashes"]["map"])
+            self.assertNotEqual(loaded.metadata()["hashes"]["config"], scenario.metadata()["hashes"]["config"])
+            for invalid in ('[]', '{', '{"scenario_id":"aquarium","schema_version":1}'):
+                path.write_text(invalid, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    load_inputs(config_path=path)
+            with self.assertRaises(ValueError):
+                load_inputs(config_path=Path(directory) / "missing.json")
+
+    def test_cli_requires_explicit_validation(self):
+        result = subprocess.run([sys.executable, "-m", "lotteworld_sim.cli"], cwd=ROOT, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn(b"Traceback", result.stderr)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "metadata.json"
+            result = subprocess.run([sys.executable, "-m", "lotteworld_sim.cli", "--validate-only", "--output", str(output)], cwd=ROOT, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(output.read_text(encoding="utf-8"))["status"], "configuration_only")
+
+    def test_metadata_and_unavailable_runtime_api(self):
+        server = make_server(0)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://127.0.0.1:{server.server_port}"
+        try:
+            with urlopen(base + "/api/meta") as response:
+                data = json.load(response)
+            self.assertEqual(data["scenario_id"], "magic-island")
+            self.assertFalse(data["runnable"])
+            self.assertNotIn("personas", data)
+            with urlopen(base) as response:
+                self.assertIn("롯데월드 매직아일랜드", response.read().decode())
+            for path in ("/api/state", "/api/signs", "/api/report", "/api/reset", "/api/advance", "/api/seek", "/configs/day.json", "/floorplan.svg"):
+                request = Request(base + path, data=b"{}") if path in ("/api/reset", "/api/advance", "/api/seek") else base + path
+                with self.subTest(path=path), self.assertRaises(HTTPError) as caught:
+                    urlopen(request)
+                self.assertEqual(caught.exception.code, 409 if path.startswith("/api/") else 404)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+
+
+if __name__ == "__main__":
+    unittest.main()

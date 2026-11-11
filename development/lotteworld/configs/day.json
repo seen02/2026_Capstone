@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "scenario_id": "magic-island",
+  "seed": 20261104,
+  "observation": {"start": "10:00", "end": "19:00", "end_event": "world_of_light", "force_exit": false},
+  "stay": {"minutes": [120, 240], "distribution": "uniform", "starts_at": "actual_entry", "includes_waiting": true, "clip_at_observation_end": false},
+  "arrivals": {
+    "model": "fixed_hourly_counts",
+    "within_slot": "uniform_seconds",
+    "daily_baseline": 11500,
+    "observation_share": 0.9,
+    "planned_total": 10350,
+    "slots": [
+      {"start": "10:00", "end": "11:00", "share": 0.12, "count": 1380},
+      {"start": "11:00", "end": "12:00", "share": 0.10, "count": 1150},
+      {"start": "12:00", "end": "13:00", "share": 0.09, "count": 1035},
+      {"start": "13:00", "end": "14:00", "share": 0.13, "count": 1495},
+      {"start": "14:00", "end": "15:00", "share": 0.14, "count": 1610},
+      {"start": "15:00", "end": "16:00", "share": 0.13, "count": 1495},
+      {"start": "16:00", "end": "17:00", "share": 0.08, "count": 920},
+      {"start": "17:00", "end": "18:00", "share": 0.06, "count": 690},
+      {"start": "18:00", "end": "19:00", "share": 0.05, "count": 575}
+    ]
+  },
+  "provenance": {
+    "baseline": "2024년 연간 5,256,920명 / 366일 × 혼잡일 배율2 × 구역비율0.4를 100명 단위로 반올림한 11,500명.",
+    "arrivals": "관측 비중90%와 시간별 비중은 실험 가정. 실제 다리 통행 통계가 아니다.",
+    "stay": "대기를 포함한 개인 예정 체류120~240분, 균등분포는 개발 가정.",
+    "hours": "19시는 월드 오브 라이트 시작에 맞춘 관측 종료이며 폐장·강제 퇴장이 아니다."
+  }
+}

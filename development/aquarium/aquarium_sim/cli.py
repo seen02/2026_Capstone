@@ -12,11 +12,18 @@ def main():
     parser.add_argument("--seed",type=int,default=20261104)
     parser.add_argument("--output",type=Path,default=Path("output/day-report.json"))
     parser.add_argument("--config",type=Path,help="별도 실험 설정 JSON")
+    parser.add_argument("--validate-only",action="store_true",help="입력 검증 후 종료")
     args=parser.parse_args()
-    map_data,config=load_inputs(config_path=args.config)
-    config.update(seed=args.seed)
-    if args.visitors is not None:config["daily_visitors"]=args.visitors
-    sim=Simulation(map_data,config)
+    try:
+        map_data,config=load_inputs(config_path=args.config)
+        config.update(seed=args.seed)
+        if args.visitors is not None:config["daily_visitors"]=args.visitors
+        sim=Simulation(map_data,config)
+    except (ValueError,KeyError,TypeError) as exc:
+        parser.error(f"아쿠아리움 설정 오류: {exc}")
+    if args.validate_only:
+        print(json.dumps(dict(scenario_id="aquarium",runnable=True,daily_visitors=config["daily_visitors"]),ensure_ascii=False))
+        return
     sim.advance_to(sim.horizon)
     report=sim.report()
     args.output.parent.mkdir(parents=True,exist_ok=True)

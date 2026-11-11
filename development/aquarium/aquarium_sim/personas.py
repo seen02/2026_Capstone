@@ -4,13 +4,31 @@ import json
 from typing import Protocol
 from .hashing import sha256_value
 
-TAGS = ("coast", "coral", "deep", "jellyfish", "freshwater", "interactive")
-PROFILES = [
-    {"id":"explorer","name":"탐구형","color":"#56cfc1","preferences":{"deep":2.5,"freshwater":2.2}},
-    {"id":"animal","name":"해양동물 선호형","color":"#b69af7","preferences":{"coast":3.0,"coral":1.8}},
-    {"id":"experience","name":"공연 선호형","color":"#ffba70","preferences":{"interactive":3.0,"coast":2.0,"coral":2.0}},
-    {"id":"calm","name":"감상형","color":"#7faaf7","preferences":{"coral":2.0,"jellyfish":3.0}}
-]
+def load_preferences(path=None):
+    path = Path(path or Path(__file__).resolve().parents[1] / "configs/preferences.json")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        tags, profiles = data["tags"], data["profiles"]
+        if data["scenario_id"] != "aquarium" or type(data["schema_version"]) is not int or data["schema_version"] != 1:
+            raise ValueError("아쿠아리움 전용 선호 설정이 필요합니다.")
+        if not isinstance(tags, list) or len(tags) != 6 or set(tags) != {"coast", "coral", "deep", "jellyfish", "freshwater", "interactive"}:
+            raise ValueError("아쿠아리움 전시 태그 6개가 필요합니다.")
+        if not isinstance(profiles, list) or not profiles:
+            raise ValueError("아쿠아리움 선호 유형이 필요합니다.")
+        ids = set()
+        for profile in profiles:
+            if not isinstance(profile["id"], str) or not profile["id"] or profile["id"] in ids or not profile["name"] or not profile["color"]:
+                raise ValueError("아쿠아리움 선호 유형 ID·이름·색상을 확인하세요.")
+            ids.add(profile["id"])
+            values = profile["preferences"]
+            if not isinstance(values, dict) or not set(values) <= set(tags) or any(type(v) not in (int, float) or not 0 <= v <= 5 for v in values.values()):
+                raise ValueError("아쿠아리움 선호 값은 전시 태그별 0~5여야 합니다.")
+        return tuple(tags), profiles
+    except (OSError, KeyError, TypeError) as exc:
+        raise ValueError("아쿠아리움 선호 설정을 읽을 수 없습니다.") from exc
+
+
+TAGS, PROFILES = load_preferences()
 
 
 class PreferenceProvider(Protocol):

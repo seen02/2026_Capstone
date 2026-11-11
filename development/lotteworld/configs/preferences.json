@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "scenario_id": "magic-island",
+  "status": "provisional",
+  "tags": ["atlantis", "gyro-drop", "gyro-swing", "gyro-spin", "comet-express", "arcana-ride"],
+  "profiles": [
+    {"id": "baseline", "name": "시설별 동일 선호 기준형", "preferences": {"atlantis": 1, "gyro-drop": 1, "gyro-swing": 1, "gyro-spin": 1, "comet-express": 1, "arcana-ride": 1}}
+  ],
+  "provenance": "독립 설정 계약 확인용 가상 기준형이다. 실제 방문객 분포·선택 확률이 아니며 선호·반복 이용 행동은 체크리스트7번에서 구현한다."
+}
