@@ -5,11 +5,12 @@ import json
 import math
 from pathlib import Path
 import re
+from .map_geometry import validate_geometry
 
 ROOT = Path(__file__).resolve().parents[1]
 SCENARIO_ID = "magic-island"
 FACILITIES = {"atlantis", "gyro-drop", "gyro-swing", "gyro-spin", "comet-express", "arcana-ride"}
-NOT_READY = "매직아일랜드는 설정 기반만 구현됐습니다. 지도·보행·운행 엔진이 준비되지 않아 시뮬레이션을 실행할 수 없습니다."
+NOT_READY = "매직아일랜드 3D 지도 표시는 준비됐습니다. 유입·보행·운행 엔진이 준비되지 않아 시뮬레이션을 실행할 수 없습니다."
 
 
 def require(condition, message):
@@ -50,10 +51,10 @@ def validate(map_data, config, preferences):
         for data in (map_data, config, preferences):
             require(type(data["schema_version"]) is int and data["schema_version"] == 1 and data["scenario_id"] == SCENARIO_ID, "설정의 시나리오·스키마가 일치하지 않습니다.")
             require(bool(data["provenance"]), "출처·가정 설명이 필요합니다.")
-        require(map_data["status"] == "planned" and map_data["geometry"] is None, "현재 단계의 지도는 미구현 상태여야 합니다.")
         facilities = map_data["facilities"]
         require(isinstance(facilities, list) and len(facilities) == 6, "6개 시설 목록이 필요합니다.")
         require({f["id"] for f in facilities} == FACILITIES and all(isinstance(f["name"], str) and f["name"].strip() for f in facilities), "시설 ID·이름이 올바르지 않습니다.")
+        validate_geometry(map_data, require, number)
         require(integer(config["seed"]), "시드는 0 이상의 정수여야 합니다.")
         observation, stay, arrivals = config["observation"], config["stay"], config["arrivals"]
         start, end = clock(observation["start"]), clock(observation["end"])
@@ -88,7 +89,7 @@ def validate(map_data, config, preferences):
             require(isinstance(profile["name"], str) and bool(profile["name"].strip()), "선호 유형 이름이 필요합니다.")
             require(isinstance(values, dict) and set(values) == set(tags) and all(number(v, 0, 5) for v in values.values()), "모든 시설의 선호는 0~5의 유한한 숫자여야 합니다.")
             ids.add(pid)
-    except (KeyError, TypeError, AttributeError) as exc:
+    except (KeyError, TypeError, AttributeError, IndexError) as exc:
         raise ValueError("설정의 필수 항목이 없거나 자료형이 올바르지 않습니다.") from exc
 
 
@@ -101,7 +102,7 @@ class Scenario:
     def metadata(self):
         parts = {"map": self.map, "config": self.config, "preferences": self.preferences}
         hashes = {key: sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")).hexdigest() for key, value in parts.items()}
-        return dict(scenario_id=SCENARIO_ID, name="롯데월드 매직아일랜드", status="configuration_only",
+        return dict(scenario_id=SCENARIO_ID, name="롯데월드 매직아일랜드", status="map_ready", map_ready=True, map_view="guide-map-3d",
                     runnable=False, message=NOT_READY, hashes=hashes, **parts)
 
 

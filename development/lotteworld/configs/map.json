@@ -1,15 +1,987 @@
 {
   "schema_version": 1,
   "scenario_id": "magic-island",
-  "status": "planned",
-  "geometry": null,
+  "status": "map_ready",
+  "provenance": "2026 국문 가이드맵 4쪽의 성 앞에서 남동쪽으로 이어지는 진입 다리, 주 섬·남쪽 메이플 돌출부·다리 양옆 수면과 시설 상대 배치를 참고한 가상 3D 공간. 넓은 포장 광장과 작은 식재 구획을 사용하며 혜성특급도 지상 모형이다. 미터 치수·높이·코스는 실측값이 아니며 대기 자리 수는 미확정.",
+  "geometry": {
+    "units": "m",
+    "axis": "x-right-y-down",
+    "bounds": [
+      0,
+      0,
+      370,
+      330
+    ],
+    "island": [
+      10,
+      5,
+      354,
+      309
+    ],
+    "lake": [
+      0,
+      0,
+      370,
+      330
+    ],
+    "castle": [
+      156,
+      115,
+      48,
+      64
+    ],
+    "plaza": [
+      166,
+      182,
+      38,
+      24
+    ],
+    "boundary": "bridge-boundary",
+    "nodes": [
+      {
+        "id": "west-north",
+        "point": [
+          147,
+          99
+        ]
+      },
+      {
+        "id": "west-castle",
+        "point": [
+          147,
+          123
+        ]
+      },
+      {
+        "id": "west-center",
+        "point": [
+          143,
+          145
+        ]
+      },
+      {
+        "id": "west-comet",
+        "point": [
+          143,
+          164
+        ]
+      },
+      {
+        "id": "west-comet-exit",
+        "point": [
+          143,
+          189
+        ]
+      },
+      {
+        "id": "west-spin",
+        "point": [
+          151,
+          215
+        ]
+      },
+      {
+        "id": "south-west",
+        "point": [
+          162,
+          220
+        ]
+      },
+      {
+        "id": "south-mid",
+        "point": [
+          180,
+          220
+        ]
+      },
+      {
+        "id": "south-east",
+        "point": [
+          185,
+          215
+        ]
+      },
+      {
+        "id": "east-south",
+        "point": [
+          209.37423312883436,
+          185
+        ]
+      },
+      {
+        "id": "east-exit",
+        "point": [
+          226,
+          163
+        ]
+      },
+      {
+        "id": "east-atlantis",
+        "point": [
+          241,
+          158
+        ]
+      },
+      {
+        "id": "east-center",
+        "point": [
+          241,
+          130
+        ]
+      },
+      {
+        "id": "east-north",
+        "point": [
+          240,
+          88
+        ]
+      },
+      {
+        "id": "north-center",
+        "point": [
+          190,
+          88
+        ]
+      },
+      {
+        "id": "bridge-island",
+        "point": [
+          217.1042944785276,
+          195
+        ]
+      },
+      {
+        "id": "bridge-boundary",
+        "point": [
+          306,
+          310
+        ]
+      },
+      {
+        "id": "swing-approach",
+        "point": [
+          190,
+          72
+        ]
+      },
+      {
+        "id": "gyro-drop-entry",
+        "point": [
+          139,
+          99
+        ]
+      },
+      {
+        "id": "gyro-drop-exit",
+        "point": [
+          108,
+          123
+        ]
+      },
+      {
+        "id": "gyro-swing-entry",
+        "point": [
+          205,
+          72
+        ]
+      },
+      {
+        "id": "gyro-swing-exit",
+        "point": [
+          242,
+          66
+        ]
+      },
+      {
+        "id": "atlantis-entry",
+        "point": [
+          261,
+          158
+        ]
+      },
+      {
+        "id": "atlantis-exit",
+        "point": [
+          310,
+          153
+        ]
+      },
+      {
+        "id": "comet-express-entry",
+        "point": [
+          126,
+          164
+        ]
+      },
+      {
+        "id": "comet-express-exit",
+        "point": [
+          98,
+          189
+        ]
+      },
+      {
+        "id": "gyro-spin-entry",
+        "point": [
+          141,
+          215
+        ]
+      },
+      {
+        "id": "gyro-spin-exit",
+        "point": [
+          102,
+          236
+        ]
+      },
+      {
+        "id": "arcana-ride-entry",
+        "point": [
+          162,
+          232
+        ]
+      },
+      {
+        "id": "arcana-ride-exit",
+        "point": [
+          188,
+          268
+        ]
+      },
+      {
+        "id": "gyro-swing-return-0",
+        "point": [
+          254,
+          66
+        ]
+      },
+      {
+        "id": "gyro-swing-return-1",
+        "point": [
+          254,
+          88
+        ]
+      },
+      {
+        "id": "atlantis-return-0",
+        "point": [
+          298,
+          153
+        ]
+      },
+      {
+        "id": "atlantis-return-1",
+        "point": [
+          298,
+          177
+        ]
+      },
+      {
+        "id": "gyro-spin-return-0",
+        "point": [
+          144,
+          236
+        ]
+      },
+      {
+        "id": "gyro-spin-return-1",
+        "point": [
+          149,
+          226
+        ]
+      },
+      {
+        "id": "arcana-ride-return-0",
+        "point": [
+          190,
+          248
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "id": "west-north--west-castle",
+        "source": "west-north",
+        "target": "west-castle",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "west-castle--west-center",
+        "source": "west-castle",
+        "target": "west-center",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "west-center--west-comet",
+        "source": "west-center",
+        "target": "west-comet",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "west-comet--west-comet-exit",
+        "source": "west-comet",
+        "target": "west-comet-exit",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "west-comet-exit--west-spin",
+        "source": "west-comet-exit",
+        "target": "west-spin",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "west-spin--south-west",
+        "source": "west-spin",
+        "target": "south-west",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "south-west--south-mid",
+        "source": "south-west",
+        "target": "south-mid",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "south-mid--south-east",
+        "source": "south-mid",
+        "target": "south-east",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "south-east--east-south",
+        "source": "south-east",
+        "target": "east-south",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "east-south--east-exit",
+        "source": "east-south",
+        "target": "east-exit",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "east-exit--east-atlantis",
+        "source": "east-exit",
+        "target": "east-atlantis",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "east-atlantis--east-center",
+        "source": "east-atlantis",
+        "target": "east-center",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "east-center--east-north",
+        "source": "east-center",
+        "target": "east-north",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "east-north--north-center",
+        "source": "east-north",
+        "target": "north-center",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "north-center--west-north",
+        "source": "north-center",
+        "target": "west-north",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "east-south--bridge-island",
+        "source": "east-south",
+        "target": "bridge-island",
+        "width": 8,
+        "kind": "main"
+      },
+      {
+        "id": "bridge-island--bridge-boundary",
+        "source": "bridge-island",
+        "target": "bridge-boundary",
+        "width": 12,
+        "kind": "bridge"
+      },
+      {
+        "id": "north-center--swing-approach",
+        "source": "north-center",
+        "target": "swing-approach",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "west-north--gyro-drop-entry",
+        "source": "west-north",
+        "target": "gyro-drop-entry",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "gyro-drop-exit--west-castle",
+        "source": "gyro-drop-exit",
+        "target": "west-castle",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "swing-approach--gyro-swing-entry",
+        "source": "swing-approach",
+        "target": "gyro-swing-entry",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "east-atlantis--atlantis-entry",
+        "source": "east-atlantis",
+        "target": "atlantis-entry",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "west-comet--comet-express-entry",
+        "source": "west-comet",
+        "target": "comet-express-entry",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "comet-express-exit--west-comet-exit",
+        "source": "comet-express-exit",
+        "target": "west-comet-exit",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "west-spin--gyro-spin-entry",
+        "source": "west-spin",
+        "target": "gyro-spin-entry",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "south-west--arcana-ride-entry",
+        "source": "south-west",
+        "target": "arcana-ride-entry",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "gyro-swing-exit--gyro-swing-return-0",
+        "source": "gyro-swing-exit",
+        "target": "gyro-swing-return-0",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "gyro-swing-return-0--gyro-swing-return-1",
+        "source": "gyro-swing-return-0",
+        "target": "gyro-swing-return-1",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "gyro-swing-return-1--east-north",
+        "source": "gyro-swing-return-1",
+        "target": "east-north",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "atlantis-exit--atlantis-return-0",
+        "source": "atlantis-exit",
+        "target": "atlantis-return-0",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "atlantis-return-0--atlantis-return-1",
+        "source": "atlantis-return-0",
+        "target": "atlantis-return-1",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "atlantis-return-1--east-exit",
+        "source": "atlantis-return-1",
+        "target": "east-exit",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "gyro-spin-exit--gyro-spin-return-0",
+        "source": "gyro-spin-exit",
+        "target": "gyro-spin-return-0",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "gyro-spin-return-0--gyro-spin-return-1",
+        "source": "gyro-spin-return-0",
+        "target": "gyro-spin-return-1",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "gyro-spin-return-1--west-spin",
+        "source": "gyro-spin-return-1",
+        "target": "west-spin",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "arcana-ride-exit--arcana-ride-return-0",
+        "source": "arcana-ride-exit",
+        "target": "arcana-ride-return-0",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "arcana-ride-return-0--south-mid",
+        "source": "arcana-ride-return-0",
+        "target": "south-mid",
+        "width": 3,
+        "kind": "exit"
+      }
+    ],
+    "island_outline": [
+      [
+        18,
+        83
+      ],
+      [
+        46,
+        70
+      ],
+      [
+        56,
+        35
+      ],
+      [
+        84,
+        19
+      ],
+      [
+        138,
+        12
+      ],
+      [
+        174,
+        28
+      ],
+      [
+        202,
+        5
+      ],
+      [
+        246,
+        18
+      ],
+      [
+        264,
+        42
+      ],
+      [
+        269,
+        54
+      ],
+      [
+        302,
+        83
+      ],
+      [
+        343,
+        112
+      ],
+      [
+        364,
+        138
+      ],
+      [
+        362,
+        163
+      ],
+      [
+        322,
+        188
+      ],
+      [
+        280,
+        207
+      ],
+      [
+        249,
+        183
+      ],
+      [
+        229,
+        173
+      ],
+      [
+        223,
+        195
+      ],
+      [
+        218,
+        204
+      ],
+      [
+        195,
+        211
+      ],
+      [
+        199,
+        233
+      ],
+      [
+        202,
+        250
+      ],
+      [
+        191,
+        280
+      ],
+      [
+        121,
+        314
+      ],
+      [
+        109,
+        279
+      ],
+      [
+        104,
+        250
+      ],
+      [
+        83,
+        237
+      ],
+      [
+        64,
+        226
+      ],
+      [
+        41,
+        225
+      ],
+      [
+        20,
+        210
+      ],
+      [
+        10,
+        187
+      ],
+      [
+        12,
+        152
+      ],
+      [
+        16,
+        115
+      ]
+    ],
+    "castle_height_m": 38,
+    "render_style": "guide-map-3d",
+    "public_space": "island-minus-reservations",
+    "landscape_beds": [
+      [
+        28,
+        144,
+        10,
+        15
+      ],
+      [
+        79,
+        38,
+        10,
+        12
+      ],
+      [
+        52,
+        122,
+        8,
+        12
+      ],
+      [
+        210,
+        110,
+        8,
+        10
+      ],
+      [
+        333,
+        146,
+        8,
+        10
+      ],
+      [
+        114,
+        259,
+        8,
+        10
+      ],
+      [
+        176,
+        248,
+        8,
+        10
+      ],
+      [
+        230,
+        60,
+        8,
+        10
+      ],
+      [
+        113,
+        131,
+        8,
+        10
+      ],
+      [
+        177,
+        101,
+        8,
+        9
+      ],
+      [
+        321,
+        160,
+        8,
+        9
+      ],
+      [
+        113,
+        239,
+        8,
+        8
+      ]
+    ],
+    "scenery_buildings": [
+      [
+        123,
+        50,
+        18,
+        25
+      ],
+      [
+        147,
+        50,
+        24,
+        26
+      ]
+    ],
+    "bridge_placement": "castle-forecourt-to-southeast",
+    "castle_forward": [
+      126,
+      163
+    ],
+    "castle_model_scale_xz": 0.61,
+    "forecourt_width_m": 20
+  },
   "facilities": [
-    {"id": "atlantis", "name": "아트란티스"},
-    {"id": "gyro-drop", "name": "자이로드롭"},
-    {"id": "gyro-swing", "name": "자이로스윙"},
-    {"id": "gyro-spin", "name": "자이로스핀"},
-    {"id": "comet-express", "name": "혜성특급"},
-    {"id": "arcana-ride", "name": "아르카나라이드"}
-  ],
-  "provenance": "시설 목록만 확정. 실제 형상·좌표·보행 경로는 체크리스트 2번에서 구현한다."
+    {
+      "id": "gyro-drop",
+      "name": "자이로드롭",
+      "shape": "drop",
+      "bounds": [
+        72,
+        76,
+        36,
+        40
+      ],
+      "queue": [
+        115,
+        93,
+        24,
+        12
+      ],
+      "exit_area": [
+        100,
+        119,
+        8,
+        6
+      ],
+      "entrance": "gyro-drop-entry",
+      "exit": "gyro-drop-exit",
+      "level": 0,
+      "model_height_m": 64,
+      "label_anchor": [
+        90.0,
+        96.0
+      ]
+    },
+    {
+      "id": "gyro-swing",
+      "name": "자이로스윙",
+      "shape": "swing",
+      "bounds": [
+        200,
+        25,
+        48,
+        34
+      ],
+      "queue": [
+        205,
+        66,
+        24,
+        12
+      ],
+      "exit_area": [
+        242,
+        62,
+        8,
+        6
+      ],
+      "entrance": "gyro-swing-entry",
+      "exit": "gyro-swing-exit",
+      "level": 0,
+      "model_height_m": 30,
+      "label_anchor": [
+        224.0,
+        42.0
+      ]
+    },
+    {
+      "id": "atlantis",
+      "name": "아트란티스",
+      "shape": "water-coaster",
+      "bounds": [
+        258,
+        93,
+        56,
+        48
+      ],
+      "queue": [
+        261,
+        152,
+        24,
+        12
+      ],
+      "exit_area": [
+        310,
+        149,
+        8,
+        6
+      ],
+      "entrance": "atlantis-entry",
+      "exit": "atlantis-exit",
+      "level": 0,
+      "model_height_m": 21,
+      "label_anchor": [
+        286.0,
+        117.0
+      ]
+    },
+    {
+      "id": "comet-express",
+      "name": "혜성특급",
+      "shape": "comet-coaster",
+      "bounds": [
+        54,
+        155,
+        42,
+        24
+      ],
+      "queue": [
+        102,
+        158,
+        24,
+        12
+      ],
+      "exit_area": [
+        90,
+        185,
+        8,
+        6
+      ],
+      "entrance": "comet-express-entry",
+      "exit": "comet-express-exit",
+      "level": 0,
+      "model_height_m": 9,
+      "label_anchor": [
+        75.0,
+        167.0
+      ]
+    },
+    {
+      "id": "gyro-spin",
+      "name": "자이로스핀",
+      "shape": "disk",
+      "bounds": [
+        66,
+        199,
+        44,
+        26
+      ],
+      "queue": [
+        117,
+        209,
+        24,
+        12
+      ],
+      "exit_area": [
+        94,
+        232,
+        8,
+        6
+      ],
+      "entrance": "gyro-spin-entry",
+      "exit": "gyro-spin-exit",
+      "level": 0,
+      "model_height_m": 13,
+      "label_anchor": [
+        88.0,
+        212.0
+      ]
+    },
+    {
+      "id": "arcana-ride",
+      "name": "아르카나라이드",
+      "shape": "speedway",
+      "bounds": [
+        126,
+        258,
+        52,
+        22
+      ],
+      "queue": [
+        150,
+        232,
+        24,
+        12
+      ],
+      "exit_area": [
+        180,
+        264,
+        8,
+        6
+      ],
+      "entrance": "arcana-ride-entry",
+      "exit": "arcana-ride-exit",
+      "level": 0,
+      "model_height_m": 9,
+      "label_anchor": [
+        152.0,
+        269.0
+      ]
+    }
+  ]
 }

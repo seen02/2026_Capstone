@@ -23,7 +23,7 @@ class ScenarioTests(unittest.TestCase):
         self.assertEqual(sum(s["count"] for s in slots[3:6]), 4600)
         self.assertEqual(max(s["count"] for s in slots), 1610)
         self.assertFalse(scenario.metadata()["runnable"])
-        self.assertIsNone(scenario.map["geometry"])
+        self.assertEqual(scenario.map["geometry"]["units"], "m")
         self.assertEqual(scenario.metadata()["hashes"], load_inputs().metadata()["hashes"])
         scenario.config["seed"] += 1
         self.assertNotEqual(scenario.metadata()["hashes"], load_inputs().metadata()["hashes"])
@@ -38,7 +38,7 @@ class ScenarioTests(unittest.TestCase):
             node[keys[-1]] = value
             return parts
         cases = [
-            (0, ["scenario_id"], "aquarium"), (0, ["facilities", 0, "id"], "gyro-drop"),
+            (0, ["scenario_id"], "aquarium"), (0, ["facilities", 0, "id"], "atlantis"),
             (0, ["geometry"], {}), (0, ["facilities"], None),
             (1, ["schema_version"], True), (1, ["seed"], True),
             (1, ["observation", "end"], "25:00"), (1, ["observation", "end"], "09:00"),
@@ -85,7 +85,7 @@ class ScenarioTests(unittest.TestCase):
             output = Path(directory) / "metadata.json"
             result = subprocess.run([sys.executable, "-m", "lotteworld_sim.cli", "--validate-only", "--output", str(output)], cwd=ROOT, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(json.loads(output.read_text(encoding="utf-8"))["status"], "configuration_only")
+            self.assertEqual(json.loads(output.read_text(encoding="utf-8"))["status"], "map_ready")
 
     def test_metadata_and_unavailable_runtime_api(self):
         server = make_server(0)
@@ -100,6 +100,15 @@ class ScenarioTests(unittest.TestCase):
             self.assertNotIn("personas", data)
             with urlopen(base) as response:
                 self.assertIn("롯데월드 매직아일랜드", response.read().decode())
+            self.assertEqual(data['map_view'], 'guide-map-3d')
+            for asset, mime in (("/map.js", "text/javascript"), ("/map3d.js", "text/javascript"), ("/rides.mjs", "text/javascript"), ("/geometry.mjs", "text/javascript"), ("/route.mjs", "text/javascript"), ("/vendor/three/three.module.js", "text/javascript"), ("/vendor/three/three.core.js", "text/javascript"), ("/vendor/three/OrbitControls.js", "text/javascript"), ("/vendor/three/LICENSE", "text/plain"), ("/map.css", "text/css")):
+                with urlopen(base + asset) as response:
+                    self.assertIn(mime, response.headers["Content-Type"])
+                    self.assertGreater(len(response.read()), 100)
+            for forbidden in ("/../configs/map.json", "/%2e%2e/configs/map.json", "/scenario.py"):
+                with self.assertRaises(HTTPError) as caught:
+                    urlopen(base + forbidden)
+                self.assertEqual(caught.exception.code, 404)
             for path in ("/api/state", "/api/signs", "/api/report", "/api/reset", "/api/advance", "/api/seek", "/configs/day.json", "/floorplan.svg"):
                 request = Request(base + path, data=b"{}") if path in ("/api/reset", "/api/advance", "/api/seek") else base + path
                 with self.subTest(path=path), self.assertRaises(HTTPError) as caught:
