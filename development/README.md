@@ -27,7 +27,7 @@
 
 ## 매직아일랜드 현재 범위
 
-[체크리스트](docs/implementation-checklist.md)1번을 완료했다. 관측10:00~19:00, 계획 유입10,350명, 대기 포함 개인 예정 체류120~240분과6개 시설의 독립 설정을 검증한다. [설정 계약](lotteworld/docs/configuration.md)에 API와 검증 규칙을 정리했다.
+[체크리스트](docs/implementation-checklist.md)1번을 완료했다. 관측10:00–19:00, 계획 유입10,350명, 대기 포함 개인 예정 체류120–240분과6개 시설의 독립 설정을 검증한다. [설정 계약](lotteworld/docs/configuration.md)에 API와 검증 규칙을 정리했다.
 
 실제 지도·유입·보행·시설 운행·재생은 후속 단계다. 매직아일랜드 서버는 `runnable: false`로 준비 상태를 제공하고 재생 요청은409로 거절한다. CLI의 내보내기는 설정 메타데이터이며 시뮬레이션 보고서가 아니다. 입력 근거·가정은 [개발 명세](docs/design.md)와 [운영 조사](docs/magic-island-research.md)를 따른다. 19시는 관측 종료이며 폐장이 아니다.
 

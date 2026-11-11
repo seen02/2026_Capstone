@@ -23,7 +23,7 @@ python -m unittest discover -s tests -v
 ## 설정과 개발 범위
 
 - `configs/map.json`: 6개 시설의 독립 ID와 이름. 현재 `status: planned`, `geometry: null`이다.
-- `configs/day.json`: 관측 10~19시, 계획 진입 10,350명, 시간별 9구간, 대기 포함 개인 예정 체류 120~240분과 출처·가정이다. 이번에는 로드·검증만 하며 도착 시각을 생성하지 않는다.
-- `configs/preferences.json`: 시설 ID별 0~5의 선호 계약이다. 동일 선호 기준형 하나는 검증용 가정이며 행동 정책·방문객 유형 분포는 7번에서 구현한다.
+- `configs/day.json`: 관측 10–19시, 계획 진입 10,350명, 시간별 9구간, 대기 포함 개인 예정 체류 120–240분과 출처·가정이다. 이번에는 로드·검증만 하며 도착 시각을 생성하지 않는다.
+- `configs/preferences.json`: 시설 ID별 0–5의 선호 계약이다. 동일 선호 기준형 하나는 검증용 가정이며 행동 정책·방문객 유형 분포는 7번에서 구현한다.
 
 세부 계약은 [설정 계약](docs/configuration.md), 개발 기준은 [명세](../docs/design.md), 다음 작업은 [체크리스트](../docs/implementation-checklist.md)를 따른다. 두 폴더를 동시에 실행해도 아쿠아리움 기본 포트8765와 겹치지 않는다.
