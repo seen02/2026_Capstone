@@ -1,0 +1,327 @@
+{
+  "contract_version": "recommendation.v1",
+  "context": {
+    "scenario_id": "magic-island",
+    "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+    "run_id": "mock-run-contract-001",
+    "timeline_epoch": 0
+  },
+  "evaluation_at": "2026-11-17T08:00:01Z",
+  "policy_id": "baseline-v1",
+  "session": {
+    "session_id": "session-contract-001",
+    "character_id": "character-contract-001",
+    "revision": 1,
+    "created_at": "2026-11-17T07:59:00Z",
+    "expires_at": "2026-11-18T07:59:00Z",
+    "phase": "ready",
+    "position": {
+      "point": [
+        143,
+        145
+      ],
+      "node_id": "west-center"
+    },
+    "position_sim_time_s": 600,
+    "preference_order": [
+      "atlantis",
+      "gyro-spin",
+      "gyro-drop",
+      "arcana-ride",
+      "comet-express",
+      "gyro-swing"
+    ],
+    "active_visit_id": null
+  },
+  "snapshot": {
+    "snapshot_seq": 12,
+    "generated_at": "2026-11-17T08:00:00Z",
+    "source": {
+      "kind": "mock",
+      "provider_id": "fixture-provider-v1"
+    },
+    "clock": {
+      "sim_time_s": 600,
+      "time_scale": 10,
+      "mode": "running"
+    },
+    "facilities": [
+      {
+        "facility_id": "gyro-drop",
+        "observed_at": "2026-11-17T08:00:00Z",
+        "as_of_sim_time_s": 600,
+        "operation": "open",
+        "admission": "accepting",
+        "queue_people": 24,
+        "riding_people": 40,
+        "wait": {
+          "status": "known",
+          "seconds": 900,
+          "method": "mock-fixture-v1"
+        }
+      },
+      {
+        "facility_id": "gyro-swing",
+        "observed_at": "2026-11-17T08:00:00Z",
+        "as_of_sim_time_s": 600,
+        "operation": "closed",
+        "admission": "not_accepting",
+        "queue_people": 0,
+        "riding_people": 0,
+        "wait": {
+          "status": "not_applicable",
+          "seconds": null,
+          "method": null
+        }
+      },
+      {
+        "facility_id": "atlantis",
+        "observed_at": "2026-11-17T08:00:00Z",
+        "as_of_sim_time_s": 600,
+        "operation": "open",
+        "admission": "accepting",
+        "queue_people": null,
+        "riding_people": null,
+        "wait": {
+          "status": "unknown",
+          "seconds": null,
+          "method": null
+        }
+      },
+      {
+        "facility_id": "comet-express",
+        "observed_at": "2026-11-17T08:00:00Z",
+        "as_of_sim_time_s": 600,
+        "operation": "suspended",
+        "admission": "not_accepting",
+        "queue_people": 12,
+        "riding_people": 0,
+        "wait": {
+          "status": "not_applicable",
+          "seconds": null,
+          "method": null
+        }
+      },
+      {
+        "facility_id": "gyro-spin",
+        "observed_at": "2026-11-17T08:00:00Z",
+        "as_of_sim_time_s": 600,
+        "operation": "open",
+        "admission": "accepting",
+        "queue_people": 8,
+        "riding_people": 40,
+        "wait": {
+          "status": "known",
+          "seconds": 300,
+          "method": "mock-fixture-v1"
+        }
+      },
+      {
+        "facility_id": "arcana-ride",
+        "observed_at": "2026-11-17T08:00:00Z",
+        "as_of_sim_time_s": 600,
+        "operation": "open",
+        "admission": "accepting",
+        "queue_people": 0,
+        "riding_people": 16,
+        "wait": {
+          "status": "known",
+          "seconds": 0,
+          "method": "mock-fixture-v1"
+        }
+      }
+    ]
+  },
+  "routes": [
+    {
+      "facility_id": "gyro-drop",
+      "status": "reachable",
+      "origin": {
+        "point": [
+          143,
+          145
+        ],
+        "node_id": "west-center"
+      },
+      "target_node_id": "gyro-drop-entry",
+      "points": [
+        [
+          143,
+          145
+        ],
+        [
+          115.46323328856116,
+          86.18818852347798
+        ],
+        [
+          115,
+          86
+        ]
+      ],
+      "distance_m": 65.43922304794056,
+      "method": "open-plaza-v1",
+      "walking_seconds": null
+    },
+    {
+      "facility_id": "gyro-swing",
+      "status": "reachable",
+      "origin": {
+        "point": [
+          143,
+          145
+        ],
+        "node_id": "west-center"
+      },
+      "target_node_id": "gyro-swing-entry",
+      "points": [
+        [
+          143,
+          145
+        ],
+        [
+          156,
+          112
+        ],
+        [
+          204.5,
+          72
+        ],
+        [
+          205,
+          72
+        ]
+      ],
+      "distance_m": 98.83521864238259,
+      "method": "open-plaza-v1",
+      "walking_seconds": null
+    },
+    {
+      "facility_id": "atlantis",
+      "status": "reachable",
+      "origin": {
+        "point": [
+          143,
+          145
+        ],
+        "node_id": "west-center"
+      },
+      "target_node_id": "atlantis-entry",
+      "points": [
+        [
+          143,
+          145
+        ],
+        [
+          156,
+          180
+        ],
+        [
+          212,
+          180
+        ],
+        [
+          260.5,
+          158
+        ],
+        [
+          261,
+          158
+        ]
+      ],
+      "distance_m": 147.09276441300935,
+      "method": "open-plaza-v1",
+      "walking_seconds": null
+    },
+    {
+      "facility_id": "comet-express",
+      "status": "reachable",
+      "origin": {
+        "point": [
+          143,
+          145
+        ],
+        "node_id": "west-center"
+      },
+      "target_node_id": "comet-express-entry",
+      "points": [
+        [
+          143,
+          145
+        ],
+        [
+          108,
+          122
+        ],
+        [
+          76.91914503001806,
+          108.60608070142084
+        ],
+        [
+          76,
+          109
+        ]
+      ],
+      "distance_m": 76.72478737612946,
+      "method": "open-plaza-v1",
+      "walking_seconds": null
+    },
+    {
+      "facility_id": "gyro-spin",
+      "status": "reachable",
+      "origin": {
+        "point": [
+          143,
+          145
+        ],
+        "node_id": "west-center"
+      },
+      "target_node_id": "gyro-spin-entry",
+      "points": [
+        [
+          143,
+          145
+        ],
+        [
+          111.88491822238198,
+          192.53425356716738
+        ],
+        [
+          111,
+          193
+        ]
+      ],
+      "distance_m": 57.812442089876946,
+      "method": "open-plaza-v1",
+      "walking_seconds": null
+    },
+    {
+      "facility_id": "arcana-ride",
+      "status": "reachable",
+      "origin": {
+        "point": [
+          143,
+          145
+        ],
+        "node_id": "west-center"
+      },
+      "target_node_id": "arcana-ride-entry",
+      "points": [
+        [
+          143,
+          145
+        ],
+        [
+          142.69723908375838,
+          233.80208565293955
+        ],
+        [
+          143,
+          234.2
+        ]
+      ],
+      "distance_m": 89.30260176641457,
+      "method": "open-plaza-v1",
+      "walking_seconds": null
+    }
+  ]
+}

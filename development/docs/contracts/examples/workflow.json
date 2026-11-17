@@ -1,0 +1,162 @@
+{
+  "recommendation": {
+    "contract_version": "recommendation.v1",
+    "context": {
+      "scenario_id": "magic-island",
+      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "run_id": "mock-run-contract-001",
+      "timeline_epoch": 0
+    },
+    "result": "recommended",
+    "session_id": "session-contract-001",
+    "session_revision": 1,
+    "snapshot_seq": 12,
+    "source": {
+      "kind": "mock",
+      "provider_id": "fixture-provider-v1"
+    },
+    "policy_id": "baseline-v1",
+    "evaluated_at": "2026-11-17T08:00:01Z",
+    "recommendation": {
+      "recommendation_id": "recommendation-contract-001",
+      "facility_id": "gyro-spin",
+      "rank": 2,
+      "wait_seconds": 300,
+      "distance_m": 57.812442089876946,
+      "cost": 0.148124977,
+      "route": {
+        "facility_id": "gyro-spin",
+        "status": "reachable",
+        "origin": {
+          "point": [
+            143,
+            145
+          ],
+          "node_id": "west-center"
+        },
+        "target_node_id": "gyro-spin-entry",
+        "points": [
+          [
+            143,
+            145
+          ],
+          [
+            111.88491822238198,
+            192.53425356716738
+          ],
+          [
+            111,
+            193
+          ]
+        ],
+        "distance_m": 57.812442089876946,
+        "method": "open-plaza-v1",
+        "walking_seconds": null
+      },
+      "expires_at": "2026-11-17T08:00:31Z",
+      "expires_sim_time_s": 900,
+      "reason_codes": [
+        "preference_wait_distance"
+      ],
+      "reason_text": "선호 2순위이며 예상 대기 5분과 현재 위치에서의 경로 거리 57.8m를 함께 고려했습니다."
+    },
+    "excluded": [
+      {
+        "facility_id": "gyro-swing",
+        "codes": [
+          "operation_unavailable",
+          "admission_unavailable"
+        ]
+      },
+      {
+        "facility_id": "atlantis",
+        "codes": [
+          "wait_unknown"
+        ]
+      },
+      {
+        "facility_id": "comet-express",
+        "codes": [
+          "operation_unavailable",
+          "admission_unavailable"
+        ]
+      }
+    ]
+  },
+  "accept_command": {
+    "contract_version": "recommendation.v1",
+    "context": {
+      "scenario_id": "magic-island",
+      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "run_id": "mock-run-contract-001",
+      "timeline_epoch": 0
+    },
+    "command_id": "command-contract-001",
+    "session_id": "session-contract-001",
+    "recommendation_id": "recommendation-contract-001",
+    "expected_session_revision": 1,
+    "expected_snapshot_seq": 12
+  },
+  "accepted_ack": {
+    "contract_version": "recommendation.v1",
+    "context": {
+      "scenario_id": "magic-island",
+      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "run_id": "mock-run-contract-001",
+      "timeline_epoch": 0
+    },
+    "command_id": "command-contract-001",
+    "accepted": true,
+    "visit_id": "visit-contract-001",
+    "session_id": "session-contract-001",
+    "session_revision": 2,
+    "snapshot_seq": 13,
+    "phase": "moving"
+  },
+  "completion_event": {
+    "contract_version": "recommendation.v1",
+    "context": {
+      "scenario_id": "magic-island",
+      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "run_id": "mock-run-contract-001",
+      "timeline_epoch": 0
+    },
+    "event_id": "completion-contract-001",
+    "visit_id": "visit-contract-001",
+    "session_id": "session-contract-001",
+    "character_id": "character-contract-001",
+    "facility_id": "gyro-spin",
+    "source": {
+      "kind": "mock",
+      "provider_id": "fixture-provider-v1"
+    },
+    "completed_at": "2026-11-17T08:01:10Z",
+    "completed_sim_time_s": 1300,
+    "exit_position": {
+      "point": [
+        50,
+        186
+      ],
+      "node_id": "gyro-spin-exit"
+    }
+  },
+  "reward_grant": {
+    "contract_version": "recommendation.v1",
+    "context": {
+      "scenario_id": "magic-island",
+      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "run_id": "mock-run-contract-001",
+      "timeline_epoch": 0
+    },
+    "reward_id": "reward-contract-001",
+    "visit_id": "visit-contract-001",
+    "session_id": "session-contract-001",
+    "completion_event_id": "completion-contract-001",
+    "source": {
+      "kind": "mock",
+      "provider_id": "fixture-provider-v1"
+    },
+    "reward_type": "simulation_experience",
+    "granted_at": "2026-11-17T08:01:11Z"
+  }
+}
