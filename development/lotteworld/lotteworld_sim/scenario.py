@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 import re
 from .map_geometry import validate_geometry
+from .queue_capacity import validate_queue_capacity, queue_report
 
 ROOT = Path(__file__).resolve().parents[1]
 SCENARIO_ID = "magic-island"
@@ -55,6 +56,7 @@ def validate(map_data, config, preferences):
         require(isinstance(facilities, list) and len(facilities) == 6, "6개 시설 목록이 필요합니다.")
         require({f["id"] for f in facilities} == FACILITIES and all(isinstance(f["name"], str) and f["name"].strip() for f in facilities), "시설 ID·이름이 올바르지 않습니다.")
         validate_geometry(map_data, require, number)
+        validate_queue_capacity(map_data, require, number)
         require(integer(config["seed"]), "시드는 0 이상의 정수여야 합니다.")
         observation, stay, arrivals = config["observation"], config["stay"], config["arrivals"]
         start, end = clock(observation["start"]), clock(observation["end"])
@@ -103,7 +105,7 @@ class Scenario:
         parts = {"map": self.map, "config": self.config, "preferences": self.preferences}
         hashes = {key: sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")).hexdigest() for key, value in parts.items()}
         return dict(scenario_id=SCENARIO_ID, name="롯데월드 매직아일랜드", status="map_ready", map_ready=True, map_view="guide-map-3d",
-                    runnable=False, message=NOT_READY, hashes=hashes, **parts)
+                    runnable=False, message=NOT_READY, hashes=hashes, queue_report=queue_report(self.map), **parts)
 
 
 def load_inputs(root=ROOT, config_path=None):

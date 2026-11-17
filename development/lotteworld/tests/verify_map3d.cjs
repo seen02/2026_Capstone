@@ -6,6 +6,7 @@ const {spawn} = require('node:child_process');
 const {chromium} = require('playwright');
 let base = process.env.MAGIC_MAP_URL;
 let server;
+let reloadConfig;
 const output = path.resolve(__dirname, '../output/map3d-verification');
 const features = {
   'gyro-drop': 'vertical-tower', 'gyro-swing': 'pendulum', atlantis: 'water-channel',
@@ -20,7 +21,9 @@ async function state(page) {
   fs.mkdirSync(output, {recursive: true});
   if (!base) {
     const bundled = 'C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe';
-    server = spawn(process.env.PYTHON || (fs.existsSync(bundled) ? bundled : 'python'), ['-m', 'lotteworld_sim.server', '--port', '0'], {
+    reloadConfig=path.join(output,`reload-day-${process.pid}.json`);
+    fs.copyFileSync(path.resolve(__dirname,'../configs/day.json'),reloadConfig);
+    server = spawn(process.env.PYTHON || (fs.existsSync(bundled) ? bundled : 'python'), ['-m', 'lotteworld_sim.server', '--port', '0','--no-reload','--config',reloadConfig], {
       cwd: path.resolve(__dirname, '..'), env: {...process.env, PYTHONUTF8: '1'}, windowsHide: true
     });
     base = await new Promise((resolve, reject) => {
@@ -46,6 +49,14 @@ async function state(page) {
       await page.goto(base);
       await page.waitForFunction(() => window.inspectMagicMap, {timeout: 30000});
       const meta = await (await page.request.get(base + '/api/meta')).json();
+      if(width===1600&&reloadConfig){
+        const before=await (await page.request.get(base+'/api/dev-version')).json();
+        const next=JSON.parse(fs.readFileSync(reloadConfig,'utf8'));next.seed+=1;fs.writeFileSync(reloadConfig,JSON.stringify(next));
+        await page.reload();await page.waitForFunction(()=>window.inspectMagicMap);
+        const refreshed=await (await page.request.get(base+'/api/meta')).json();
+        const after=await (await page.request.get(base+'/api/dev-version')).json();
+        assert.equal(refreshed.config.seed,next.seed);assert.equal(after.instance,before.instance);assert.notEqual(after.version,before.version);
+      }
       assert.equal(meta.runnable, false); assert.equal(meta.map_view, 'guide-map-3d');
       assert.equal(await page.locator('#scene canvas').count(), 1);
       assert.equal(await page.locator('.facility-label').count(), 6);
@@ -54,6 +65,19 @@ async function state(page) {
       assert.equal(scene.renderer, 'three-webgl'); assert.ok(scene.drawCalls > 0);
       assert.equal(scene.publicSpace,'island-minus-reservations');
       assert.deepEqual(scene.landscapeBeds,meta.map.geometry.landscape_beds);
+      assert.equal(scene.plazaOverlayCount,0);
+      assert.deepEqual(scene.surfaceMeshes.sort(),['public-pavement',...meta.map.geometry.edges.filter(e=>e.kind==='bridge').map(e=>'walk:'+e.id)].sort());
+      assert.equal(Object.keys(scene.queues).length,6);
+      for(const [id,queue] of Object.entries(scene.queues)){
+        assert.equal(queue.capacity,meta.queue_report[id].capacity);
+        assert.deepEqual(queue.slots,meta.queue_report[id].slots);
+        assert.ok(queue.meets_minimum);
+        assert.deepEqual(queue.railPaths,meta.queue_report[id].railPaths);
+        assert.equal(queue.railPaths.length,2);
+        assert.deepEqual(queue.boarding_exit,meta.queue_report[id].boarding_exit);
+        assert.deepEqual(queue.points.at(-1),queue.boarding_exit);
+      }
+      assert.ok(!(await page.locator('#scene .labels').allTextContents()).some(text=>text==='대기줄'||text==='탑승 진입'));
       const points = Object.fromEntries(meta.map.geometry.nodes.map(n => [n.id, n.point]));
       const gate=scene.castleGate,bridgeStart=points['bridge-island'],bridgeEnd=points[meta.map.geometry.boundary];
       const dx=bridgeEnd[0]-bridgeStart[0],dz=bridgeEnd[1]-bridgeStart[1];
@@ -73,6 +97,8 @@ async function state(page) {
         assert.equal(await page.locator(`.facility-label[data-facility="${facility.id}"]`).isVisible(), true);
         await page.locator(`#facilities [data-facility="${facility.id}"]`).click();
         assert.equal(await page.locator('#detail h2').textContent(), facility.name);
+        assert.equal(await page.locator('[data-queue-capacity]').count(),0);
+        assert.ok(!/대기 수용|\d+자리/.test(await page.locator('body').innerText()));
         const routes = await page.evaluate(() => window.inspectMagicMap().routes);
         assert.equal(routes.length, 2);
         assert.equal(routes[0].nodes[0], meta.map.geometry.boundary);
@@ -81,13 +107,15 @@ async function state(page) {
         assert.equal(routes[1].nodes.at(-1), meta.map.geometry.boundary);
         const text = await page.locator('#detail').textContent();
         for (const route of routes) {
-          const distance = route.nodes.slice(1).reduce((sum, key, i) => sum + Math.hypot(points[key][0] - points[route.nodes[i]][0], points[key][1] - points[route.nodes[i]][1]), 0);
+          assert.equal(route.mode,'open-plaza');
+          const distance = route.points.slice(1).reduce((sum,p,i) => sum + Math.hypot(p[0]-route.points[i][0],p[1]-route.points[i][1]),0);
           assert.ok(Math.abs(distance - route.distance_m) < 1e-8);
           assert.ok(text.includes(distance.toFixed(1) + 'm'));
         }
       }
       for (const edge of meta.map.geometry.edges) {
         const walk = scene.walks.find(w => w.edgeId === edge.id);
+        if(edge.kind!=='bridge'){assert.equal(walk,undefined);continue;}
         assert.equal(walk.width, edge.width);
         assert.deepEqual(walk.center, [0, 1].map(i => (points[edge.source][i] + points[edge.target][i]) / 2));
       }
@@ -143,5 +171,5 @@ async function state(page) {
       console.log(`${width}×${height}: WebGL·지상 모형 6개·점유 범위·동선·회전·확대·이동·시점 복귀·외부 요청 없음 검사 통과`);
       await page.close();
     }
-  } finally { await browser.close(); server?.kill(); }
-})().catch(error => { server?.kill(); console.error(error); process.exitCode = 1; });
+  } finally { await browser.close(); server?.kill(); if(reloadConfig&&fs.existsSync(reloadConfig))fs.unlinkSync(reloadConfig); }
+})().catch(error => { server?.kill(); if(reloadConfig&&fs.existsSync(reloadConfig))fs.unlinkSync(reloadConfig); console.error(error); process.exitCode = 1; });

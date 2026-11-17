@@ -11,9 +11,11 @@ function select(id) {
   const detail=document.querySelector('#detail');detail.replaceChildren();
   const heading=document.createElement('h2');heading.textContent=facility.name;
   const lengths=document.createElement('p');lengths.textContent=`다리 → 입구 ${entry.distance_m.toFixed(1)}m · 출구 → 다리 ${exit.distance_m.toFixed(1)}m`;
+  lengths.title='포장 광장의 장애물을 피하는 표시 경로 기준 거리';
   const info=document.createElement('p');info.textContent=facility.id==='comet-express'?'지상 표시 모형 · 열차와 굽은 코스':'정적 시설 모형 · 대기·운행 미집계';
   const focus=document.createElement('button');focus.textContent='시설 가까이 보기';focus.dataset.action='focus';focus.onclick=()=>view.focus(id);
-  detail.append(heading,lengths,info,focus);
+  const flow=document.createElement('p');flow.textContent='초록 대기 입구 → 줄 진행 → 황금색 탑승 진입 · 빨간 점은 이용 후 퇴장';
+  detail.append(heading,lengths,info,flow,focus);
 }
 
 host.addEventListener('map-error',e=>{error.textContent=e.detail;});

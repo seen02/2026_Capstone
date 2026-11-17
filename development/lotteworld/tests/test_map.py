@@ -111,7 +111,8 @@ class MapTests(unittest.TestCase):
         self.assertLess(centers['gyro-swing'][1],centers['atlantis'][1])
         self.assertGreater(centers['atlantis'][0],cx)
         self.assertLess(centers['comet-express'][0],cx)
-        self.assertGreater(centers['comet-express'][1],cy)
+        self.assertGreater(centers['comet-express'][1],centers['gyro-drop'][1])
+        self.assertNotIn([52,122,8,12],data['geometry']['landscape_beds'])
         self.assertGreater(centers['gyro-spin'][1],centers['comet-express'][1])
         self.assertGreater(centers['arcana-ride'][1],cy)
 
@@ -128,7 +129,8 @@ class MapTests(unittest.TestCase):
         # 이전 녹지였던 길 바깥 공간도 이제 포장 광장으로 이동할 수 있다.
         for p in ([137,130],[200,205],[80,120],[258,252.5]):
             self.assertTrue(public_walkable(data,p,.25),p)
-        for p in ([180,145],[75,167],[114,164],[94,188],[33,151],[0,0],[314,320]):
+        reserved=[f[key] for f in data['facilities'] for key in ('bounds','queue','exit_area')]
+        for p in ([180,145],[33,151],[0,0],[314,320],*[[x+w/2,z+d/2] for x,z,w,d in reserved]):
             self.assertFalse(public_walkable(data,p,.25),p)
         self.assertTrue(public_walkable(data,[137,130],.25))
         self.assertFalse(public_walkable(data,[155.9,140],.25))

@@ -101,6 +101,9 @@ class ScenarioTests(unittest.TestCase):
             with urlopen(base) as response:
                 self.assertIn("롯데월드 매직아일랜드", response.read().decode())
             self.assertEqual(data['map_view'], 'guide-map-3d')
+            for asset in ('/navigation.mjs','/queue.mjs'):
+                with urlopen(base+asset) as response:
+                    self.assertIn('text/javascript',response.headers['Content-Type'])
             for asset, mime in (("/map.js", "text/javascript"), ("/map3d.js", "text/javascript"), ("/rides.mjs", "text/javascript"), ("/geometry.mjs", "text/javascript"), ("/route.mjs", "text/javascript"), ("/vendor/three/three.module.js", "text/javascript"), ("/vendor/three/three.core.js", "text/javascript"), ("/vendor/three/OrbitControls.js", "text/javascript"), ("/vendor/three/LICENSE", "text/plain"), ("/map.css", "text/css")):
                 with urlopen(base + asset) as response:
                     self.assertIn(mime, response.headers["Content-Type"])

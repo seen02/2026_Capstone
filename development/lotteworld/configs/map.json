@@ -2,7 +2,7 @@
   "schema_version": 1,
   "scenario_id": "magic-island",
   "status": "map_ready",
-  "provenance": "2026 국문 가이드맵 4쪽의 성 앞에서 남동쪽으로 이어지는 진입 다리, 주 섬·남쪽 메이플 돌출부·다리 양옆 수면과 시설 상대 배치를 참고한 가상 3D 공간. 넓은 포장 광장과 작은 식재 구획을 사용하며 혜성특급도 지상 모형이다. 미터 치수·높이·코스는 실측값이 아니며 대기 자리 수는 미확정.",
+  "provenance": "2026 국문 가이드맵 4쪽 상대 배치를 참고한 가상 3D 공간. 좌표·폭·높이는 실측값이 아니다. 1회 탑승 정원은 개발 명세 기준이며 아트란티스는 보트 1대 8명 기준이다. 대기 자리는 반경 0.3m·중심 간격 0.8m·회전 여백 0.8m의 정적 배치로 검증한다.",
   "geometry": {
     "units": "m",
     "axis": "x-right-y-down",
@@ -167,15 +167,15 @@
       {
         "id": "gyro-drop-entry",
         "point": [
-          139,
-          99
+          115,
+          86
         ]
       },
       {
         "id": "gyro-drop-exit",
         "point": [
-          108,
-          123
+          118,
+          68
         ]
       },
       {
@@ -209,43 +209,43 @@
       {
         "id": "comet-express-entry",
         "point": [
-          126,
-          164
+          76,
+          109
         ]
       },
       {
         "id": "comet-express-exit",
         "point": [
-          98,
-          189
+          44,
+          146
         ]
       },
       {
         "id": "gyro-spin-entry",
         "point": [
-          141,
-          215
+          111,
+          193
         ]
       },
       {
         "id": "gyro-spin-exit",
         "point": [
-          102,
-          236
+          50,
+          186
         ]
       },
       {
         "id": "arcana-ride-entry",
         "point": [
-          162,
-          232
+          143,
+          234.2
         ]
       },
       {
         "id": "arcana-ride-exit",
         "point": [
-          188,
-          268
+          123,
+          250
         ]
       },
       {
@@ -277,24 +277,59 @@
         ]
       },
       {
-        "id": "gyro-spin-return-0",
+        "id": "gyro-drop-return-0",
         "point": [
-          144,
-          236
+          119,
+          78
         ]
       },
       {
-        "id": "gyro-spin-return-1",
+        "id": "comet-approach",
         "point": [
-          149,
-          226
+          90,
+          103
         ]
       },
       {
-        "id": "arcana-ride-return-0",
+        "id": "comet-approach-1",
         "point": [
-          190,
-          248
+          128,
+          103
+        ]
+      },
+      {
+        "id": "spin-approach",
+        "point": [
+          130,
+          183
+        ]
+      },
+      {
+        "id": "spin-return-0",
+        "point": [
+          98,
+          186
+        ]
+      },
+      {
+        "id": "spin-return-1",
+        "point": [
+          132,
+          186
+        ]
+      },
+      {
+        "id": "arcana-return-0",
+        "point": [
+          132,
+          227
+        ]
+      },
+      {
+        "id": "arcana-approach",
+        "point": [
+          136,
+          225
         ]
       }
     ],
@@ -433,13 +468,6 @@
         "kind": "branch"
       },
       {
-        "id": "gyro-drop-exit--west-castle",
-        "source": "gyro-drop-exit",
-        "target": "west-castle",
-        "width": 3,
-        "kind": "exit"
-      },
-      {
         "id": "swing-approach--gyro-swing-entry",
         "source": "swing-approach",
         "target": "gyro-swing-entry",
@@ -450,34 +478,6 @@
         "id": "east-atlantis--atlantis-entry",
         "source": "east-atlantis",
         "target": "atlantis-entry",
-        "width": 5,
-        "kind": "branch"
-      },
-      {
-        "id": "west-comet--comet-express-entry",
-        "source": "west-comet",
-        "target": "comet-express-entry",
-        "width": 5,
-        "kind": "branch"
-      },
-      {
-        "id": "comet-express-exit--west-comet-exit",
-        "source": "comet-express-exit",
-        "target": "west-comet-exit",
-        "width": 3,
-        "kind": "exit"
-      },
-      {
-        "id": "west-spin--gyro-spin-entry",
-        "source": "west-spin",
-        "target": "gyro-spin-entry",
-        "width": 5,
-        "kind": "branch"
-      },
-      {
-        "id": "south-west--arcana-ride-entry",
-        "source": "south-west",
-        "target": "arcana-ride-entry",
         "width": 5,
         "kind": "branch"
       },
@@ -524,39 +524,109 @@
         "kind": "exit"
       },
       {
-        "id": "gyro-spin-exit--gyro-spin-return-0",
+        "id": "gyro-drop-exit--gyro-drop-return-0",
+        "source": "gyro-drop-exit",
+        "target": "gyro-drop-return-0",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "gyro-drop-return-0--west-castle",
+        "source": "gyro-drop-return-0",
+        "target": "west-castle",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "comet-express-entry--comet-approach",
+        "source": "comet-express-entry",
+        "target": "comet-approach",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "comet-approach--comet-approach-1",
+        "source": "comet-approach",
+        "target": "comet-approach-1",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "comet-approach-1--west-castle",
+        "source": "comet-approach-1",
+        "target": "west-castle",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "comet-express-exit--west-center",
+        "source": "comet-express-exit",
+        "target": "west-center",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "gyro-spin-entry--spin-approach",
+        "source": "gyro-spin-entry",
+        "target": "spin-approach",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "spin-approach--west-comet-exit",
+        "source": "spin-approach",
+        "target": "west-comet-exit",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "gyro-spin-exit--spin-return-0",
         "source": "gyro-spin-exit",
-        "target": "gyro-spin-return-0",
+        "target": "spin-return-0",
         "width": 3,
         "kind": "exit"
       },
       {
-        "id": "gyro-spin-return-0--gyro-spin-return-1",
-        "source": "gyro-spin-return-0",
-        "target": "gyro-spin-return-1",
+        "id": "spin-return-0--spin-return-1",
+        "source": "spin-return-0",
+        "target": "spin-return-1",
         "width": 3,
         "kind": "exit"
       },
       {
-        "id": "gyro-spin-return-1--west-spin",
-        "source": "gyro-spin-return-1",
+        "id": "spin-return-1--west-spin",
+        "source": "spin-return-1",
         "target": "west-spin",
         "width": 3,
         "kind": "exit"
       },
       {
-        "id": "arcana-ride-exit--arcana-ride-return-0",
+        "id": "arcana-ride-exit--arcana-return-0",
         "source": "arcana-ride-exit",
-        "target": "arcana-ride-return-0",
+        "target": "arcana-return-0",
         "width": 3,
         "kind": "exit"
       },
       {
-        "id": "arcana-ride-return-0--south-mid",
-        "source": "arcana-ride-return-0",
-        "target": "south-mid",
+        "id": "arcana-return-0--west-spin",
+        "source": "arcana-return-0",
+        "target": "west-spin",
         "width": 3,
         "kind": "exit"
+      },
+      {
+        "id": "arcana-ride-entry--arcana-approach",
+        "source": "arcana-ride-entry",
+        "target": "arcana-approach",
+        "width": 5,
+        "kind": "branch"
+      },
+      {
+        "id": "arcana-approach--south-west",
+        "source": "arcana-approach",
+        "target": "south-west",
+        "width": 5,
+        "kind": "branch"
       }
     ],
     "island_outline": [
@@ -714,12 +784,6 @@
         12
       ],
       [
-        52,
-        122,
-        8,
-        12
-      ],
-      [
         210,
         110,
         8,
@@ -794,7 +858,13 @@
       163
     ],
     "castle_model_scale_xz": 0.61,
-    "forecourt_width_m": 20
+    "forecourt_width_m": 20,
+    "queue_rules": {
+      "minimum_boarding_multiple": 2.5,
+      "person_radius_m": 0.3,
+      "spacing_m": 0.8,
+      "end_clearance_m": 0.8
+    }
   },
   "facilities": [
     {
@@ -802,20 +872,20 @@
       "name": "자이로드롭",
       "shape": "drop",
       "bounds": [
-        72,
-        76,
-        36,
-        40
+        85.6,
+        51.6,
+        22,
+        22
       ],
       "queue": [
-        115,
-        93,
+        91,
+        80,
         24,
         12
       ],
       "exit_area": [
-        100,
-        119,
+        110,
+        64,
         8,
         6
       ],
@@ -824,9 +894,11 @@
       "level": 0,
       "model_height_m": 64,
       "label_anchor": [
-        90.0,
-        96.0
-      ]
+        96.6,
+        62.6
+      ],
+      "boarding_capacity": 40,
+      "boarding_unit": "cycle"
     },
     {
       "id": "gyro-swing",
@@ -857,7 +929,9 @@
       "label_anchor": [
         224.0,
         42.0
-      ]
+      ],
+      "boarding_capacity": 40,
+      "boarding_unit": "cycle"
     },
     {
       "id": "atlantis",
@@ -888,27 +962,29 @@
       "label_anchor": [
         286.0,
         117.0
-      ]
+      ],
+      "boarding_capacity": 8,
+      "boarding_unit": "vehicle"
     },
     {
       "id": "comet-express",
       "name": "혜성특급",
       "shape": "comet-coaster",
       "bounds": [
-        54,
-        155,
+        20,
+        112,
         42,
         24
       ],
       "queue": [
-        102,
-        158,
-        24,
-        12
+        65,
+        109,
+        12,
+        28
       ],
       "exit_area": [
-        90,
-        185,
+        40,
+        143,
         8,
         6
       ],
@@ -917,29 +993,31 @@
       "level": 0,
       "model_height_m": 9,
       "label_anchor": [
-        75.0,
-        167.0
-      ]
+        41,
+        124
+      ],
+      "boarding_capacity": 26,
+      "boarding_unit": "train"
     },
     {
       "id": "gyro-spin",
       "name": "자이로스핀",
       "shape": "disk",
       "bounds": [
-        66,
+        52,
         199,
         44,
         26
       ],
       "queue": [
-        117,
-        209,
-        24,
-        12
+        100,
+        193,
+        12,
+        28
       ],
       "exit_area": [
-        94,
-        232,
+        46,
+        183,
         8,
         6
       ],
@@ -948,9 +1026,11 @@
       "level": 0,
       "model_height_m": 13,
       "label_anchor": [
-        88.0,
+        74.0,
         212.0
-      ]
+      ],
+      "boarding_capacity": 40,
+      "boarding_unit": "cycle"
     },
     {
       "id": "arcana-ride",
@@ -963,14 +1043,14 @@
         22
       ],
       "queue": [
-        150,
-        232,
+        143,
+        233,
         24,
-        12
+        16
       ],
       "exit_area": [
-        180,
-        264,
+        119,
+        247,
         8,
         6
       ],
@@ -981,7 +1061,9 @@
       "label_anchor": [
         152.0,
         269.0
-      ]
+      ],
+      "boarding_capacity": 16,
+      "boarding_unit": "cycle"
     }
   ]
 }
