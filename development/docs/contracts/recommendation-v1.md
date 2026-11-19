@@ -203,6 +203,8 @@ QR URL을 공유해도 독립 브라우저 프로필마다 세션·캐릭터를 
 
 ## 8. 수락·상태 전이·보상
 
+로컬 QR 시연의 `POST /api/user/recommendation/accept`는 아래 명령 필드로 수락을 검증하고 엔진 이용을 메모리에 한 건 연결한다. 두 지도는 `moving`, `waiting_at_entrance`, `queued`, `boarding`, `riding`, `unloading`, `completed`를 표시한다. 마지막 상태는 시설의 하차 출구를 지나 공공 연결점에 도착했을 때 표시한다. 이용 완료 이벤트, 다음 추천, 수락 이벤트와 보상 응답은 전체 연동의 계약이다. [로컬 시연 API](../../lotteworld/README.md#qr-사용자-진입과-선호-입력)
+
 ### AcceptRecommendation
 
 필수 필드: `contract_version`, `context`, `command_id`, `session_id`, `recommendation_id`, `expected_session_revision`, `expected_snapshot_seq`. 클라이언트는 목표 시설·좌표·보상값을 지정하지 않는다. 추천 서버가 저장한 추천과 최신 상태를 대조해 승인한다.

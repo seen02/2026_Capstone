@@ -37,11 +37,15 @@
 
 `GET /api/state`는 `scenario_id`, 서버 실행 중 일정한 `run_id`, 보행에 사용하는 `map_hash`, `status: continuous_running`, `clock.sim_time_s`·`clock.time_scale`을 반환한다. `background`는 `target_people`, `entered_total`(누적 진입), `present_people`(현재 체류), `exited_total`(누적 퇴장), 현재 체류 중인 `visitors`와 시설별 `queues`를 담는다. 예정 체류가 끝난 방문객도 다리 외부 경계를 통과할 때까지 현재 체류에 포함한다. 경계를 통과해 빈자리가 생기면 보충 간격을 적용한다. `entered_total = present_people + exited_total`을 유지한다.
 
-서버는 시작 시 검증한 연속 설정·지도 좌표·시설 운행·방문객 선호를 실행 전체에 사용한다. `/api/meta`의 지도·기존 시간표·시설 운행·선호 설정은 저장 후 다시 읽으며, 지도·운행·선호 변경은 서버 재시작 시 새 실행에 적용한다. `/api/state`의 `map_hash`·`ride_operations_hash`·`preferences_hash`로 현재 실행이 쓰는 입력을 식별한다. QR 세션은 모의 추천 문맥과 실제 시간 만료를 사용하며 `background` 집계의 대상에서 제외한다. 시연용 인원 가정은 [연속 시연 검증 기록](../../docs/verification/magic-island-continuous-arrivals.md)을 따른다.
+서버는 시작 시 검증한 연속 설정·지도 좌표·시설 운행·방문객 선호를 실행 전체에 사용한다. `/api/meta`의 지도·기존 시간표·시설 운행·선호 설정은 저장 후 다시 읽으며, 지도·운행·선호 변경은 서버 재시작 시 새 실행에 적용한다. `/api/state`의 `map_hash`·`ride_operations_hash`·`preferences_hash`로 현재 실행이 쓰는 입력을 식별한다. 지도 화면은 로드한 지도 해시가 실행과 일치할 때만 동적 상태를 합성한다. 시연용 인원 가정은 [연속 시연 검증 기록](../../docs/verification/magic-island-continuous-arrivals.md)을 따른다.
+
+`/api/state.qr`는 연속 실행의 `context`와 실제 시간 기준으로 유효한 `characters`를 제공한다. 쿠키가 필요한 `/api/user/session` 등은 동일한 형식의 행을 `character`로 제공한다. 수락한 캐릭터의 위치와 상태는 대기열·차량을 처리하는 엔진에서 함께 읽는다. 대기 순서 `queue_position`은 자리로 걸어가는 예약 인원도 포함한 1부터 시작하는 순서다. 차량 배정 시 `vehicle_id`를 제공한다. 이동 좌표가 없는 차량 이용 구간에서 `position.point`는 `null`이고 `map_point`는 화면에 표시할 탑승 기준점이다. QR은 시설의 대기 인원·탑승 인원에 포함하며 배경 방문객의 유입·체류·퇴장 보존식과 공개 명단은 별도로 유지한다.
 
 ### 물리적 대기열과 승하차 보행
 
 `visitors`는 실행 내 증가하는 정수 `visitor_id` 순이다. 각 행은 진입 시각 `entered_at_sim_s`, 예정 퇴장 시각 `leave_at_sim_s`, 평면 미터 좌표 `point: [x,z]`, `state`, `facility_id`, `queue_slot`, `vehicle_id`, `departure_requested`를 제공한다. `preference_profile_id`는 배정한 선호 유형 ID다. `completed_rides`는 하차 보행을 시작한 시점까지 시설별로 센 이용 횟수이며 첫 이용 전에는 빈 객체다. `queue_slot`은 해당 시설 `queue_report.slots`의 0부터 시작하는 예약 인덱스이며 값이 클수록 탑승 지점에 가깝다. 보행 중인 방문객의 좌표는 경로를 따라 갱신한다. `vehicle_id`는 승차 접근부터 하차 보행 시작 전까지 배정된 시설 내 차량 번호다. 시설·자리·차량 배정이 없거나 현재 보행 좌표가 없는 경우 해당 필드는 `null`이다. `departure_requested`는 예정 체류 만료 이후 참이다.
+
+최근 보행 구간이 있으면 `walk_trail`에 `[내부 초, x, z]` 배열을 시간순으로 제공한다. 직전 실제 시간 1.2초 안에서 현재 보행의 경유점과 끝점을 제공한다. 전체 지도는 약 0.5초 뒤 화면에 수신한 좌표와 경유점을 보간해 코너를 따라 움직이는 사람 모형을 그린다.
 
 | 상태 | 동작 |
 | --- | --- |
@@ -50,11 +54,11 @@
 | `leaving_queue` | 자리에서 옆 통로로 옮긴 뒤 별도 게이트를 통해 공공 보행로에 복귀한다. 통로에 들어서면 자리를 해제한다. |
 | `walking_to_board`, `at_boarding_point` | 선두부터 1회 정원 이내로 탑승 진입점을 거쳐 시설 경계까지 걷는다. |
 | `on_ride`, `waiting_for_station` | 운행 중이거나 코스 주행을 마치고 빈 승강장을 기다린다. 현재 좌표는 `null`이다. |
-| `awaiting_unload`, `walking_from_ride` | 하차 순서를 기다리고 시설 경계에서 빨간 출구를 1 내부 초 간격으로 통과한다. 이후 전용 연결을 통해 공공 보행로에 합류한다. |
+| `awaiting_unload`, `walking_from_ride` | 하차 순서를 기다리고 빨간 출구를 1 내부 초 간격으로 통과한다. 배경 방문객은 출구 뒤에 확보한 공공 보행 지점에서 각자의 다음 목적지로 방향을 틀고, QR 이용은 기존 출구 합류점에서 완료된다. |
 | `waiting_to_exit` | 남은 체류 시간과 대기 허용 시간으로 갈 수 있는 시설이 없으면 현재 공공 연결점에서 예정 체류 만료까지 머문다. |
 | `walking_to_exit` | 다리 외부 경계로 돌아간다. 도착 시 명단에서 빠지고 `exited_total`이 증가한다. |
 
-시설별 `queues`에는 `capacity`(배치한 자리 수), `reserved_count`(걷는 사람 포함 예약 수), `queued_count`(배정된 자리에 도착해 서 있는 인원)가 포함된다. 이동 속도는 내부 초당 1.4m로 가정한다. 대기열의 진입과 이탈 보행은 경로를 따라 최소 1m 간격으로 시작한다. 공공 보행 중 체류가 만료되면 현재 경로의 합류점에서 다리로 향한다. 줄에서 만료되면 배정된 자리까지 이동을 마친 뒤 이탈하고, 승차에 들어간 뒤 만료되면 하차 후 다리로 향한다.
+시설별 `queues`에는 `capacity`(배치한 자리 수), `reserved_count`(걷는 사람 포함 예약 수), `queued_count`(배정된 자리에 도착해 서 있는 인원)가 포함된다. 기본 연속 시연에서 공공 보행은 방문객마다 시드로 정한 경로 변형과 내부 초당 1.15~1.65m의 속도를 사용한다. 변형은 광장의 장애물과 호안을 피하고 다리에서는 진행 방향에 따라 폭을 나눠 쓴다. 줄과 승하차 구간은 정해진 경로에서 내부 초당 1.4m로 이동한다. 대기열의 진입과 이탈 보행은 경로를 따라 최소 1m 간격으로 시작한다. 공공 보행 중 체류가 만료되면 현재 경로의 합류점에서 다리로 향한다. 줄에서 만료되면 배정된 자리까지 이동을 마친 뒤 이탈하고, 승차에 들어간 뒤 만료되면 하차 후 다리로 향한다.
 
 서버에서 가동하는 여섯 시설은 모두 자동으로 승하차를 진행한다. `BackgroundRun`에 운행 설정을 주지 않은 대기열 검증에서는 `board_next(facility_id, seats)`·`unload(facility_id)`로 한 묶음의 보행을 확인할 수 있다. `withdraw(visitor_id)`는 대기 중 이탈을 요청한다. 방문객의 3D 표시는 체크리스트 8번에서 연결한다. [공간·런타임 검증](../../docs/verification/magic-island-physical-queues-and-boarding.md)
 
@@ -100,9 +104,9 @@
 - 복귀한 차량은 공용 승강장이 찼으면 코스 밖의 논리적 복귀 대기 상태에 머무른다. 빈 승강장은 복귀 순서대로 먼저 배정하고, 이후 가용 차량을 투입한다. 승강장의 번호는 점유를 나타내는 논리적 위치다. 시설별 지도에는 하나의 승차 접근로와 하나의 빨간 출구를 사용한다.
 - 하차 보행은 승강장 배정부터 시작하고 모든 차량의 출구 통과를 1 내부 초 간격으로 예약한다. 하차 시간과 출구까지 걷는 시간은 겹쳐 진행되며, 설정한 하차 시간이 끝나고 마지막 승객이 빨간 출구를 통과한 뒤 승강장을 비운다. 퇴장 예정 시각이 지난 승객은 하차와 다리 보행을 마친 뒤 퇴장으로 집계한다.
 
-`GET /api/state`의 `rides`는 시설 ID별 `vehicle_count`, `station_capacity`, `seats_per_vehicle`, `dispatch_count`, `last_dispatch_at_sim_s`, `next_dispatch_min_at_sim_s`, `course_section_count`, `course_entry_available_at_sim_s`를 제공한다. 최소 간격 시각과 첫 구간 가용 시각은 실제 출발의 하한이다. 첫 출발 전의 마지막 출발 시각은 `null`, 두 하한은 내부 시각 `0`이다.
+`GET /api/state`의 `rides`는 시설 ID별 `vehicle_count`, `station_capacity`, `seats_per_vehicle`, `dispatch_count`, `riding_people`, `last_dispatch_at_sim_s`, `next_dispatch_min_at_sim_s`, `course_section_count`, `course_entry_available_at_sim_s`를 제공한다. 화면의 대기 인원은 자리에 도달한 `queued_count`다. 탑승 인원 `riding_people`은 코스 운행 중이거나 복귀 후 승강장 진입을 기다리는 탑승객의 합이다. 최소 간격 시각과 첫 구간 가용 시각은 실제 출발의 하한이다. 첫 출발 전의 마지막 출발 시각은 `null`, 두 하한은 내부 시각 `0`이다.
 
-각 `vehicles` 행은 1부터 시작하는 시설별 `vehicle_id`, `state`, `station_slot`, `course_section`, `last_dispatched_at_sim_s`, `passenger_ids`를 담는다. 상태는 `available`(대기), `boarding`(접근·확인), `ready`(출발 대기), `running`(운행), `waiting_for_station`(복귀 후 승강장 대기), `unloading`(하차)이다. `station_slot`과 `course_section`은 점유 중에만 1부터 시작하는 번호를 제공한다. 승차로 배정된 방문객은 하차 보행을 시작할 때 차량 명단에서 빠진다. [검증 기록](../../docs/verification/magic-island-ride-operations.md)
+각 `vehicles` 행은 1부터 시작하는 시설별 `vehicle_id`, `state`, `station_slot`, `course_section`, `last_dispatched_at_sim_s`, 배경 `passenger_ids`와 `qr_character_ids`를 담는다. 두 명단의 합이 실제 정원 계산에 사용된다. 상태는 `available`(대기), `boarding`(접근·확인), `ready`(출발 대기), `running`(운행), `waiting_for_station`(복귀 후 승강장 대기), `unloading`(하차)이다. `station_slot`과 `course_section`은 점유 중에만 1부터 시작하는 번호를 제공한다. 승차로 배정된 방문객은 하차 보행을 시작할 때 차량 명단에서 빠진다. [검증 기록](../../docs/verification/magic-island-ride-operations.md)
 
 ## 지도 형상 계약 (2번)
 
