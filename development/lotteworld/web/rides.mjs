@@ -1,6 +1,6 @@
 /** 안내도의 시설별 특징을 추상화한 정적 입체 모형. 운행 상태를 재현하지 않는다. */
 import * as THREE from 'three';
-import {box, cylinder, rod, polygon, rectPoints, tube} from './geometry.mjs';
+import {box, cylinder, rod, tube} from './geometry.mjs';
 
 function coaster(group, bounds, height) {
   const [x, z, w, d] = bounds;
@@ -42,17 +42,20 @@ function swing(group, bounds, height) {
   const [x,z,w,d]=bounds, cx=x+w/2, cz=z+d/2;
   cylinder(group,cx,.5,cz,Math.min(w,d)*.46,1,'#ded2ac');
   for (const side of [-1,1]) {
-    rod(group,[cx-w*.35,0,cz+side*d*.3],[cx,height,cz+side*2],.8,'#c27e55');
-    rod(group,[cx+w*.35,0,cz+side*d*.3],[cx,height,cz+side*2],.8,'#c27e55');
+    rod(group,[cx-w*.35,0,cz+side*d*.4],[cx,height,cz+side*2],.8,'#c27e55');
+    rod(group,[cx+w*.35,0,cz+side*d*.4],[cx,height,cz+side*2],.8,'#c27e55');
   }
   rod(group,[cx,height,cz-3],[cx,height,cz+3],1,'#647f79');
-  const end=[cx+w*.17,7,cz+d*.1];
+  const pendulumLength=height-7,offset=w*.17;
+  const end=[cx+offset,height-Math.sqrt(pendulumLength**2-offset**2),cz];
   rod(group,[cx,height,cz],end,.7,'#d1b16a');
-  const disk=cylinder(group,...end,7,1.5,'#607e9b');
-  disk.rotation.z=.3;
+  // 원판과 좌석을 같은 로컬 좌표계에 두어 함께 기울인다.
+  const gondola=new THREE.Group();gondola.name='swing-gondola';
+  gondola.position.set(...end);gondola.rotation.z=Math.asin(offset/pendulumLength);group.add(gondola);
+  cylinder(gondola,0,0,0,7,1.5,'#607e9b').name='swing-disk';
   for(let i=0;i<16;i++) {
     const a=i*Math.PI/8;
-    cylinder(group,end[0]+Math.cos(a)*6,8,end[2]+Math.sin(a)*6,.6,1,'#cba266',.6,8);
+    cylinder(gondola,Math.cos(a)*6,1.25,Math.sin(a)*6,.6,1,'#cba266',.6,8).name='swing-seat';
   }
   group.userData.features = ['a-frame', 'pendulum', 'seat-disk'];
 }
@@ -62,12 +65,13 @@ function spin(group,bounds,height) {
   const route=[[x+3,height*.8,cz],[x+w*.25,3,cz],[cx,2,cz],[x+w*.75,3,cz],[x+w-3,height*.8,cz]];
   for(const dz of [-2,2])tube(group,route.map(p=>[p[0],p[1],p[2]+dz]),.4,'#827ca3');
   for(const p of route)rod(group,[p[0],0,cz],p,.45,'#b3a083');
-  const disk=cylinder(group,cx,5,cz,7,1.6,'#b096c9');
-  disk.rotation.z=.12;
-  cylinder(group,cx,6.8,cz,2,2,'#81739c');
+  const platform=new THREE.Group();platform.name='spin-platform';
+  platform.position.set(cx,5,cz);platform.rotation.z=.12;group.add(platform);
+  cylinder(platform,0,0,0,7,1.6,'#b096c9').name='spin-disk';
+  cylinder(platform,0,1.8,0,2,2,'#81739c');
   for(let i=0;i<16;i++) {
     const a=i*Math.PI/8;
-    box(group,cx+Math.cos(a)*6,6.7,cz+Math.sin(a)*6,1,1.5,1,'#e2ce83');
+    box(platform,Math.cos(a)*6,1.55,Math.sin(a)*6,1,1.5,1,'#e2ce83').name='spin-seat';
   }
   group.userData.features = ['u-rail', 'rotating-disk'];
 }
@@ -77,11 +81,17 @@ function comet(group,bounds,height) {
   box(group,x+w/2,.25,z+d/2,w,.5,d,'#c8bed5');
   const route=[[x+4,2,z+d*.7],[x+w*.2,3,z+4],[x+w*.5,height*.6,z+5],
     [x+w*.8,3,z+3],[x+w-4,2,z+d*.65],[x+w*.65,4,z+d-4],[x+w*.4,2,z+d*.6]];
-  tube(group,route,.4,'#817299',true);
+  const track=tube(group,route,.4,'#817299',true);
+  const curve=track.geometry.parameters.path;
   for(const point of route)rod(group,[point[0],.5,point[2]],point,.25,'#a79bb6');
   for(let i=0;i<3;i++) {
-    const train=box(group,x+w*.3+i*2.3,3.2,z+d*.7,1.8,1.3,2.5,'#db9a62');
-    cylinder(group,train.position.x,4,train.position.z,.6,.3,'#e5d8ad',.6,8);
+    const t=(.9+i*2.8/curve.getLength())%1;
+    const point=curve.getPointAt(t),tangent=curve.getTangentAt(t);
+    const car=new THREE.Group();car.name='comet-car';group.add(car);
+    car.position.copy(point);car.position.y+=1.05;
+    car.rotation.set(-Math.asin(tangent.y),Math.atan2(tangent.x,tangent.z),0,'YXZ');
+    box(car,0,0,0,1.8,1.3,2.5,'#db9a62');
+    cylinder(car,0,.8,0,.6,.3,'#e5d8ad',.6,8);
   }
   box(group,x+w*.5,1.2,z+1.2,w*.42,2.4,2,'#a491b8');
   group.userData.features = ['ground-platform', 'winding-track', 'train'];
@@ -140,7 +150,16 @@ export function buildCastle(parent,bounds,height,forward,scale) {
     cylinder(group,tx,h,tz,r+1,1.4,'#b3acb0');
     cylinder(group,tx,h+4,tz,r+1.7,8,'#3b7996',0);
     rod(group,[tx,h+8,tz],[tx,h+11,tz],.1,'#b89b5a');
-    polygon(group,[[tx,tz],[tx+2.2,tz],[tx,tz+2.2]],'#dbb46e',.2,h+10);
+    const flagGeometry=new THREE.PlaneGeometry(2.6,1.5,12,2);
+    const vertices=flagGeometry.attributes.position;
+    for(let i=0;i<vertices.count;i++) {
+      const u=(vertices.getX(i)+1.3)/2.6;
+      // 깃대에 닿는 왼쪽 가장자리는 고정하고 바깥쪽만 완만하게 굽힌다.
+      vertices.setXYZ(i,tx+u*2.6,h+10.15+vertices.getY(i)+Math.sin(u*Math.PI*2)*.08*u,tz+Math.sin(u*Math.PI*2)*.24*u);
+    }
+    flagGeometry.computeVertexNormals();
+    const flag=new THREE.Mesh(flagGeometry,new THREE.MeshStandardMaterial({color:'#dbb46e',roughness:.8,side:THREE.DoubleSide}));
+    flag.name='castle-flag';flag.castShadow=true;flag.receiveShadow=true;group.add(flag);
     for(let i=0;i<4;i++) {
       const a=i*Math.PI/2;
       box(group,tx+Math.cos(a)*r,h*.65,tz+Math.sin(a)*r,.7,2,.7,'#608795');

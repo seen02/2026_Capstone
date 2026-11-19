@@ -174,8 +174,8 @@
       {
         "id": "gyro-drop-exit",
         "point": [
-          118,
-          68
+          75.2,
+          57.2
         ]
       },
       {
@@ -279,8 +279,8 @@
       {
         "id": "gyro-drop-return-0",
         "point": [
-          119,
-          78
+          75.2,
+          98
         ]
       },
       {
@@ -330,6 +330,13 @@
         "point": [
           136,
           225
+        ]
+      },
+      {
+        "id": "gyro-drop-return-1",
+        "point": [
+          128,
+          98
         ]
       }
     ],
@@ -531,13 +538,6 @@
         "kind": "exit"
       },
       {
-        "id": "gyro-drop-return-0--west-castle",
-        "source": "gyro-drop-return-0",
-        "target": "west-castle",
-        "width": 3,
-        "kind": "exit"
-      },
-      {
         "id": "comet-express-entry--comet-approach",
         "source": "comet-express-entry",
         "target": "comet-approach",
@@ -627,6 +627,20 @@
         "target": "south-west",
         "width": 5,
         "kind": "branch"
+      },
+      {
+        "id": "gyro-drop-return-0--gyro-drop-return-1",
+        "source": "gyro-drop-return-0",
+        "target": "gyro-drop-return-1",
+        "width": 3,
+        "kind": "exit"
+      },
+      {
+        "id": "gyro-drop-return-1--west-castle",
+        "source": "gyro-drop-return-1",
+        "target": "west-castle",
+        "width": 3,
+        "kind": "exit"
       }
     ],
     "island_outline": [
@@ -842,13 +856,7 @@
       [
         123,
         50,
-        18,
-        25
-      ],
-      [
-        147,
-        50,
-        24,
+        48,
         26
       ]
     ],
@@ -884,8 +892,8 @@
         12
       ],
       "exit_area": [
-        110,
-        64,
+        75.2,
+        55.2,
         8,
         6
       ],

@@ -17,6 +17,10 @@ async function state(page) {
   return page.locator('#scene').evaluate(el => ({zoom: el.dataset.cameraZoom, position: el.dataset.cameraPosition, target: el.dataset.cameraTarget}));
 }
 
+async function routesInScene(page) {
+  return page.evaluate(() => window.inspectMagicMap().routes);
+}
+
 (async () => {
   fs.mkdirSync(output, {recursive: true});
   if (!base) {
@@ -40,16 +44,16 @@ async function state(page) {
   }
   const browser = await chromium.launch({headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || 'chrome'});
   try {
-    for (const [width, height] of [[1600, 1100], [1024, 900], [390, 844]]) {
+    for (const [width, height] of [[1920, 1080], [1024, 900], [390, 844]]) {
       const page = await browser.newPage({viewport: {width, height}, hasTouch: width === 390});
       const errors = [], failed = [], remote = [];
       page.on('pageerror', error => errors.push(error.message));
       page.on('response', response => { if (response.status() >= 400) failed.push(response.url()); });
       page.on('request', request => { if (!request.url().startsWith(base) && !request.url().startsWith('data:')) remote.push(request.url()); });
       await page.goto(base);
-      await page.waitForFunction(() => window.inspectMagicMap, {timeout: 30000});
+      await page.waitForFunction(() => window.inspectMagicMap, null, {timeout: 30000});
       const meta = await (await page.request.get(base + '/api/meta')).json();
-      if(width===1600&&reloadConfig){
+      if(width===1920&&reloadConfig){
         const before=await (await page.request.get(base+'/api/dev-version')).json();
         const next=JSON.parse(fs.readFileSync(reloadConfig,'utf8'));next.seed+=1;fs.writeFileSync(reloadConfig,JSON.stringify(next));
         await page.reload();await page.waitForFunction(()=>window.inspectMagicMap);
@@ -57,10 +61,28 @@ async function state(page) {
         const after=await (await page.request.get(base+'/api/dev-version')).json();
         assert.equal(refreshed.config.seed,next.seed);assert.equal(after.instance,before.instance);assert.notEqual(after.version,before.version);
       }
-      assert.equal(meta.runnable, false); assert.equal(meta.map_view, 'guide-map-3d');
+      assert.equal(meta.runnable, true); assert.equal(meta.status, 'continuous_running'); assert.equal(meta.map_view, 'guide-map-3d');
+      const panel = page.locator('#facility-panel');
+      const closePanel = page.locator('#close-panel');
+      const showRoutes = page.locator('#show-routes');
+      const routeDistances = page.locator('#route-distances');
+      const facilityList = page.locator('#facility-list');
+      const mapToolButtons = page.locator('.map-tools > .tool-group > button');
+      assert.deepEqual(await mapToolButtons.evaluateAll(buttons => buttons.map(button => button.id)),
+        ['reset', 'top-view', 'facility-list']);
+      assert.deepEqual((await mapToolButtons.allTextContents()).map(text => text.trim()),
+        ['전체 보기', '위에서 보기', '시설 찾기']);
+      assert.equal(await page.locator('#display-toggle, #display-panel, #help-toggle, #help-panel, #cutaway').count(), 0);
       assert.equal(await page.locator('#scene canvas').count(), 1);
+      const canvas = await page.locator('#scene canvas').boundingBox();
+      assert.ok(canvas.width >= width * .9 && canvas.height >= height * .8, '기본 화면 대부분을 지도가 채워야 합니다.');
       assert.equal(await page.locator('.facility-label').count(), 6);
       assert.equal(await page.locator('#facilities button').count(), 6);
+      assert.equal(await page.locator('#facility-picker').isVisible(), false);
+      assert.equal(await panel.isVisible(), false);
+      assert.deepEqual(await routesInScene(page), []);
+      assert.ok(!/\d+\s*(?:명|분|자리)|운행\s*(?:중|정지)|재생바/.test(await page.locator('body').innerText()));
+      await page.screenshot({path: path.join(output, `map-${width}.png`), fullPage: true});
       const scene = await page.evaluate(() => window.inspectMagicMap());
       assert.equal(scene.renderer, 'three-webgl'); assert.ok(scene.drawCalls > 0);
       assert.equal(scene.publicSpace,'island-minus-reservations');
@@ -95,11 +117,22 @@ async function state(page) {
         assert.equal(facility.level,0);
         assert.ok(object.min[1] >= -.7 && object.max[1] > 5);
         assert.equal(await page.locator(`.facility-label[data-facility="${facility.id}"]`).isVisible(), true);
-        await page.locator(`#facilities [data-facility="${facility.id}"]`).click();
+        const label = page.locator(`.facility-label[data-facility="${facility.id}"]`);
+        const homeBeforeSelection = await state(page);
+        await label.click();
+        assert.equal(await panel.isVisible(), true);
         assert.equal(await page.locator('#detail h2').textContent(), facility.name);
+        assert.deepEqual(await state(page), homeBeforeSelection, '시설 선택 시 카메라를 옮기지 않습니다.');
+        assert.deepEqual(await page.locator('#scene canvas').boundingBox(), canvas);
+        assert.deepEqual(await routesInScene(page), [], '경로는 버튼으로 요청한 경우에만 표시합니다.');
+        assert.equal(await showRoutes.getAttribute('aria-pressed'), 'false');
+        assert.equal(await routeDistances.isVisible(), false);
         assert.equal(await page.locator('[data-queue-capacity]').count(),0);
-        assert.ok(!/대기 수용|\d+자리/.test(await page.locator('body').innerText()));
-        const routes = await page.evaluate(() => window.inspectMagicMap().routes);
+        assert.ok(!/대기 수용|\d+\s*(?:명|분|자리)|운행\s*(?:중|정지)/.test(await panel.innerText()));
+        await showRoutes.click();
+        assert.equal(await showRoutes.getAttribute('aria-pressed'), 'true');
+        assert.equal(await routeDistances.isVisible(), true);
+        const routes = await routesInScene(page);
         assert.equal(routes.length, 2);
         assert.equal(routes[0].nodes[0], meta.map.geometry.boundary);
         assert.equal(routes[0].nodes.at(-1), facility.entrance);
@@ -112,6 +145,13 @@ async function state(page) {
           assert.ok(Math.abs(distance - route.distance_m) < 1e-8);
           assert.ok(text.includes(distance.toFixed(1) + 'm'));
         }
+        await showRoutes.click();
+        assert.equal(await showRoutes.getAttribute('aria-pressed'), 'false');
+        assert.equal(await routeDistances.isVisible(), false);
+        assert.deepEqual(await routesInScene(page), []);
+        await closePanel.click();
+        assert.equal(await panel.isVisible(), false);
+        assert.deepEqual(await state(page), homeBeforeSelection);
       }
       for (const edge of meta.map.geometry.edges) {
         const walk = scene.walks.find(w => w.edgeId === edge.id);
@@ -139,11 +179,11 @@ async function state(page) {
       const drop = await page.evaluate(() => window.inspectMagicMap().pickPoints['gyro-drop']);
       await page.mouse.click(bounds.x + drop[0], bounds.y + drop[1]);
       assert.equal(await page.locator('#detail h2').textContent(), '자이로드롭');
+      assert.equal(await panel.isVisible(), true);
+      await page.keyboard.press('Escape');
+      assert.equal(await panel.isVisible(), false);
       await page.locator('#top-view').click(); assert.notEqual((await state(page)).position, home.position);
       await page.screenshot({path: path.join(output, `top-${width}.png`), fullPage: true});
-      await page.locator('#cutaway').click();
-      assert.equal(await page.evaluate(() => window.inspectMagicMap().castleOpacity), .14);
-      await page.locator('#cutaway').click(); assert.equal(await page.evaluate(() => window.inspectMagicMap().castleOpacity), 1);
       await page.locator('#reset').click();
       if (width === 390) {
         const cdp = await page.context().newCDPSession(page);
@@ -159,17 +199,46 @@ async function state(page) {
         assert.ok(Number((await state(page)).zoom) > beforePinch);
         await page.locator('#reset').click();
       }
-      await page.locator('#facilities [data-facility="comet-express"]').focus(); await page.keyboard.press('Enter');
+      await facilityList.click();
+      assert.equal(await facilityList.getAttribute('aria-expanded'), 'true');
+      assert.equal(await page.locator('#facilities').isVisible(), true);
+      await page.locator('#facilities [data-facility="comet-express"]').focus();
+      await page.keyboard.press('Enter');
       assert.equal(await page.locator('#detail h2').textContent(), '혜성특급');
+      assert.equal(await panel.isVisible(), true);
+      assert.equal(await page.locator('#facility-picker').isVisible(), false);
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'facility-title');
+      await showRoutes.click();
       await page.locator('[data-action="focus"]').click(); assert.notEqual((await state(page)).target, home.target);
       await page.screenshot({path: path.join(output, `comet-${width}.png`), fullPage: true});
+      await closePanel.click();
+      assert.deepEqual(await routesInScene(page), []);
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'facility-list');
       await page.locator('#reset').click(); assert.deepEqual(await state(page), home);
+      if (width === 1920 && await page.evaluate(() => document.fullscreenEnabled)) {
+        const fullscreen = page.locator('#fullscreen');
+        await fullscreen.click();
+        await page.waitForFunction(() =>
+          document.fullscreenElement !== null && document.querySelector('#fullscreen').ariaPressed === 'true');
+        await fullscreen.click();
+        await page.waitForFunction(() =>
+          document.fullscreenElement === null && document.querySelector('#fullscreen').ariaPressed === 'false');
+      }
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight), true);
       assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(remote, []);
-      await page.screenshot({path: path.join(output, `map-${width}.png`), fullPage: true});
       assert.equal(await page.locator('body').textContent().then(text=>text.includes('지하 B1')),false);
-      console.log(`${width}×${height}: WebGL·지상 모형 6개·점유 범위·동선·회전·확대·이동·시점 복귀·외부 요청 없음 검사 통과`);
+      console.log(`${width}×${height}: 지도 중심 배치·시설 선택 패널·동선 전환·WebGL·모형 6개·회전·확대·시점 복귀 검사 통과`);
       await page.close();
     }
+    const errorPage = await browser.newPage();
+    await errorPage.route('**/api/meta', route => route.fulfill({status: 503}));
+    await errorPage.goto(base);
+    await errorPage.locator('#error').waitFor({state: 'visible'});
+    assert.equal(await errorPage.locator('#map-status').textContent(), '지도 표시 오류');
+    assert.equal(await errorPage.locator('#scene canvas').count(), 0);
+    assert.equal(await errorPage.locator('#facility-panel').isVisible(), false);
+    console.log('지도 요청 실패 시 오류 표시 검사 통과');
+    await errorPage.close();
   } finally { await browser.close(); server?.kill(); if(reloadConfig&&fs.existsSync(reloadConfig))fs.unlinkSync(reloadConfig); }
 })().catch(error => { server?.kill(); if(reloadConfig&&fs.existsSync(reloadConfig))fs.unlinkSync(reloadConfig); console.error(error); process.exitCode = 1; });

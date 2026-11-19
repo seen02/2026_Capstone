@@ -48,12 +48,14 @@ export class MagicIslandMap {
     sun.position.set(-100,350,180);sun.castShadow=true;
     Object.assign(sun.shadow.camera,{left:-300,right:300,top:300,bottom:-300,near:1,far:800});
     sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0005;sun.shadow.normalBias=.3;this.scene.add(sun);
-    this.labels=[];this.pickables=[];this.rideGroups={};this.cutaway=false;this.routes=[];
-    this.scenery=new THREE.Group();this.scenery.name='가림 조절 배경';this.scene.add(this.scenery);
+    this.labels=[];this.pickables=[];this.rideGroups={};this.routes=[];
+    this.scenery=new THREE.Group();this.scenery.name='배경';this.scene.add(this.scenery);
     this.routeGroup=new THREE.Group();this.routeGroup.name='선택 보행 경로';this.scene.add(this.routeGroup);
     this.build();
     this.ray=new THREE.Raycaster();let down=null;
-    this.renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
+    this.renderer.domElement.addEventListener('pointerdown',e=>{
+      down=e.isPrimary&&e.button===0?[e.clientX,e.clientY]:null;
+    });
     this.renderer.domElement.addEventListener('pointerup',e=>{
       if(!down || Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;
       const bounds=this.host.getBoundingClientRect();
@@ -68,12 +70,17 @@ export class MagicIslandMap {
     });
   }
 
-  label(name,position,facility=null,extra='') {
+  label(name,position,facility=null) {
     const element=document.createElement(facility?'button':'span');
     element.className='map-label'+(facility?' facility-label':' landmark-label');
     element.textContent=name;
-    if(extra){const small=document.createElement('small');small.textContent=extra;element.append(small);}
-    if(facility){element.dataset.facility=facility;element.setAttribute('aria-label',name+' 동선 보기');element.onclick=()=>this.onSelect(facility);}
+    if(facility) {
+      element.type='button';
+      element.dataset.facility=facility;
+      element.setAttribute('aria-label',name+' 상세 보기');
+      element.setAttribute('aria-pressed','false');
+      element.onclick=()=>this.onSelect(facility,element);
+    }
     this.host.querySelector('.labels').append(element);
     this.labels.push({element,position:new THREE.Vector3(...position)});
     return element;
@@ -205,17 +212,30 @@ export class MagicIslandMap {
     });
     trunks.castShadow=true;crowns.castShadow=true;crowns.receiveShadow=true;this.scenery.add(trunks,crowns);
     // 안내도에서 성 뒤쪽의 지붕 군집을 참고한 배경 건물. 추가 대상 시설이 아니다.
+    const rearBuilding=new THREE.Group();rearBuilding.name='castle-rear-building';this.scenery.add(rearBuilding);
     for(const [x,z,w,d] of g.scenery_buildings) {
-      box(this.scenery,x+w/2,3,z+d/2,w,6,d,'#d5c7b0');
-      box(this.scenery,x+w/2,7,z+d/2,w,2,d,'#597387');
+      box(rearBuilding,x+w/2,3,z+d/2,w,6,d,'#d5c7b0');
+      box(rearBuilding,x+w/2,7,z+d/2,w,2,d,'#597387');
     }
   }
 
   select(id) {
+    for(const {element} of this.labels) {
+      if(element.dataset.facility)element.setAttribute('aria-pressed',String(element.dataset.facility===id));
+    }
+    this.hideRoutes();
+  }
+
+  hideRoutes() {
     while(this.routeGroup.children.length) {
       const object=this.routeGroup.children[0];this.routeGroup.remove(object);
       object.geometry?.dispose();object.material?.dispose();
     }
+    this.routes=[];
+    this.render();
+  }
+
+  showRoutes(id) {
     const f=this.map.facilities.find(f=>f.id===id);
     this.routes=[this.navigator.route(this.map.geometry.boundary,f.entrance),this.navigator.route(f.exit,this.map.geometry.boundary)];
     this.routes.forEach((route,index)=>{
@@ -225,18 +245,21 @@ export class MagicIslandMap {
         new THREE.LineBasicMaterial({color:'#147755',depthTest:false}));
       if(index)line.computeLineDistances();line.renderOrder=10;this.routeGroup.add(line);
     });
-    for(const label of this.labels)if(label.element.dataset.facility)label.element.setAttribute('aria-pressed',String(label.element.dataset.facility===id));
-    this.render();return this.routes;
-  }
-
-  setCutaway(value) {
-    this.cutaway=value;
-    this.scenery.traverse(object=>{
-      if(!object.isMesh)return;
-      object.material.transparent=value;object.material.opacity=value?.14:1;
-      object.material.depthWrite=!value;object.castShadow=!value;
-    });
+    const stops=[
+      [this.points[f.entrance],'#287e63'],
+      [this.queueLayouts[id].boarding_exit,'#bc8a35'],
+      [this.points[f.exit],'#b65f48'],
+    ];
+    for(const [[x,z],color] of stops) {
+      const ring=new THREE.Mesh(new THREE.RingGeometry(1.65,2.25,24),
+        new THREE.MeshBasicMaterial({color,depthTest:false,depthWrite:false}));
+      ring.rotation.x=-Math.PI/2;
+      ring.position.set(x,.35,z);
+      ring.renderOrder=11;
+      this.routeGroup.add(ring);
+    }
     this.render();
+    return this.routes;
   }
 
   resize() {
@@ -305,10 +328,9 @@ export class MagicIslandMap {
   // 장면 객체와 설정 좌표의 일치를 검사할 때 사용하는 읽기 전용 상태다.
   inspect() {
     return {
-      renderer:'three-webgl',cutaway:this.cutaway,
+      renderer:'three-webgl',
       publicSpace:this.map.geometry.public_space,
       landscapeBeds:this.map.geometry.landscape_beds,
-      castleOpacity:this.scenery.getObjectByName('magic-castle').children[0].material.opacity,
       castleGate:this.scenery.getObjectByName('castle-gate').getWorldPosition(new THREE.Vector3()).toArray(),
       castleBounds:(()=>{const b=new THREE.Box3().setFromObject(this.scenery.getObjectByName('magic-castle'));return {min:b.min.toArray(),max:b.max.toArray()};})(),
       outline:this.map.geometry.island_outline,

@@ -1,37 +1,73 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>롯데월드 매직아일랜드 3D 지도</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>매직아일랜드 시뮬레이션</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/map.css">
   <script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
   <script type="module" src="/map.js"></script>
 </head>
 <body>
-<header>
-  <div><p class="eyebrow">롯데월드 · 공간 시뮬레이션</p><h1>매직아일랜드 <span>3D</span></h1><p>호수 위의 섬, 여섯 시설과 이어지는 길</p></div>
-  <span class="badge">3D 지도 · 공간 검증 단계</span>
-</header>
-<main>
-  <section class="map-panel" aria-label="매직아일랜드 3D 지도">
-    <div class="toolbar">
-      <div><strong>매직아일랜드 안내도</strong><span id="scale">전체 보기</span></div>
-      <div class="tools"><button id="zoom-out" aria-label="지도 축소">−</button><button id="zoom-in" aria-label="지도 확대">+</button><button id="top-view">위에서 보기</button><button id="cutaway" aria-pressed="false">가림 줄이기</button><button id="reset">전체 보기</button></div>
+  <header class="topbar">
+    <div class="identity">
+      <span class="app-name">공간 시뮬레이션</span>
+      <h1>매직아일랜드</h1>
     </div>
-    <div id="scene" class="viewport" aria-label="매직아일랜드 입체 지도">
-      <div id="loading" role="status">3D 지도를 불러오는 중…</div><div class="labels"></div>
-      <div class="scene-caption"><strong>석촌호수 · 매직아일랜드</strong><span>가상 미터 좌표 · 안내도 상대 배치 참고</span></div>
+    <div class="header-actions">
+      <p id="map-status" class="map-status" role="status">지도 불러오는 중</p>
+      <button type="button" id="fullscreen" aria-label="전체 화면" aria-pressed="false" hidden>
+        <span class="fullscreen-icon" aria-hidden="true"></span><span class="fullscreen-label">전체 화면</span>
+      </button>
     </div>
-    <div class="map-bottom"><p class="controls-help">드래그로 회전 · 휠로 확대 · 오른쪽 드래그로 이동<br class="mobile-break">터치: 한 손가락 회전 · 두 손가락 확대·이동</p><div class="legend"><span><i class="walk"></i>보행 광장·통로</span><span><i class="planting"></i>식재 구획</span><span><i class="queue"></i>대기 구획</span><span><b class="entry">●</b> 대기 입구 <b class="boarding">●</b> 탑승 진입 <b class="exit">●</b> 이용 후 퇴장</span></div></div>
-  </section>
-  <aside>
-    <section class="intro"><p class="eyebrow">시설과 보행 동선</p><h2>섬을 둘러보세요</h2><p>입체 모형이나 이름을 선택하면 다리에서 입구까지, 출구에서 다리까지의 길을 확인할 수 있습니다.</p></section>
-    <div id="facilities" aria-label="시설 선택"></div>
-    <section id="detail" aria-live="polite"><h2>시설을 선택하세요</h2><p>초록 실선은 입구 접근,<br>주황 점선은 출구 복귀 경로입니다.</p></section>
-    <p class="notice">포장된 광장 전체가 보행 공간이며 녹지는 작은 식재 구획으로 구분합니다. 대기줄은 정적 표시이며 현재 대기 인원·운행 상태는 아직 집계하지 않습니다. 크기·코스는 실측값이 아닙니다.</p>
-    <a href="/api/meta">지도·운영·선호 설정 확인 ↗</a>
-  </aside>
-</main>
-<footer>지도 표시 단계 · 유입·보행·운행·재생 엔진은 개발 예정입니다. <span id="error" role="alert"></span></footer>
-</body></html>
+  </header>
+  <main class="map-shell" aria-label="매직아일랜드 3D 지도">
+    <div id="scene" class="viewport">
+      <div id="loading" role="status">3D 지도를 불러오는 중…</div>
+      <div class="labels"></div>
+    </div>
+    <div class="map-tools">
+      <div class="tool-group" role="group" aria-label="지도 도구">
+        <button type="button" id="reset">전체 보기</button>
+        <button type="button" id="top-view">위에서 보기</button>
+        <span class="tool-divider" aria-hidden="true"></span>
+        <button type="button" id="facility-list" aria-expanded="false" aria-controls="facility-picker">
+          시설 찾기<span class="picker-chevron" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+    <div class="zoom-tools tool-group" role="group" aria-label="확대와 축소">
+      <button type="button" id="zoom-out" aria-label="지도 축소">−</button>
+      <span id="scale" aria-label="지도 확대 배율">100%</span>
+      <button type="button" id="zoom-in" aria-label="지도 확대">+</button>
+    </div>
+    <div class="legend" role="group" aria-label="시설 동선 범례">
+      <span><i class="entry" aria-hidden="true"></i>대기 입구</span>
+      <span><i class="boarding" aria-hidden="true"></i>탑승 진입</span>
+      <span><i class="exit" aria-hidden="true"></i>이용 후 퇴장</span>
+    </div>
+    <section id="facility-picker" class="overlay menu" aria-labelledby="picker-title" hidden>
+      <h2 id="picker-title">시설 선택</h2>
+      <div id="facilities" aria-labelledby="picker-title"></div>
+    </section>
+    <aside id="facility-panel" class="overlay facility-panel" aria-labelledby="facility-title" hidden>
+      <button type="button" id="close-panel" aria-label="시설 상세 닫기">×</button>
+      <div id="detail">
+        <h2 id="facility-title" tabindex="-1"></h2>
+        <p id="facility-description"></p>
+        <div class="detail-actions">
+          <button type="button" id="show-routes" aria-pressed="false">동선 보기</button>
+          <button type="button" data-action="focus">시설 가까이 보기</button>
+        </div>
+        <dl id="route-distances" class="route-distances" hidden>
+          <div><dt>다리 → 대기 입구</dt><dd id="entry-distance"></dd></div>
+          <div><dt>이용 후 퇴장 → 다리</dt><dd id="exit-distance"></dd></div>
+        </dl>
+      </div>
+    </aside>
+    <p id="error" class="map-error" role="alert" hidden></p>
+    <p id="screen-message" class="screen-message" role="status" hidden></p>
+  </main>
+</body>
+</html>

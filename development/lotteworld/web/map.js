@@ -1,54 +1,160 @@
 import {MagicIslandMap} from './map3d.js';
-let view;
-const buttons=document.querySelector('#facilities');
-const error=document.querySelector('#error');
-const host=document.querySelector('#scene');
 
-function select(id) {
-  const facility=view.map.facilities.find(f=>f.id===id);
-  const [entry,exit]=view.select(id);
-  for(const button of buttons.children)button.setAttribute('aria-pressed',String(button.dataset.facility===id));
-  const detail=document.querySelector('#detail');detail.replaceChildren();
-  const heading=document.createElement('h2');heading.textContent=facility.name;
-  const lengths=document.createElement('p');lengths.textContent=`다리 → 입구 ${entry.distance_m.toFixed(1)}m · 출구 → 다리 ${exit.distance_m.toFixed(1)}m`;
-  lengths.title='포장 광장의 장애물을 피하는 표시 경로 기준 거리';
-  const info=document.createElement('p');info.textContent=facility.id==='comet-express'?'지상 표시 모형 · 열차와 굽은 코스':'정적 시설 모형 · 대기·운행 미집계';
-  const focus=document.createElement('button');focus.textContent='시설 가까이 보기';focus.dataset.action='focus';focus.onclick=()=>view.focus(id);
-  const flow=document.createElement('p');flow.textContent='초록 대기 입구 → 줄 진행 → 황금색 탑승 진입 · 빨간 점은 이용 후 퇴장';
-  detail.append(heading,lengths,info,flow,focus);
+const get = id => document.getElementById(id);
+const host = get('scene');
+const panel = get('facility-panel');
+const title = get('facility-title');
+const buttons = get('facilities');
+const routeButton = get('show-routes');
+const distances = get('route-distances');
+const facilityList = get('facility-list');
+const picker = get('facility-picker');
+const descriptions = {
+  'gyro-drop': '수직 타워를 따라 움직이는 원형 탑승대',
+  'gyro-swing': '지지대 사이에서 우측으로 흔들려 올라간 원형 탑승대',
+  atlantis: '물길과 고가 레일이 이어지는 코스터',
+  'comet-express': '지상 모형의 굽은 레일 위에 놓인 열차',
+  'gyro-spin': 'U자형 레일 위의 회전 원판',
+  'arcana-ride': '타원형 궤도를 도는 소형 차량',
+};
+
+let view;
+let selectedId;
+let selectionTrigger;
+
+function setPickerOpen(open) {
+  picker.hidden = !open;
+  facilityList.setAttribute('aria-expanded', String(open));
 }
 
-host.addEventListener('map-error',e=>{error.textContent=e.detail;});
-host.addEventListener('view-change',e=>{document.querySelector('#scale').textContent=Math.round(e.detail.zoom*100)+'%';});
-document.querySelector('#zoom-in').onclick=()=>view?.zoom(1.25);
-document.querySelector('#zoom-out').onclick=()=>view?.zoom(.8);
-document.querySelector('#reset').onclick=()=>view?.home(false);
-document.querySelector('#top-view').onclick=()=>view?.home(true);
-document.querySelector('#cutaway').onclick=e=>{
-  if(!view)return;
-  view.setCutaway(!view.cutaway);
-  e.currentTarget.setAttribute('aria-pressed',String(view.cutaway));
+function setRouteDetails(routes = []) {
+  const visible = routes.length > 0;
+  routeButton.textContent = visible ? '동선 숨기기' : '동선 보기';
+  routeButton.setAttribute('aria-pressed', String(visible));
+  distances.hidden = !visible;
+  if (visible) {
+    get('entry-distance').textContent = routes[0].distance_m.toFixed(1) + 'm';
+    get('exit-distance').textContent = routes[1].distance_m.toFixed(1) + 'm';
+  }
+}
+
+function highlightSelection(id) {
+  view.select(id);
+  setRouteDetails();
+  for (const button of buttons.children) {
+    button.setAttribute('aria-pressed', String(button.dataset.facility === id));
+  }
+}
+
+function select(id, trigger) {
+  const facility = view.map.facilities.find(item => item.id === id);
+  selectionTrigger = trigger ?? facilityList;
+  setPickerOpen(false);
+  selectedId = id;
+  highlightSelection(id);
+  title.textContent = facility.name;
+  get('facility-description').textContent = descriptions[id] ?? '매직아일랜드 시설 모형';
+  panel.hidden = false;
+  title.focus({preventScroll: true});
+}
+
+function closePanel() {
+  selectedId = null;
+  highlightSelection(null);
+  panel.hidden = true;
+  const focusTarget = selectionTrigger?.hidden ? facilityList : selectionTrigger;
+  (focusTarget ?? facilityList).focus({preventScroll: true});
+}
+
+facilityList.onclick = () => {
+  const open = picker.hidden;
+  setPickerOpen(open);
+  if (open) (buttons.querySelector('[aria-pressed="true"]') ?? buttons.firstElementChild)?.focus();
 };
+get('close-panel').onclick = closePanel;
+routeButton.onclick = () => {
+  if (!selectedId) return;
+  if (routeButton.getAttribute('aria-pressed') === 'true') {
+    view.hideRoutes();
+    setRouteDetails();
+  } else {
+    setRouteDetails(view.showRoutes(selectedId));
+  }
+};
+panel.querySelector('[data-action="focus"]').onclick = () => view?.focus(selectedId);
+
+document.addEventListener('pointerdown', event => {
+  if (!picker.hidden && !facilityList.contains(event.target) && !picker.contains(event.target)) setPickerOpen(false);
+});
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  if (!picker.hidden) {
+    setPickerOpen(false);
+    facilityList.focus();
+  } else if (!panel.hidden) closePanel();
+  else return;
+  event.preventDefault();
+});
+
+const fullscreen = get('fullscreen');
+fullscreen.hidden = !document.fullscreenEnabled;
+fullscreen.onclick = async () => {
+  get('screen-message').hidden = true;
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch {
+    get('screen-message').textContent = '브라우저에서 전체 화면으로 전환할 수 없습니다.';
+    get('screen-message').hidden = false;
+  }
+};
+document.addEventListener('fullscreenchange', () => {
+  const isFullscreen = Boolean(document.fullscreenElement);
+  const label = isFullscreen ? '전체 화면 종료' : '전체 화면';
+  fullscreen.setAttribute('aria-pressed', String(isFullscreen));
+  fullscreen.setAttribute('aria-label', label);
+  fullscreen.querySelector('.fullscreen-label').textContent = label;
+});
+
+function showError(message) {
+  get('map-status').textContent = '지도 표시 오류';
+  get('map-status').dataset.error = '';
+  get('error').textContent = message;
+  get('error').hidden = false;
+}
+
+host.addEventListener('map-error', event => showError(event.detail));
+host.addEventListener('view-change', event => {
+  get('scale').textContent = Math.round(event.detail.zoom * 100) + '%';
+});
+get('zoom-in').onclick = () => view?.zoom(1.25);
+get('zoom-out').onclick = () => view?.zoom(.8);
+get('reset').onclick = () => view?.home(false);
+get('top-view').onclick = () => view?.home(true);
 
 async function initialize() {
   try {
-    const response=await fetch('/api/meta');
-    if(!response.ok)throw new Error('지도 설정을 가져오지 못했습니다.');
-    const metadata=await response.json();
-    view=new MagicIslandMap(host,metadata.map,select);
-    for(const facility of metadata.map.facilities) {
-      const button=document.createElement('button');button.dataset.facility=facility.id;
-      button.setAttribute('aria-pressed','false');button.textContent=facility.name;
-      const small=document.createElement('small');small.textContent='지상';button.append(small);
-      button.onclick=()=>select(facility.id);buttons.append(button);
+    const response = await fetch('/api/meta');
+    if (!response.ok) throw new Error('지도 설정을 가져오지 못했습니다.');
+    const {map} = await response.json();
+    view = new MagicIslandMap(host, map, select);
+    for (const facility of map.facilities) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.facility = facility.id;
+      button.setAttribute('aria-pressed', 'false');
+      button.textContent = facility.name;
+      button.onclick = () => select(facility.id, facilityList);
+      buttons.append(button);
     }
-    document.querySelector('#loading').remove();
-    // 디버깅·장면 검증을 위한 읽기 전용 스냅샷. 실제 운영 API가 아니다.
-    window.inspectMagicMap=()=>view.inspect();
-  }catch(exception) {
-    error.textContent='3D 지도를 불러오지 못했습니다. WebGL을 지원하는 브라우저와 서버 연결을 확인하세요.';
-    document.querySelector('#loading').textContent='3D 지도를 표시할 수 없습니다.';
-    console.error(exception);
+    get('loading').remove();
+    get('map-status').textContent = '정적 지도';
+    // 브라우저 검증에 사용하는 읽기 전용 장면 상태.
+    window.inspectMagicMap = () => view.inspect();
+  } catch (error) {
+    showError('3D 지도를 불러오지 못했습니다. 서버 연결과 브라우저의 WebGL 지원을 확인하세요.');
+    get('loading').textContent = '3D 지도를 표시할 수 없습니다.';
+    console.error(error);
   }
 }
 initialize();
