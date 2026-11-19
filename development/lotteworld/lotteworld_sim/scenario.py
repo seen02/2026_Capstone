@@ -14,6 +14,12 @@ CONTINUOUS_PATH = Path("configs/continuous.json")
 SCENARIO_ID = "magic-island"
 FACILITIES = {"atlantis", "gyro-drop", "gyro-swing", "gyro-spin", "comet-express", "arcana-ride"}
 MAP_READY = "매직아일랜드 설정 검증을 마쳤습니다. 연속 유입을 실행하려면 서버를 시작하세요."
+DEFAULT_PREFERENCE_BEHAVIOR = {
+    "facility_weights": dict.fromkeys(FACILITIES, 1),
+    "wait_patience_sim_s": (300, 1500),
+    "repeat_weight": 0.25,
+    "time_cost_scale_sim_s": 300,
+}
 
 
 def require(condition, message):
@@ -83,7 +89,7 @@ def validate(map_data, config, preferences):
             cursor, counts, shares = b, counts + count, shares + weight
         require(cursor == end and counts == total and math.isclose(shares, share, rel_tol=0, abs_tol=1e-9), "시간별 유입의 범위·인원·비중 합계가 관측 설정과 다릅니다.")
         tags, profiles = preferences["tags"], preferences["profiles"]
-        require(preferences["status"] == "provisional", "선호 설정은 후속 행동 구현 전의 가정 상태여야 합니다.")
+        require(preferences["status"] == "provisional", "선호 설정은 시연용 가정 상태여야 합니다.")
         require(isinstance(tags, list) and len(tags) == 6 and set(tags) == FACILITIES, "선호 태그는 지도 시설 6개와 일치해야 합니다.")
         require(isinstance(profiles, list) and bool(profiles), "선호 유형이 하나 이상 필요합니다.")
         ids = set()
@@ -93,6 +99,17 @@ def validate(map_data, config, preferences):
             require(isinstance(profile["name"], str) and bool(profile["name"].strip()), "선호 유형 이름이 필요합니다.")
             require(isinstance(values, dict) and set(values) == set(tags) and all(number(v, 0, 5) for v in values.values()), "모든 시설의 선호는 0~5의 유한한 숫자여야 합니다.")
             ids.add(pid)
+        behavior = preferences.get("behavior", DEFAULT_PREFERENCE_BEHAVIOR)
+        require(isinstance(behavior, dict), "방문객 행동 설정은 객체여야 합니다.")
+        weights = behavior["facility_weights"]
+        require(isinstance(weights, dict) and weights.keys() == FACILITIES
+                and all(number(v, 0.01, 10) for v in weights.values()), "시설별 가중치는 0.01~10이어야 합니다.")
+        patience = behavior["wait_patience_sim_s"]
+        require(isinstance(patience, (list, tuple)) and len(patience) == 2
+                and all(number(v, 1, 86400) for v in patience) and patience[0] <= patience[1],
+                "대기 허용 시간은 1~86400 내부 초의 오름차순 두 값이어야 합니다.")
+        require(number(behavior["repeat_weight"], 0.01, 1), "재탑승 가중치는 0.01~1이어야 합니다.")
+        require(number(behavior["time_cost_scale_sim_s"], 1, 3600), "이동·대기 비용 기준은 1~3600 내부 초여야 합니다.")
     except (KeyError, TypeError, AttributeError, IndexError) as exc:
         raise ValueError("설정의 필수 항목이 없거나 자료형이 올바르지 않습니다.") from exc
 

@@ -54,10 +54,22 @@ class ScenarioTests(unittest.TestCase):
             (2, ["profiles", 0, "preferences", "atlantis"], True),
             (2, ["profiles", 0, "preferences", "atlantis"], float("nan")),
             (2, ["profiles"], []), (2, ["profiles", 0, "preferences"], {}),
+            (2, ["behavior"], None), (2, ["behavior", "facility_weights"], {"atlantis": 1}),
+            (2, ["behavior", "facility_weights", "atlantis"], 0),
+            (2, ["behavior", "wait_patience_sim_s"], [1500, 300]),
+            (2, ["behavior", "wait_patience_sim_s"], [False, 300]),
+            (2, ["behavior", "repeat_weight"], 0), (2, ["behavior", "repeat_weight"], 1.01),
+            (2, ["behavior", "time_cost_scale_sim_s"], 0),
         ]
         for group, keys, value in cases:
             with self.subTest(group=group, keys=keys, value=value), self.assertRaises(ValueError):
                 validate(*change(group, keys, value))
+
+    def test_legacy_preference_settings_without_behavior_still_validate(self):
+        scenario = load_inputs()
+        scenario.preferences.pop('behavior')
+        scenario.preferences['profiles'] = scenario.preferences['profiles'][:1]
+        validate(scenario.map, scenario.config, scenario.preferences)
 
     def test_custom_config_errors_and_hashes(self):
         scenario = load_inputs()
@@ -157,6 +169,7 @@ class ScenarioTests(unittest.TestCase):
             self.assertEqual(state["clock"]["time_scale"], data["continuous"]["time_scale"])
             self.assertEqual(state["map_hash"], data["hashes"]["map"])
             self.assertEqual(state["ride_operations_hash"], data["hashes"]["ride_operations"])
+            self.assertEqual(state["preferences_hash"], data["hashes"]["preferences"])
             self.assertEqual(set(state["rides"]), set(expected))
             people = state["background"]
             self.assertEqual(people["target_people"], data["continuous"]["target_people"])
@@ -165,6 +178,9 @@ class ScenarioTests(unittest.TestCase):
             self.assertEqual({key: queue['capacity'] for key, queue in people['queues'].items()},
                              {key: report['capacity'] for key, report in data['queue_report'].items()})
             self.assertTrue(all(len(visitor['point']) == 2 for visitor in people['visitors']))
+            self.assertEqual({v['preference_profile_id'] for v in people['visitors']},
+                             {profile['id'] for profile in data['preferences']['profiles']})
+            self.assertTrue(all(v['completed_rides'] == {} for v in people['visitors']))
             now = 600 / data['continuous']['time_scale']
             server.service_actions()
             self.assertTrue(all(ride.dispatch_count >= 2 for ride in server.background.rides.values()))
@@ -172,6 +188,7 @@ class ScenarioTests(unittest.TestCase):
                 running = json.load(response)
             self.assertEqual(running['run_id'], state['run_id'])
             self.assertTrue(all(ride['dispatch_count'] >= 2 for ride in running['rides'].values()))
+            self.assertTrue(any(v['completed_rides'] for v in running['background']['visitors']))
             for asset in ('/navigation.mjs','/queue.mjs'):
                 with urlopen(base+asset) as response:
                     self.assertIn('text/javascript',response.headers['Content-Type'])

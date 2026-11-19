@@ -9,7 +9,7 @@ from time import monotonic
 from uuid import uuid4
 
 from .ride_operations import RideOperation
-from .scenario import SCENARIO_ID
+from .scenario import DEFAULT_PREFERENCE_BEHAVIOR, SCENARIO_ID
 from .visitor_routes import FacilityPaths, Path, UNLOAD_GAP_S, WALK_M_PER_S
 
 
@@ -44,6 +44,11 @@ class Visitor:
     withdrawing: bool = False
     expired: bool = False
     vehicle_id: int | None = None
+    profile: dict | None = None
+    wait_patience: float = 0
+    wait_deadline: float | None = None
+    waiting_source: str | None = None
+    completed_rides: dict[str, int] = field(default_factory=dict)
 
     def snapshot(self, now):
         state = self.phase
@@ -56,6 +61,8 @@ class Visitor:
             'state': state, 'facility_id': self.facility_id, 'queue_slot': self.slot,
             'point': self.motion.path.point_at(self.motion.distance_at(now)) if self.motion else None,
             'departure_requested': self.expired, 'vehicle_id': self.vehicle_id,
+            'preference_profile_id': self.profile['id'] if self.profile else None,
+            'completed_rides': dict(self.completed_rides),
         }
 
 
@@ -76,7 +83,7 @@ class FacilityQueue:
 
 class BackgroundRun:
     def __init__(self, config, routes=None, *, map_hash=None, ride_operations=None,
-                 ride_operations_hash=None, clock=monotonic):
+                 ride_operations_hash=None, preferences=None, preferences_hash=None, clock=monotonic):
         self.run_id = f"continuous-{uuid4().hex}"
         self.clock = clock
         self.lock = Lock()
@@ -86,9 +93,15 @@ class BackgroundRun:
         self.time_scale = config['time_scale']
         self.stays = Random(config['seed'])
         initial_ages = Random(config['seed'] + 1)
+        self.profile_random = Random(config['seed'] + 2)
+        self.choice_random = Random(config['seed'] + 3)
+        self.profiles = preferences['profiles'] if preferences is not None else None
+        self.behavior = (preferences.get('behavior', DEFAULT_PREFERENCE_BEHAVIOR)
+                         if preferences is not None else DEFAULT_PREFERENCE_BEHAVIOR)
         self.routes = routes
         self.map_hash = map_hash
         self.ride_operations_hash = ride_operations_hash
+        self.preferences_hash = preferences_hash
         self.queues = {key: FacilityQueue(paths) for key, paths in routes.facilities.items()} if routes else {}
         self.facility_ids = tuple(self.queues)
         self.walk_gap = routes.queue_headway_m / WALK_M_PER_S if routes else 0
@@ -100,6 +113,7 @@ class BackgroundRun:
         self.admission_pending = False
         self.rides = {key: RideOperation(self, self.queues[key], settings)
                       for key, settings in (ride_operations or {}).items()}
+        self.queue_times = {key: self._queue_times(queue, self.rides.get(key)) for key, queue in self.queues.items()}
         for _ in range(config['initial_people']):
             self._admit(0, initial_ages.random())
         self._schedule_admission(0)
@@ -118,6 +132,9 @@ class BackgroundRun:
         entered = now - duration * (elapsed_fraction or 0)
         self.entered_total += 1
         visitor = Visitor(self.entered_total, entered, entered + duration)
+        if self.profiles is not None:
+            visitor.profile = self.profile_random.choice(self.profiles)
+            visitor.wait_patience = self.profile_random.uniform(*self.behavior['wait_patience_sim_s'])
         self.visitors[visitor.visitor_id] = visitor
         self._schedule(visitor.leave_at_sim_s, self._expire, visitor)
         if self.routes:
@@ -131,11 +148,14 @@ class BackgroundRun:
         visitor.motion = Motion(path, now, origin, path.length if target is None else target)
         self._schedule(visitor.motion.end, arrival, visitor, *args)
 
-    def _seek_queue(self, now, visitor, source, fraction=0):
+    def _seek_queue(self, now, visitor, source, fraction=0, *, avoid=None):
         if visitor.expired:
             visitor.facility_id = None
             path = self.routes.public_path(source, self.routes.boundary)
             self._walk(now, visitor, 'walking_to_exit', path, self._depart)
+            return
+        if visitor.profile is not None:
+            self._seek_preferred_queue(now, visitor, source, fraction, avoid)
             return
         ids = self.facility_ids
         start = (ids.index(visitor.facility_id) + 1 if visitor.facility_id else visitor.visitor_id - 1) % len(ids)
@@ -155,23 +175,107 @@ class BackgroundRun:
                 self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, self.routes.boundary)
                 return
             key, queue = next_stop
+        path = self.routes.public_path(source, queue.paths.approach)
+        self._walk_to_queue(now, visitor, key, path, fraction)
+
+    @staticmethod
+    def _queue_times(queue, ride):
+        paths = queue.paths
+        head_walk = paths.slots[-1] / WALK_M_PER_S
+        board_walk = paths.queue.length / WALK_M_PER_S - head_walk
+        unload_walk = paths.unloading.length / WALK_M_PER_S
+        if ride is None:
+            return head_walk, board_walk + unload_walk, 0
+        settings = ride.settings
+        boarding = max(board_walk, settings['boarding_and_check_seconds'])
+        unloading = settings['unloading_seconds']
+        travel = settings['ride_seconds']
+        headway = max(settings['dispatch_interval_seconds'], float(ride.section_seconds),
+                      (boarding + travel + unloading) / len(ride.vehicles),
+                      (boarding + unloading) / settings['station_capacity'])
+        return head_walk, boarding + travel + max(unloading, unload_walk), headway
+
+    def _observed_wait(self, key):
+        head_walk, _, headway = self.queue_times[key]
+        queue = self.queues[key]
+        return max(head_walk, len(queue.members) * headway / queue.paths.boarding_capacity)
+
+    def _wait_budget(self, now, visitor, key):
+        score = visitor.profile['preferences'][key]
+        patience = visitor.wait_patience * (0.5 + score / 10)
+        service_time = self.queue_times[key][1]
+        return min(patience, visitor.leave_at_sim_s - now - service_time)
+
+    @staticmethod
+    def _can_enter(now, queue):
+        return len(queue.members) < queue.capacity and now >= queue.next_entry
+
+    def _seek_preferred_queue(self, now, visitor, source, fraction, avoid):
+        destinations, weights = [], []
+        can_fit = False
+        for key, queue in self.queues.items():
+            score = visitor.profile['preferences'][key]
+            if not score:
+                continue
+            path = self.routes.public_path(source, queue.paths.approach)
+            walk = path.length * (1 - fraction) / WALK_M_PER_S
+            budget = self._wait_budget(now + walk, visitor, key)
+            head_walk = self.queue_times[key][0]
+            if head_walk >= budget:
+                continue
+            can_fit = True
+            # 시설의 현재 줄은 입구 앞 공공 연결점에서만 관찰한다.
+            observed = queue.paths.approach == source
+            wait = self._observed_wait(key) if observed else head_walk
+            if key == avoid or (observed and (not self._can_enter(now, queue) or wait >= budget)):
+                continue
+            repeat = self.behavior['repeat_weight'] if key in visitor.completed_rides else 1
+            cost = 1 + (walk + wait) / self.behavior['time_cost_scale_sim_s']
+            destinations.append((key, path))
+            weights.append(self.behavior['facility_weights'][key] * score * repeat / cost)
+
+        if destinations:
+            (key, path), = self.choice_random.choices(destinations, weights)
+            self._walk_to_queue(now, visitor, key, path, fraction)
+            return
+        visitor.facility_id = None
+        if not can_fit:
+            visitor.phase = 'waiting_to_exit'
+            visitor.waiting_source = source
+            visitor.motion = Motion(self.routes.public_path(source, source), now, 0, 0)
+            return
+        # 현장에서 막힌 시설만 남으면 다른 공공 연결점까지 걸은 뒤 다시 확인한다.
+        stops = dict.fromkeys(queue.paths.approach for queue in self.queues.values())
+        for stop in (*stops, self.routes.boundary):
+            path = self.routes.public_path(source, stop)
+            if path.length:
+                self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, stop)
+                return
+        self._schedule(now + self.walk_gap, self._seek_queue, visitor, source)
+
+    def _walk_to_queue(self, now, visitor, key, path, fraction):
         visitor.facility_id = key
         visitor.has_waited = False
         visitor.withdrawing = False
-        path = self.routes.public_path(source, queue.paths.approach)
         self._walk(now, visitor, 'walking_to_queue', path, self._arrive_at_queue, origin=fraction * path.length)
 
     def _arrive_at_queue(self, now, visitor):
-        queue = self.queues[visitor.facility_id]
-        if visitor.expired or len(queue.members) == queue.capacity or now < queue.next_entry:
-            self._seek_queue(now, visitor, queue.paths.approach)
+        key = visitor.facility_id
+        queue = self.queues[key]
+        budget = self._wait_budget(now, visitor, key) if visitor.profile is not None else None
+        if (visitor.expired or not self._can_enter(now, queue)
+                or (budget is not None and self._observed_wait(key) >= budget)):
+            self._seek_queue(now, visitor, queue.paths.approach, avoid=key)
             return
         queue.next_entry = now + self.walk_gap
         visitor.phase = 'in_queue'
         visitor.slot = queue.capacity - 1 - len(queue.members)
         visitor.motion = Motion(queue.paths.queue, now, 0, queue.paths.slots[visitor.slot])
         queue.members.append(visitor)
-        if ride := self.rides.get(visitor.facility_id):
+        if budget is not None:
+            visitor.wait_deadline = now + budget
+            self._schedule(visitor.wait_deadline, self._wait_elapsed, visitor)
+        if ride := self.rides.get(key):
             ride.wake(now)
 
     def _compact(self, now, queue):
@@ -189,11 +293,18 @@ class BackgroundRun:
             self._depart(now, visitor)
         elif visitor.phase == 'in_queue':
             self._request_withdrawal(now, visitor)
+        elif visitor.phase == 'waiting_to_exit':
+            self._seek_queue(now, visitor, visitor.waiting_source)
+
+    def _wait_elapsed(self, now, visitor):
+        if visitor.wait_deadline == now:
+            self._request_withdrawal(now, visitor)
 
     def _request_withdrawal(self, now, visitor):
         if visitor.withdrawing:
             return False
         visitor.withdrawing = True
+        visitor.wait_deadline = None
         self._schedule(now, self._try_withdrawal, visitor, priority=1)
         return True
 
@@ -223,8 +334,11 @@ class BackgroundRun:
         self._compact(now, queue)
         if ride := self.rides.get(visitor.facility_id):
             ride.wake(now)
-        self._walk(now, visitor, 'leaving_queue', queue.paths.withdrawal, self._seek_queue,
+        self._walk(now, visitor, 'leaving_queue', queue.paths.withdrawal, self._finish_withdrawal,
                    queue.paths.withdrawal_merge, origin=shoulder_offset, target=0)
+
+    def _finish_withdrawal(self, now, visitor, source):
+        self._seek_queue(now, visitor, source, avoid=visitor.facility_id)
 
     def _depart(self, now, visitor):
         del self.visitors[visitor.visitor_id]
@@ -274,6 +388,7 @@ class BackgroundRun:
             self._walk(now, visitor, 'walking_to_board', queue.paths.queue, self._finish_boarding,
                        origin=queue.paths.slots[visitor.slot])
             visitor.slot = None
+            visitor.wait_deadline = None
             visitor.vehicle_id = vehicle_id
             batch.append(visitor)
         if batch:
@@ -308,6 +423,8 @@ class BackgroundRun:
     def _unload_visitor(self, now, visitor, paths, on_leave):
         if on_leave is not None:
             on_leave(visitor)
+        key = visitor.facility_id
+        visitor.completed_rides[key] = visitor.completed_rides.get(key, 0) + 1
         visitor.vehicle_id = None
         self._walk(now, visitor, 'walking_from_ride', paths.unloading, self._seek_queue, paths.exit_merge)
 
@@ -319,6 +436,7 @@ class BackgroundRun:
                 'run_id': self.run_id,
                 'map_hash': self.map_hash,
                 'ride_operations_hash': self.ride_operations_hash,
+                'preferences_hash': self.preferences_hash,
                 'status': 'continuous_running',
                 'clock': {'sim_time_s': now, 'time_scale': self.time_scale},
                 'rides': {key: ride.snapshot(now) for key, ride in self.rides.items()},

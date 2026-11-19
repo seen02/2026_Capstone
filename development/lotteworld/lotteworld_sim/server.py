@@ -217,6 +217,7 @@ def make_server(port=8767, config_path=None, root=ROOT, web_root=None, *, host="
     background = BackgroundRun(store.continuous, store.routes, map_hash=store.value['hashes']['map'],
                                ride_operations=store.value['ride_operations']['facilities'],
                                ride_operations_hash=store.value['hashes']['ride_operations'],
+                               preferences=store.value['preferences'], preferences_hash=store.value['hashes']['preferences'],
                                clock=clock)
     return ContinuousServer((host, port), handler, background)
 

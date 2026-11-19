@@ -96,6 +96,17 @@ class ReloadTests(unittest.TestCase):
                 atlantis['dispatch_interval_seconds'] = 35
                 operations_path.write_text(json.dumps(operations), encoding='utf-8')
                 self.assertEqual(get('/api/meta')['ride_operations']['facilities']['atlantis'], atlantis)
+                preferences_path = root / 'configs/preferences.json'
+                preferences = json.loads(preferences_path.read_text(encoding='utf-8'))
+                preferences['behavior']['repeat_weight'] = 0.5
+                preferences_path.write_text(json.dumps(preferences), encoding='utf-8')
+                updated_hash = get('/api/meta')['hashes']['preferences']
+                self.assertNotEqual(updated_hash, initial['hashes']['preferences'])
+                self.assertEqual(get('/api/state')['preferences_hash'], initial['hashes']['preferences'])
+                self.assertEqual(server.background.behavior['repeat_weight'], 0.25)
+                with make_server(0, root=root) as restarted:
+                    self.assertEqual(restarted.background.snapshot()['preferences_hash'], updated_hash)
+                    self.assertEqual(restarted.background.behavior['repeat_weight'], 0.5)
                 map_path=root/'configs/map.json';original=map_path.read_text(encoding='utf-8');updated=json.loads(original);updated['facilities'][0]['name']='갱신 시설';map_path.write_text(json.dumps(updated),encoding='utf-8')
                 self.assertEqual(get('/api/meta')['map']['facilities'][0]['name'],'갱신 시설')
                 self.assertNotEqual(get('/api/meta')['hashes']['map'], initial['hashes']['map'])
