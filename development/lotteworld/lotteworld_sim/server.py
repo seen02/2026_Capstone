@@ -10,6 +10,7 @@ import threading
 import uuid
 from hashlib import sha256
 from pathlib import Path
+from time import monotonic
 from urllib.parse import urlparse
 from .background import BackgroundRun
 from .scenario import load_continuous, load_inputs, RIDE_OPERATIONS_PATH, ROOT, SCENARIO_ID
@@ -17,6 +18,7 @@ from .devserver import signatures, supervise
 from .recommendation import VERSION, RecommendationError, require
 from .recommendation_mock import MOCK_FILENAME, MockRecommendation
 from .user_sessions import SESSION_LIFETIME, SIGN_FACILITIES, UserSessions
+from .visitor_routes import VisitorRoutes
 
 WEB = Path(__file__).resolve().parents[1] / "web"
 UNAVAILABLE = "연속 시연에서 이 API는 아직 지원하지 않습니다."
@@ -59,8 +61,11 @@ class ScenarioStore:
                 self.signature=current
                 try:
                     scenario = load_inputs(root=self.root, config_path=self.config_path, continuous=self.continuous)
-                    self.value = dict(scenario.metadata(), status="continuous_running",
-                                      runnable=True, message=BACKGROUND_RUNNING)
+                    metadata = dict(scenario.metadata(), status="continuous_running",
+                                    runnable=True, message=BACKGROUND_RUNNING)
+                    if not hasattr(self, 'value') or self.value['hashes']['map'] != metadata['hashes']['map']:
+                        self.routes = VisitorRoutes(scenario.map, metadata['queue_report'])
+                    self.value = metadata
                     self.error = None
                 except ValueError as error:
                     self.error=str(error)
@@ -203,13 +208,14 @@ class Handler(BaseHTTPRequestHandler):
         self.respond({"error": "없는 API입니다."}, 404)
 
 
-def make_server(port=8767, config_path=None, root=ROOT, web_root=None, *, host="127.0.0.1", mock_data=None):
+def make_server(port=8767, config_path=None, root=ROOT, web_root=None, *, host="127.0.0.1", mock_data=None, clock=monotonic):
     store=ScenarioStore(root,config_path)
     mock = MockRecommendation(store, mock_data or Path(root) / "configs" / MOCK_FILENAME,
                               sign_facilities=SIGN_FACILITIES)
     handler = partial(Handler, store=store, web_root=web_root or Path(root) / "web",
                       mock_recommendation=mock, user_sessions=UserSessions(mock))
-    return ContinuousServer((host, port), handler, BackgroundRun(store.continuous))
+    background = BackgroundRun(store.continuous, store.routes, map_hash=store.value['hashes']['map'], clock=clock)
+    return ContinuousServer((host, port), handler, background)
 
 
 def main():
@@ -225,7 +231,9 @@ def main():
     args = parser.parse_args()
     try:
         if args.validate_only:
-            print(json.dumps(load_inputs(config_path=args.config).metadata(), ensure_ascii=False))
+            metadata = load_inputs(config_path=args.config).metadata()
+            VisitorRoutes(metadata['map'], metadata['queue_report'])
+            print(json.dumps(metadata, ensure_ascii=False))
             return
         if not args.no_reload:
             load_inputs(config_path=args.config)

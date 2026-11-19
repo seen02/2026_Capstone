@@ -143,10 +143,14 @@ class ScenarioTests(unittest.TestCase):
                 state = json.load(response)
             self.assertEqual(state["status"], "continuous_running")
             self.assertEqual(state["clock"]["time_scale"], data["continuous"]["time_scale"])
+            self.assertEqual(state["map_hash"], data["hashes"]["map"])
             people = state["background"]
             self.assertEqual(people["target_people"], data["continuous"]["target_people"])
             self.assertEqual(people["entered_total"], people["present_people"] + people["exited_total"])
             self.assertEqual(len(people["visitors"]), people["present_people"])
+            self.assertEqual({key: queue['capacity'] for key, queue in people['queues'].items()},
+                             {key: report['capacity'] for key, report in data['queue_report'].items()})
+            self.assertTrue(all(len(visitor['point']) == 2 for visitor in people['visitors']))
             for asset in ('/navigation.mjs','/queue.mjs'):
                 with urlopen(base+asset) as response:
                     self.assertIn('text/javascript',response.headers['Content-Type'])

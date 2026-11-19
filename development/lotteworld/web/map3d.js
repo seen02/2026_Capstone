@@ -127,7 +127,7 @@ export class MagicIslandMap {
       this.label(f.name,[cx,f.model_height_m+8,cz],f.id);
       for(const [key,color] of [['entrance','#287e63'],['exit','#b65f48']]) {
         const [px,pz]=this.points[f[key]];
-        cylinder(this.scene,px,.6,pz,1.3,.6,color,1.3,12);
+        cylinder(this.scene,px,.14,pz,1.3,.02,color,1.3,12);
       }
     }
     const bridgeStart=this.points['bridge-island'],bridgeEnd=this.points[g.boundary];
@@ -136,7 +136,8 @@ export class MagicIslandMap {
   }
 
   buildQueue(facility) {
-    const layout=queueLayout(facility.queue,this.points[facility.entrance],this.map.geometry.queue_rules,facility.boarding_capacity,facility.bounds);
+    const layout=queueLayout(facility.queue,this.points[facility.entrance],this.map.geometry.queue_rules,
+      facility.boarding_capacity,facility.bounds,facility.queue_capacity);
     this.queueLayouts[facility.id]=layout;
     const group=new THREE.Group();group.name='queue:'+facility.id;this.scene.add(group);
     const posts=[];
@@ -181,7 +182,7 @@ export class MagicIslandMap {
       group.add(new THREE.ArrowHelper(delta.normalize(),start,1.1,0x358e7a,.4,.24));
     }
     const boarding=layout.boarding_exit,target=layout.boarding_target;
-    cylinder(group,boarding[0],.5,boarding[1],.85,.5,'#bc8a35',.85,12).name='boarding-exit';
+    cylinder(group,boarding[0],.14,boarding[1],.85,.02,'#bc8a35',.85,12).name='boarding-exit';
     band(group,boarding,target,.12,'#bc8a35',.14,.04).name='boarding-approach';
 
   }

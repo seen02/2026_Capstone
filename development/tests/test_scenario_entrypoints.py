@@ -7,7 +7,6 @@ import sys
 import tempfile
 import threading
 import unittest
-from urllib.error import HTTPError
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,16 +72,19 @@ class EntrypointTests(unittest.TestCase):
             self.assertEqual(aquarium["scenario_id"], "aquarium")
             self.assertEqual(magic["scenario_id"], "magic-island")
             self.assertTrue(aquarium["runnable"])
-            self.assertFalse(magic["runnable"])
+            self.assertTrue(magic["runnable"])
+            self.assertEqual(magic["status"], "continuous_running")
             self.assertEqual(aquarium["config"]["daily_visitors"], 1000)
             self.assertEqual(magic["config"]["arrivals"]["planned_total"], 10350)
             with get(0, "/api/state") as response:
                 self.assertEqual(json.load(response)["metrics"]["inside"], 0)
             with get(0, "/") as response:
                 self.assertIn("아쿠아리움", response.read().decode("utf-8"))
-            with self.assertRaises(HTTPError) as caught:
-                get(1, "/api/state")
-            self.assertEqual(caught.exception.code, 409)
+            with get(1, "/api/state") as response:
+                state = json.load(response)
+                self.assertEqual(state["scenario_id"], magic["scenario_id"])
+                self.assertEqual(state["map_hash"], magic["hashes"]["map"])
+                self.assertEqual(set(state["background"]["queues"]), set(magic["queue_report"]))
         finally:
             for server in servers:
                 server.shutdown()

@@ -4,6 +4,7 @@ import json
 import sys
 from pathlib import Path
 from .scenario import load_inputs
+from .visitor_routes import VisitorRoutes
 
 
 def main():
@@ -16,6 +17,7 @@ def main():
     args = parser.parse_args()
     try:
         data = load_inputs(config_path=args.config).metadata()
+        VisitorRoutes(data['map'], data['queue_report'])
     except ValueError as exc:
         parser.error(str(exc))
     if not args.validate_only:

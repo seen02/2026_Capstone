@@ -64,7 +64,7 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(self.policy.recommend(self.data)["recommendation"]["facility_id"], "gyro-spin")
 
     def test_recommendation_keeps_independent_exclusion_reasons(self):
-        self.states["gyro-drop"].update(admission="full", queue_people=105)
+        self.states["gyro-drop"].update(admission="full", queue_people=110)
         self.states["gyro-spin"]["wait"].update(status="stale", seconds=None)
         self.states["gyro-spin"]["observed_at"] = "2026-11-17T07:59:30Z"
         self.states["gyro-spin"]["as_of_sim_time_s"] = 299

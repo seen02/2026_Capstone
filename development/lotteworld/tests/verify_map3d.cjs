@@ -95,7 +95,9 @@ async function routesInScene(page) {
         assert.deepEqual(queue.slots,meta.queue_report[id].slots);
         assert.ok(queue.meets_minimum);
         assert.deepEqual(queue.railPaths,meta.queue_report[id].railPaths);
-        assert.equal(queue.railPaths.length,2);
+        assert.equal(queue.railPaths.length,3);
+        assert.deepEqual(queue.points,meta.queue_report[id].points);
+        assert.deepEqual(queue.withdrawal,meta.queue_report[id].withdrawal);
         assert.deepEqual(queue.boarding_exit,meta.queue_report[id].boarding_exit);
         assert.deepEqual(queue.points.at(-1),queue.boarding_exit);
       }

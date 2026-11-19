@@ -19,7 +19,8 @@ from lotteworld_sim.devserver import supervise
 class QueueCapacityTests(unittest.TestCase):
     def test_verified_slots_meet_each_boarding_unit(self):
         scenario=load_inputs();report=scenario.metadata()['queue_report']
-        expected={'atlantis':(8,20,105),'gyro-drop':(40,100,105),'gyro-swing':(40,100,105),'gyro-spin':(40,100,130),'comet-express':(26,65,130),'arcana-ride':(16,40,126)}
+        expected={'atlantis':(8,20,110),'gyro-drop':(40,100,110),'gyro-swing':(40,100,110),'gyro-spin':(40,100,130),'comet-express':(26,65,130),'arcana-ride':(16,40,130)}
+        self.assertEqual(sum(row['capacity'] for row in report.values()),720)
         for id,(boarding,minimum,capacity) in expected.items():
             with self.subTest(facility=id):
                 row=report[id]
@@ -31,9 +32,10 @@ class QueueCapacityTests(unittest.TestCase):
 
     def test_insufficient_capacity_and_body_overlap_rejected(self):
         scenario=load_inputs()
-        for key,value in [('boarding',49),('spacing_m',1),('person_radius_m',.5),('minimum_boarding_multiple',2)]:
+        for key,value in [('boarding_capacity',49),('queue_capacity',111),('queue_capacity',None),
+                          ('spacing_m',1),('person_radius_m',.5),('minimum_boarding_multiple',2)]:
             data=deepcopy(scenario.map)
-            if key=='boarding':data['facilities'][0]['boarding_capacity']=value
+            if key in ('boarding_capacity','queue_capacity'):data['facilities'][0][key]=value
             else:data['geometry']['queue_rules'][key]=value
             with self.subTest(key=key),self.assertRaises(ValueError):validate(data,scenario.config,scenario.preferences)
 
@@ -87,6 +89,10 @@ class ReloadTests(unittest.TestCase):
                 self.assertEqual(get('/api/meta')['ride_operations']['facilities']['atlantis'], atlantis)
                 map_path=root/'configs/map.json';original=map_path.read_text(encoding='utf-8');updated=json.loads(original);updated['facilities'][0]['name']='갱신 시설';map_path.write_text(json.dumps(updated),encoding='utf-8')
                 self.assertEqual(get('/api/meta')['map']['facilities'][0]['name'],'갱신 시설')
+                self.assertNotEqual(get('/api/meta')['hashes']['map'], initial['hashes']['map'])
+                self.assertEqual(get('/api/state')['map_hash'], initial['hashes']['map'])
+                with make_server(0, root=root) as restarted:
+                    self.assertEqual(restarted.background.snapshot()['map_hash'], get('/api/meta')['hashes']['map'])
                 map_path.write_text('{',encoding='utf-8')
                 with self.assertRaises(HTTPError) as caught:get('/api/meta')
                 self.assertEqual(caught.exception.code,422)

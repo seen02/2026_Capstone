@@ -45,8 +45,23 @@ def public_walkable(data, point, radius=0):
 
 def distance_to_segment(point, a, b):
     dx, dy = b[0]-a[0], b[1]-a[1]
+    if dx == dy == 0:
+        return math.dist(point, a)
     t = max(0, min(1, ((point[0]-a[0])*dx+(point[1]-a[1])*dy)/(dx*dx+dy*dy)))
     return math.dist(point, (a[0]+t*dx, a[1]+t*dy))
+
+
+def segment_distance(a, b, c, d):
+    def side(start, end, point):
+        return ((end[0]-start[0])*(point[1]-start[1])
+                - (end[1]-start[1])*(point[0]-start[0]))
+
+    if (side(a,b,c)*side(a,b,d) <= 0 and side(c,d,a)*side(c,d,b) <= 0
+            and all(max(min(a[i],b[i]),min(c[i],d[i])) <= min(max(a[i],b[i]),max(c[i],d[i]))
+                    for i in (0,1))):
+        return 0
+    return min(distance_to_segment(a,c,d), distance_to_segment(b,c,d),
+               distance_to_segment(c,a,b), distance_to_segment(d,a,b))
 
 
 def segment_rect_distance(a, b, rect):
@@ -70,7 +85,7 @@ def segment_rect_distance(a, b, rect):
     return min(to_rect(a),to_rect(b),*(distance_to_segment(c,a,b) for c in corners))
 
 
-def walking_route(map_data, source, target):
+def walking_route(map_data, source, target, *, edge_kinds=None, excluded=()):
     """양방향 그래프의 경로와 미터 거리를 반환한다."""
     g = map_data['geometry']
     points = {n['id']: n['point'] for n in g['nodes']}
@@ -79,6 +94,8 @@ def walking_route(map_data, source, target):
     adjacency = {key: [] for key in points}
     for e in g['edges']:
         a,b=e['source'],e['target']
+        if (edge_kinds is not None and e['kind'] not in edge_kinds) or a in excluded or b in excluded:
+            continue
         length=math.dist(points[a],points[b])
         adjacency[a].append((b,length)); adjacency[b].append((a,length))
     pending=[(0,source,[source])]; visited=set()

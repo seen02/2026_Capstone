@@ -11,7 +11,6 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
-from lotteworld_sim.background import BackgroundRun
 from lotteworld_sim.map_geometry import public_walkable
 from lotteworld_sim.recommendation import VERSION
 from lotteworld_sim.scenario import ROOT
@@ -24,9 +23,7 @@ class UserSessionAPITests(unittest.TestCase):
         self.mock_path = Path(self.enterContext(tempfile.TemporaryDirectory())) / "mock.json"
         self.mock_path.write_bytes((ROOT / "configs/recommendation-mock.json").read_bytes())
         self.background_time = 0
-        with patch("lotteworld_sim.server.BackgroundRun",
-                   side_effect=lambda config: BackgroundRun(config, clock=lambda: self.background_time)):
-            server = make_server(0, mock_data=self.mock_path)
+        server = make_server(0, mock_data=self.mock_path, clock=lambda: self.background_time)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         self.addCleanup(thread.join)

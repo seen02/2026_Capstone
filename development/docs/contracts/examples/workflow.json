@@ -3,7 +3,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+      "map_hash": "a8629524f031b85a3d729379e62bab35039539f4caa10f1fa53b6b6347f23fdb",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -80,7 +80,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+      "map_hash": "a8629524f031b85a3d729379e62bab35039539f4caa10f1fa53b6b6347f23fdb",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -94,7 +94,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+      "map_hash": "a8629524f031b85a3d729379e62bab35039539f4caa10f1fa53b6b6347f23fdb",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -113,7 +113,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+      "map_hash": "a8629524f031b85a3d729379e62bab35039539f4caa10f1fa53b6b6347f23fdb",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -135,7 +135,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+      "map_hash": "a8629524f031b85a3d729379e62bab35039539f4caa10f1fa53b6b6347f23fdb",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -155,7 +155,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+      "map_hash": "a8629524f031b85a3d729379e62bab35039539f4caa10f1fa53b6b6347f23fdb",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
