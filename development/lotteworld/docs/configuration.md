@@ -1,22 +1,58 @@
 # 매직아일랜드 설정 계약
 
-설정·지도와 후속 추천 서버의 연결은 [추천·시뮬레이션 공통 데이터 계약 v1](../../docs/contracts/recommendation-v1.md)을 따른다. `hashes.map`을 지도 버전으로 사용하고 QR 사용자의 선호 순위는 기존 0–5 프로필과 구분한다. 해당 계약은 설계 문서이며 아래 현재 API 동작을 변경하지 않는다.
+설정·지도와 로컬 모의 추천 서버의 연결은 [추천·시뮬레이션 공통 데이터 계약 v1](../../docs/contracts/recommendation-v1.md)을 따른다. `hashes.map`을 지도 버전으로 사용하고 QR 사용자의 선호 순위는 기존 0–5 프로필과 구분한다. 모의 파일 설정과 추천 HTTP 호출 형식은 [로컬 추천 API](../README.md#로컬-추천-api)를 참고한다.
 
-세 JSON은 `schema_version: 1`, `scenario_id: magic-island`와 `provenance`를 포함한다. `lotteworld_sim/scenario.py`의 `load_inputs`가 매번 새 객체를 읽고 `validate`로 자료형·범위·파일 간 참조를 검사한다. 다른 시나리오로의 자동 대체나 아쿠아리움 엔진 호출은 없다.
+연속 시연의 유입·체류·퇴장은 `configs/continuous.json`으로 설정한다. 이전 시간표는 입력 호환과 실험 기록을 위해 검증한다. 현재 우선순위는 [체크리스트](../../docs/implementation-checklist.md)를 따른다.
+
+아래 다섯 JSON은 `schema_version: 1`, `scenario_id: magic-island`와 `provenance`를 포함한다. `lotteworld_sim/scenario.py`의 `load_inputs`는 자료형·범위·파일 간 참조를 검사한다.
 
 | 파일 | 현재 계약 |
 | --- | --- |
 | `configs/map.json` | 6개 고유 시설 ID·이름, `map_ready` 상태, 미터 좌표·구획·양방향 보행 그래프 |
 | `configs/day.json` | 음수가 아닌 정수 시드, 관측 시작·종료와 월드 오브 라이트 종료 이벤트, 강제 퇴장 금지, 실제 진입부터 대기 포함 균등 체류, 관측 종료로 체류 자르기 금지 |
 | `configs/preferences.json` | 지도 시설과 일치하는 태그6개, 고유 유형 ID와 이름, 모든 시설별 0–5의 유한한 숫자, `provisional` 상태 |
+| `configs/ride-operations.json` | 지도 시설 6개별 운행·하차·승차 확인·출발 간격, 차량 수와 동시 승하차 대수 |
+| `configs/continuous.json` | 수동 종료까지 반복하는 배경 방문객 유입·체류·퇴장 설정 |
 
 운영 설정의 `arrivals`는 하루 기준 인원·관측 비중·관측 계획 합계와 `slots`를 분리한다. 한 시간 단위의 시작 포함·끝 제외 구간은 관측 시작부터 종료까지 빈틈·중복 없이 이어져야 한다. 각 행의 `count = daily_baseline × share`, 전체 `planned_total = daily_baseline × observation_share`, 행별 인원·비중의 합계를 검증한다. 이 계약으로 관측 구간에 19시 이후 몫을 몰아넣거나 구간을 중복하는 입력을 검출한다.
 
-기본값 검증은 9구간 합10,350명, 13–16시4,600명, 피크14–15시1,610명을 확인한다. 사용자 운영 JSON은 계약을 지키는 실험용 값으로 변경할 수 있다. 최신 연구·기본 시나리오는 `../../docs/design.md`가 기준이다. 입력 설정 검증이 실제 유입·체류 엔진의 구현을 뜻하지 않는다.
+이전 시간표의 기본값 검증은 9구간 합 10,350명, 13–16시 4,600명, 피크 14–15시 1,610명을 확인한다. 근거와 지도·시설 명세는 [설계 문서](../../docs/design.md)에 남긴다.
 
-`Scenario.metadata()`는 시나리오 ID, 이름, `status: map_ready`, `map_ready: true`, `runnable: false`, 준비 상태 설명과 세 설정·해시를 반환한다. 해시는 정렬된 JSON의 UTF-8 바이트를 SHA-256으로 계산한다. 동일 설정이면 해시가 같고, 시드 등 운영 값 변경은 운영 해시만 바꾼다. 해시는 설정 식별자이며 실행 결과 증명이 아니다.
+`--validate-only` 출력은 `status: map_ready`, `runnable: false`이고 실행 중 `GET /api/meta`는 `status: continuous_running`, `runnable: true`다. 양쪽 모두 `map_ready: true`, `map_view: guide-map-3d`와 다섯 설정·해시를 제공한다. 정렬된 JSON의 UTF-8 바이트를 SHA-256으로 계산하며 `day.json`은 `hashes.config`, 시설 운행은 `hashes.ride_operations`, 연속 시연은 `hashes.continuous`에 대응한다.
 
-서버는 로컬 주소127.0.0.1에 바인딩한다. `/`는 지도 화면, `/map.js`·`/map.css`는 전용 정적 자원, `GET /api/meta`는 설정을 제공한다. 정적 자원은 고정 허용 목록으로만 제공하고 임의 파일 경로는 거절한다. 상태·안내판·결과·진행·되감기·재시작 요청은409, 없는 경로는404다. 아쿠아리움 정적 파일은 제공하지 않는다. 엔진을 연결하는 후속 작업에서 상태 계약과 미구현 API를 명시적으로 변경한다.
+서버의 기본 바인딩 주소는 `127.0.0.1`이다. `/`는 지도 화면을 제공하며 정적 자원 요청은 허용 목록을 사용한다. `GET /api/state`는 연속 시연 상태를 제공한다. 안내판·보고서·수동 진행·되감기·초기화 API는 HTTP 409, 없는 경로는 HTTP 404를 반환한다.
+
+## 연속 시연 설정과 상태
+
+| 필드 | 기본값 | 단위와 검증 범위 |
+| --- | ---: | --- |
+| `target_people` | 240 | 동시 배경 방문객 목표 겸 상한. 1~10,000명의 정수 |
+| `initial_people` | 240 | 실행 시작에 이미 체류 중으로 배치할 인원. 0 이상이고 목표 이하인 정수 |
+| `admission_interval_sim_s` | 5 | 빈자리가 처음 생긴 뒤 첫 입장까지의 간격. 빈자리가 남으면 같은 간격으로 한 명씩 입장. 1~3,600 내부 초의 정수 |
+| `stay_sim_s` | [7200, 10800] | 개인별 전체 예정 체류의 균등분포 범위. 60~86,400 내부 초의 오름차순 두 값 |
+| `time_scale` | 6 | 실제 경과 1초당 내부 경과 초. 0.1~60 |
+| `seed` | 20261119 | 0 이상의 정수. 같은 설정·경과 시간에서 같은 방문객 순서를 재현 |
+
+초기 인원은 각자 체류 기간의 0~100%가 이미 지났다고 균등 추출하고, 실행 시작과 동시에 누적 진입에 포함한다. 따라서 초기 명단의 진입 시각은 내부 시작 전을 나타내는 음수가 될 수 있다. 초기 인원이 목표보다 작으면 실행 시작 기준으로 첫 간격부터 한 명씩 채운다. 목표를 채운 동안 보류 입장을 쌓지 않으며, 예정 퇴장과 입장 시각이 같으면 퇴장을 먼저 처리한다. 서버의 단조 시계로 경과 시간을 계산하고 상태 조회가 없어도 유입·퇴장을 진행한다.
+
+`GET /api/state`는 `scenario_id`, 서버 실행 중 일정한 `run_id`, `status: continuous_running`, `clock.sim_time_s`·`clock.time_scale`을 반환한다. `background`는 `target_people`, `entered_total`(누적 진입), `present_people`(현재 체류), `exited_total`(누적 퇴장), 현재 체류 중인 `visitors`를 담는다. 명단은 실행 내 증가하는 정수 `visitor_id` 순이며 각 방문객의 `entered_at_sim_s`와 `leave_at_sim_s`가 포함된다. 현재 구현은 예정 시각에 논리적으로 퇴장 처리한다. 다리로 복귀하는 보행과 운행 중 퇴장 유예는 후속 단계다.
+
+서버는 시작할 때 읽은 연속 설정을 실행 종료까지 사용한다. 설정을 바꿔 적용하려면 서버를 재시작한다. 실행 중 지도·기존 시간표·시설 설정의 자동 반영은 기존 방식대로 동작한다. QR 세션은 모의 추천 문맥과 실제 시간 만료를 사용하며 `background` 집계의 대상에서 제외한다. 시연용 가정과 검증 범위는 [연속 시연 검증 기록](../../docs/verification/magic-island-continuous-arrivals.md)에 정리했다.
+
+## 시설별 운행 설정
+
+`GET /api/meta`와 `--validate-only` 출력의 `ride_operations.facilities`는 지도와 같은 시설 ID로 조회한다. `--config`는 유입·체류 등 기존 일일 설정을 바꾸는 옵션이며 시설별 운행 설정은 `configs/ride-operations.json`에서 읽는다.
+
+| 필드 | 단위와 의미 |
+| --- | --- |
+| `ride_seconds` | 차량 한 대 또는 한 탑승 묶음의 출발부터 하차 가능한 정지까지의 초 |
+| `unloading_seconds` | 한 차량 또는 한 탑승 묶음의 하차에 할당한 초 |
+| `boarding_and_check_seconds` | 다음 탑승 묶음의 승차와 출발 전 확인에 할당한 초 |
+| `dispatch_interval_seconds` | 시설에서 연속 출발 사이에 두는 최소 초. 실제 다음 출발은 차량·승강장·코스가 준비될 때까지 늦어질 수 있다. |
+| `vehicle_count` | 시설에서 재사용할 차량·열차 편성 또는 순차 운행 장치의 수 |
+| `station_capacity` | 승하차를 동시에 처리할 수 있는 차량 또는 운행 장치의 수 |
+
+운행 시간·출발 간격·차량 수·동시 승하차 대수는 양의 정수다. 하차와 승차·확인 시간은 각각 0 이상의 정수다. 아트란티스의 기본값은 차량 8대, 동시 승하차 2대, 차량당 운행 120초와 승하차 60초, 시설 출발 간격 30초다. 차량 한 대의 모델상 최소 회차는 180초다. 나머지 시설은 각각 한 대이며 기본 출발 간격은 운행과 승하차를 더한 값이다. 반복 운행 엔진은 이 설정을 소비할 후속 작업이다. [시연용 초기값과 근거](../../docs/magic-island-research.md#시연용-초기값)
 
 ## 지도 형상 계약 (2번)
 
@@ -47,11 +83,11 @@
 
 고정 허용 목록으로 `/map.js`, `/map3d.js`, `/geometry.mjs`, `/rides.mjs`, `/route.mjs`, `/navigation.mjs`, `/queue.mjs`, `/map.css`, `/vendor/three/three.module.js`, `/vendor/three/three.core.js`, `/vendor/three/OrbitControls.js`, `/vendor/three/LICENSE`만 제공한다. 모듈은 JavaScript MIME을 사용한다. 임의 디렉터리·다른 프로젝트의 파일은 제공하지 않는다.
 
-`Scenario.metadata()`는 `status: map_ready`, `map_ready: true`, `map_view: guide-map-3d`, `runnable: false`를 함께 반환한다. 지도 표시 준비와 유입·보행·운행 엔진 준비를 구분한다. `window.inspectMagicMap()`은 브라우저 검증용 읽기 전용 장면 스냅샷이며 운영 API가 아니다. WebGL 미지원·그래픽 연결 오류는 화면에 안내한다.
+`map_ready: true`와 `map_view: guide-map-3d`는 지도 표시 준비를 나타낸다. 실행 서버의 `runnable`은 배경 방문객 순환의 실행 여부다. `window.inspectMagicMap()`은 브라우저 검증용 읽기 전용 장면 스냅샷이다. WebGL 미지원·그래픽 연결 오류는 화면에 안내한다.
 
 ## 개발 중 변경 반영
 
-정적 파일은 매 요청마다 파일에서 읽고 `Cache-Control: no-store`로 제공한다. 지도·운영·선호 JSON은 파일 수정 시각·크기 변경을 감지해 묶음 전체를 다시 검증한다. 성공하면 같은 서버의 `/api/meta`가 새 설정·해시·수용량을 반환한다. 잘못 저장한 입력은 422이며, 수정 저장 후 다시 요청하면 복구한다.
+정적 파일은 매 요청마다 파일에서 읽고 `Cache-Control: no-store`로 제공한다. 지도·일일 운영·선호·시설 운행 JSON은 파일 수정 시각·크기 변경을 감지해 묶음 전체를 다시 검증한다. 성공하면 같은 서버의 `/api/meta`가 새 설정·해시·수용량을 반환한다. 잘못 저장한 입력은 422이며, 수정 저장 후 다시 요청하면 복구한다.
 
 CLI 기본 모드는 `devserver.py`가 Python 소스 변경을 감지해 자식 서버를 같은 포트에서 다시 시작한다. `--no-reload`는 이 감시만 끈다. `/api/dev-version`의 `version`은 정적 자원·설정·실행 인스턴스 식별자이며, `instance`는 Python 서버를 다시 불러오면 바뀐다. 사용자 화면은 자동 새로고침하지 않으므로 저장 후 브라우저 새로고침을 사용한다. 기존 감시 기능이 없는 서버에는 한 번의 재실행이 필요하다.
 
