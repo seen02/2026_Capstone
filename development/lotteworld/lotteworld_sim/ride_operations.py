@@ -155,13 +155,16 @@ class RideOperation:
         return {
             'vehicle_count': len(self.vehicles), 'station_capacity': self.settings['station_capacity'],
             'seats_per_vehicle': self.seats, 'dispatch_count': self.dispatch_count,
+            'riding_people': sum(p.phase in ('on_ride', 'waiting_for_station')
+                                 for v in self.vehicles for p in v.passengers),
             'last_dispatch_at_sim_s': self.last_dispatch_at, 'next_dispatch_min_at_sim_s': self.next_dispatch_at,
             'course_section_count': self.section_count, 'course_entry_available_at_sim_s': self.course_entry_at,
             'vehicles': [
                 {'vehicle_id': v.vehicle_id, 'state': v.state, 'station_slot': v.station_slot,
                  'course_section': self._course_section(now, v),
                  'last_dispatched_at_sim_s': v.dispatched_at,
-                 'passenger_ids': [p.visitor_id for p in v.passengers]}
+                 'passenger_ids': [p.visitor_id for p in v.passengers if isinstance(p.visitor_id, int)],
+                 'qr_character_ids': [p.visitor_id for p in v.passengers if isinstance(p.visitor_id, str)]}
                 for v in self.vehicles
             ],
         }

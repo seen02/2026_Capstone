@@ -29,6 +29,9 @@ RECOMMENDATION_ERRORS = {
     "body_too_large": 413, "unsupported_media_type": 415,
     "session_required": 401, "unknown_sign": 404, "session_mismatch": 409, "revision_mismatch": 409,
     "placement_full": 503, "sign_unavailable": 503,
+    "recommendation_expired": 409, "recommendation_invalidated": 409,
+    "idempotency_conflict": 409, "session_conflict": 409, "route_unavailable": 409,
+    "engine_unavailable": 503,
 }
 SESSION_COOKIE = "magic_island_session"
 ASSETS = {
@@ -186,7 +189,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/user/recommendation":
             return self.api_response(lambda: self.respond(self.user_sessions.recommend(self.session_token())))
         if path == "/api/state":
-            return self.respond(self.server.background.snapshot())
+            return self.respond(self.user_sessions.engine_state())
         if path in ("/api/signs", "/api/report"):
             return self.respond({"error": UNAVAILABLE, "scenario_id": SCENARIO_ID, "runnable": False}, 409)
         self.respond({"error": "없는 경로입니다."}, 404)
@@ -197,6 +200,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_response(lambda: self.respond(self.mock_recommendation.recommend(self.request_json())))
         if path == "/api/user/session":
             return self.api_response(self.enter_user)
+        if path == "/api/user/recommendation/accept":
+            return self.api_response(lambda: self.respond(
+                self.user_sessions.accept(self.session_token(), self.request_json())))
         if path in ("/api/reset", "/api/advance", "/api/seek"):
             return self.respond({"error": UNAVAILABLE, "runnable": False}, 409)
         self.respond({"error": "없는 API입니다."}, 404)
@@ -212,13 +218,13 @@ def make_server(port=8767, config_path=None, root=ROOT, web_root=None, *, host="
     store=ScenarioStore(root,config_path)
     mock = MockRecommendation(store, mock_data or Path(root) / "configs" / MOCK_FILENAME,
                               sign_facilities=SIGN_FACILITIES)
-    handler = partial(Handler, store=store, web_root=web_root or Path(root) / "web",
-                      mock_recommendation=mock, user_sessions=UserSessions(mock))
     background = BackgroundRun(store.continuous, store.routes, map_hash=store.value['hashes']['map'],
                                ride_operations=store.value['ride_operations']['facilities'],
                                ride_operations_hash=store.value['hashes']['ride_operations'],
                                preferences=store.value['preferences'], preferences_hash=store.value['hashes']['preferences'],
                                clock=clock)
+    handler = partial(Handler, store=store, web_root=web_root or Path(root) / "web",
+                      mock_recommendation=mock, user_sessions=UserSessions(mock, store.value, background))
     return ContinuousServer((host, port), handler, background)
 
 

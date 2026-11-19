@@ -1,10 +1,11 @@
+from dataclasses import replace
 from fractions import Fraction
 from math import dist, inf, nextafter
 import unittest
 
-from lotteworld_sim.background import BackgroundRun
+from lotteworld_sim.background import BackgroundRun, Visitor
 from lotteworld_sim.scenario import load_inputs
-from lotteworld_sim.visitor_routes import UNLOAD_GAP_S, VisitorRoutes, WALK_M_PER_S
+from lotteworld_sim.visitor_routes import Path, UNLOAD_GAP_S, VisitorRoutes, WALK_M_PER_S
 
 
 SINGLE_RIDES = ('gyro-drop', 'gyro-swing', 'gyro-spin', 'arcana-ride')
@@ -37,6 +38,9 @@ class RideOperationTests(unittest.TestCase):
                 with self.subTest(facility=key, now=self.now):
                     vehicle, = ride['vehicles']
                     passengers = vehicle['passenger_ids']
+                    self.assertEqual(ride['riding_people'], sum(
+                        people[visitor_id]['state'] in ('on_ride', 'waiting_for_station')
+                        for visitor_id in passengers))
                     if vehicle['state'] == 'boarding':
                         if previous_boarding[key] is not None:
                             self.assertEqual(passengers[:len(previous_boarding[key])], previous_boarding[key])
@@ -59,6 +63,42 @@ class RideOperationTests(unittest.TestCase):
                                         for i in passengers))
                     launches[key].append(ride['last_dispatch_at_sim_s'])
         self.assertTrue(all(len(times) >= 3 for times in launches.values()))
+
+    def test_full_queue_serves_background_then_qr_arrivals_in_order(self):
+        key = 'comet-express'
+        run = self.start((key,), initial_people=0, target_people=0)
+        queue = run.queues[key]
+        queue.paths = replace(queue.paths, slots=queue.paths.slots[-1:])
+        run.rides[key].seats = 1
+        prior = Visitor(1, 0, 10000, facility_id=key)
+        run.visitors[1] = prior
+        run.entered_total = 1
+        run._join_queue(0, prior, queue)
+        entrance = Path(queue.paths.queue.points[:3])
+        run.start_qr_visit('qr-first', key, entrance)
+        self.now = 1
+        run.start_qr_visit('qr-second', key, entrance)
+        self.now = 25
+        run.advance()
+        self.assertEqual([visitor.visitor_id for visitor in queue.members], [1])
+        self.assertEqual([visitor.visitor_id for visitor in queue.entrance_waiters], ['qr-first', 'qr-second'])
+        boarded = []
+        for self.now in range(26, 1500):
+            ride = run.snapshot()['rides'][key]
+            self.assertLessEqual(len(queue.members), 1)
+            if ride['dispatch_count'] == len(boarded):
+                continue
+            vehicle, = ride['vehicles']
+            passenger, = vehicle['passenger_ids'] + vehicle['qr_character_ids']
+            boarded.append(passenger)
+            if len(boarded) == 3:
+                break
+        self.assertEqual(boarded, [1, 'qr-first', 'qr-second'])
+        self.now += self.operations[key]['ride_seconds'] + queue.paths.unloading.length / WALK_M_PER_S + 2
+        for character_id in ('qr-first', 'qr-second'):
+            result = run.qr_visit_state(character_id)
+            self.assertEqual(result['phase'], 'completed')
+            self.assertEqual(result['position']['point'], list(queue.paths.unloading.points[-1]))
 
     def test_expired_passengers_finish_each_single_ride_and_walk_to_bridge(self):
         for key, visitor_id, stay in (('gyro-drop', 1, 425), ('gyro-swing', 2, 425),

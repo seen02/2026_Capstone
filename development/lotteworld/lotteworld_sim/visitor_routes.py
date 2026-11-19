@@ -114,12 +114,27 @@ class VisitorRoutes:
         length = dist(a, b)
         return a[0] + dx * portion - dz / length * side_m, a[1] + dz * portion + dx / length * side_m
 
-    def _public_segment_clear(self, a, b):
-        radius = self.radius + .15
+    def entrance_path(self, facility_id, points):
+        facility = next(f for f in self.map['facilities'] if f['id'] == facility_id)
+        entry = self.nodes[facility['entrance']]
+        queue = facility['queue']
+        if list(points[-1]) != entry:
+            return None
+        x, z, width, depth = queue
+        a, b = points[-2:]
+        approaches_gate = ((b[0] == x and a[0] < x) or (b[0] == x + width and a[0] > x + width)
+                           or (b[1] == z and a[1] < z) or (b[1] == z + depth and a[1] > z + depth))
+        if (approaches_gate and self._public_segment_clear(a, b, margin=0, entrance_queue=queue)
+                and all(self._public_segment_clear(a, b, margin=0) for a, b in pairwise(points[:-1]))):
+            return Path(points)
+        return None
+
+    def _public_segment_clear(self, a, b, *, margin=.15, entrance_queue=None):
+        radius = self.radius + margin
         left, right = min(a[0], b[0]) - radius, max(a[0], b[0]) + radius
         top, bottom = min(a[1], b[1]) - radius, max(a[1], b[1]) + radius
         return (all(segment_rect_distance(a, b, rect) >= radius
-                    for rect in self.reservations if left <= rect[0] + rect[2] and rect[0] <= right
+                    for rect in self.reservations if rect is not entrance_queue and left <= rect[0] + rect[2] and rect[0] <= right
                     and top <= rect[1] + rect[3] and rect[1] <= bottom)
                 and all(segment_distance(a, b, c, d) >= radius for c, d in self.shore
                         if left <= max(c[0], d[0]) and min(c[0], d[0]) <= right

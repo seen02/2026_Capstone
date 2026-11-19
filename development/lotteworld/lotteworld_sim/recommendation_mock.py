@@ -94,27 +94,22 @@ class MockRecommendation:
                     "positions": [{"node_id": node, "point": self.policy.nodes[node]} for node in sorted(self.routes_by_node)],
                     "facility_ids": sorted(self.policy.entrances)}
 
-    def user_world(self):
-        with self.lock:
-            self._refresh(datetime.now(timezone.utc))
-            return self.sign_policy, self.context, time.monotonic() - self.started
-
-    def _input(self, policy, now, sim_time, session, routes):
+    def _input(self, policy, now, sim_time, session, routes, *, context=None, time_scale=1):
         self.seq += 1
         stamp = utc_text(now)
-        return {"contract_version": VERSION, "context": self.context, "evaluation_at": stamp,
+        return {"contract_version": VERSION, "context": self.context if context is None else context, "evaluation_at": stamp,
                 "policy_id": policy.policy_id, "session": session, "routes": routes,
                 "snapshot": {"snapshot_seq": self.seq, "generated_at": stamp,
                              "source": {"kind": "mock", "provider_id": self.definition["provider_id"]},
-                             "clock": {"sim_time_s": sim_time, "time_scale": 1, "mode": "running"},
+                             "clock": {"sim_time_s": sim_time, "time_scale": time_scale, "mode": "running"},
                              "facilities": [self._observe(row, now, sim_time) for row in self.definition["facilities"]]}}
 
-    def recommend_for_user(self, context, session, anchor):
+    def recommend_for_user(self, context, session, anchor, *, sim_time, time_scale):
         with self.lock:
             now = datetime.now(timezone.utc)
             self._refresh(now)
-            require(context == self.context, "현재 실행과 세션의 문맥이 다릅니다.", "context_mismatch")
             policy = self.sign_policy
+            policy.context(context)
             position = session["position"]
             anchor_routes = self.routes_by_node.get(anchor, [])
             require(bool(anchor_routes), "표지판을 연결할 모의 경로가 없습니다.", "mock_data_unavailable")
@@ -123,9 +118,9 @@ class MockRecommendation:
                             [position["point"], *route["points"]] if route["status"] == "reachable" else None)
                 for route in anchor_routes
             ]
-            sim_time = time.monotonic() - self.started
             # 캐릭터는 초기 위치에 정지해 있으므로 평가 시점에 같은 위치를 관측한다.
-            data = self._input(policy, now, sim_time, {**session, "position_sim_time_s": sim_time}, routes)
+            data = self._input(policy, now, sim_time, {**session, "position_sim_time_s": sim_time}, routes,
+                               context=context, time_scale=time_scale)
         return policy.recommend(data)
 
     def recommend(self, request):

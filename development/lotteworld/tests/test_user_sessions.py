@@ -65,6 +65,86 @@ class UserSessionAPITests(unittest.TestCase):
     def assert_error(self, response, status, code):
         self.assertEqual((response[0], response[1]["error"]["code"]), (status, code))
 
+    def acceptance(self, offer):
+        return {"context": offer["context"], "command_id": "test-walk-command",
+                "session_id": offer["session_id"], "expected_session_revision": offer["session_revision"],
+                "expected_snapshot_seq": offer["snapshot_seq"],
+                "recommendation_id": offer["recommendation"]["recommendation_id"]}
+
+    def accept(self, command, *, client=None):
+        return self.request("/api/user/recommendation/accept", command, method="POST", client=client)
+
+    def test_acceptance_shares_one_queue_ride_and_unload_with_overview(self):
+        _, entry, _ = self.enter()
+        _, ready, _ = self.save(entry, ["comet-express", "gyro-spin", "gyro-drop"])
+        other = self.new_client()
+        _, other_entry, _ = self.enter(client=other)
+        command = self.acceptance(ready["offer"])
+        self.assert_error(self.accept(command, client=other), 409, "session_mismatch")
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            accepted = list(pool.map(lambda _: self.accept(command), range(2)))
+        status, result, _ = accepted[0]
+        self.assertEqual(status, 200)
+        self.assertEqual(accepted[1][1], result)
+        self.assert_error(self.accept({**command, "command_id": "another-command"}), 409, "session_conflict")
+        self.assert_error(self.accept({**command, "expected_snapshot_seq": 0}), 409, "idempotency_conflict")
+        _, moving, _ = self.request("/api/user/session")
+        self.assertEqual(moving["session"]["phase"], "moving")
+        self.assertEqual(moving["session"]["active_visit_id"], result["visit_id"])
+        self.background_time = 3
+        _, mid, _ = self.request("/api/user/session")
+        _, state, _ = self.request("/api/state")
+        self.assertIn(mid["character"], state["qr"]["characters"])
+        self.assertIn(other_entry["character"], state["qr"]["characters"])
+        self.assertGreater(mid["character"]["revision"], moving["character"]["revision"])
+        self.assertNotEqual(mid["character"]["position"], moving["character"]["position"])
+        self.assertTrue(mid["character"]["walk_trail"])
+        facility = "comet-express"
+        character_id = ready["character"]["character_id"]
+        phases = []
+        for self.background_time in range(4, 200):
+            _, visit, _ = self.request("/api/user/session")
+            character = visit["character"]
+            phase = character["phase"]
+            if phases and phases[-1] == phase:
+                continue
+            state = self.request("/api/state")[1]
+            phases.append(phase)
+            self.assertIn(character, state["qr"]["characters"])
+            self.assertIn(other_entry["character"], state["qr"]["characters"])
+            self.assertEqual(state["background"]["entered_total"],
+                             state["background"]["present_people"] + state["background"]["exited_total"])
+            self.assertNotIn(character_id, {visitor["visitor_id"] for visitor in state["background"]["visitors"]})
+            if phase == "queued":
+                self.assertGreater(character["queue_position"], 1)
+                self.assertEqual(state["background"]["queues"][facility]["qr_reserved_count"], 1)
+            if phase in ("boarding", "riding"):
+                vehicle, = (v for v in state["rides"][facility]["vehicles"] if v["vehicle_id"] == character["vehicle_id"])
+                self.assertIn(character_id, vehicle["qr_character_ids"])
+                self.assertLessEqual(len(vehicle["passenger_ids"]) + len(vehicle["qr_character_ids"]),
+                                     state["rides"][facility]["seats_per_vehicle"])
+                if phase == "riding":
+                    self.assertIsNone(character["position"]["point"])
+                    self.assertIsNotNone(character["map_point"])
+            if phase == "completed":
+                self.assertIsNone(visit["session"]["active_visit_id"])
+                nodes = {node["id"]: node["point"] for node in self.request("/api/meta")[1]["map"]["geometry"]["nodes"]}
+                self.assertEqual(character["position"]["point"], nodes[character["position"]["node_id"]])
+                break
+        self.assertEqual(phases, ["moving", "waiting_at_entrance", "queued", "boarding", "riding", "unloading", "completed"])
+        self.assertEqual(self.accept(command)[1], result)
+        self.assertEqual(self.enter()[1], visit)
+
+    def test_expired_offer_can_be_replaced_before_walking(self):
+        _, entry, _ = self.enter()
+        _, ready, _ = self.save(entry, ["gyro-spin", "comet-express", "gyro-drop"])
+        old = self.acceptance(ready["offer"])
+        self.background_time = 60
+        self.assert_error(self.accept(old), 409, "recommendation_expired")
+        _, offer, _ = self.request("/api/user/recommendation")
+        self.assertNotEqual(offer["recommendation"]["recommendation_id"], old["recommendation_id"])
+        self.assertEqual(self.accept(self.acceptance(offer))[0], 200)
+
     def test_common_entry_restores_session_and_isolates_independent_clients(self):
         other = self.new_client()
         with ThreadPoolExecutor(max_workers=2) as pool:
@@ -88,6 +168,11 @@ class UserSessionAPITests(unittest.TestCase):
         one, two = (entry["session"]["position"]["point"] for entry in (first, second))
         self.assertGreaterEqual(math.dist(one, two), 2)
         _, meta, _ = self.request("/api/meta")
+        _, live, _ = self.request("/api/state")
+        self.assertEqual(live["run_id"], first["context"]["run_id"])
+        self.assertEqual(live["qr"]["context"], first["context"])
+        self.assertCountEqual(live["qr"]["characters"], [first["character"], second["character"]])
+        self.assertNotIn("session_id", live["qr"]["characters"][0])
         self.assertEqual(first["sign"]["map_hash"], first["context"]["map_hash"])
         self.assertEqual(first["sign"]["map_hash"], meta["hashes"]["map"])
         self.assertTrue(all(public_walkable(meta["map"], point, 0.5) for point in (origin, one, two)))
@@ -139,6 +224,12 @@ class UserSessionAPITests(unittest.TestCase):
         self.assertEqual(rec["route"]["origin"], ready["session"]["position"])
         self.assertEqual(rec["route"]["points"][0], ready["session"]["position"]["point"])
         self.assertEqual(rec["route"]["points"][1], [143, 145])
+        preview = ready["character"]["route_preview"]
+        self.assertEqual(preview, {"facility_id": rec["facility_id"], "route": rec["route"],
+                                  "source": result["source"]})
+        live = self.request("/api/state")[1]
+        self.assertIn(ready["character"], live["qr"]["characters"])
+        self.assertIn(other_entry["character"], live["qr"]["characters"])
 
         order[:2] = reversed(order[:2])
         code, updated, _ = self.save(ready, order)
@@ -181,19 +272,30 @@ class UserSessionAPITests(unittest.TestCase):
                 people = state["background"]
                 self.assertGreater(people["exited_total"], initial_population)
                 self.assertEqual(people["present_people"] + people["exited_total"], people["entered_total"])
-                self.assertEqual(self.request("/api/user/session")[1], ready)
+                observed = self.request("/api/user/session")[1]
+                self.assertEqual(observed["session"], ready["session"])
+                self.assertEqual(observed["character"], ready["character"])
                 self.assertEqual(self.request("/api/user/session", client=other)[1], other_ready)
                 status, result, _ = self.request("/api/user/recommendation")
                 self.assertEqual(status, 200)
                 self.assertEqual(result["context"], ready["context"])
                 self.assertEqual(result["recommendation"]["facility_id"], order[0])
 
-    def test_expired_session_and_new_world_release_previous_identity(self):
+    def test_expired_session_releases_identity_and_mock_reload_keeps_live_context(self):
         _, entry, _ = self.enter()
         created = datetime.fromisoformat(entry["session"]["created_at"])
         expires = datetime.fromisoformat(entry["session"]["expires_at"])
         order = [row["facility_id"] for row in entry["facilities"]]
         self.assertEqual(expires - created, timedelta(minutes=30))
+
+        mock = json.loads(self.mock_path.read_text(encoding="utf-8"))
+        mock["provider_id"] = "updated-local-mock"
+        self.mock_path.write_text(json.dumps(mock), encoding="utf-8")
+        self.assertEqual(self.request("/api/user/session")[1], entry)
+        code, entry, _ = self.save(entry, order)
+        self.assertEqual(code, 200)
+        self.assertEqual(entry["character"]["route_preview"]["source"]["provider_id"], "updated-local-mock")
+
         with patch("lotteworld_sim.user_sessions.datetime", wraps=datetime) as clock:
             clock.now.return_value = expires - timedelta(seconds=1)
             _, still_active, headers = self.enter()
@@ -201,18 +303,10 @@ class UserSessionAPITests(unittest.TestCase):
             self.assertNotIn("Set-Cookie", headers)
             clock.now.return_value = expires
             self.assert_error(self.request("/api/user/session"), 409, "session_expired")
+            self.assertEqual(self.request("/api/state")[1]["qr"]["characters"], [])
             self.assert_error(self.save(entry, order), 409, "session_expired")
             self.assert_error(self.request("/api/user/recommendation"), 409, "session_expired")
             _, after_expiry, _ = self.enter()
         self.assertNotEqual(entry["session"]["session_id"], after_expiry["session"]["session_id"])
         self.assertEqual(entry["session"]["position"], after_expiry["session"]["position"])
         self.assert_error(self.save(entry, order), 409, "session_mismatch")
-
-        mock = json.loads(self.mock_path.read_text(encoding="utf-8"))
-        mock["provider_id"] = "updated-local-mock"
-        self.mock_path.write_text(json.dumps(mock), encoding="utf-8")
-        self.assert_error(self.request("/api/user/session"), 401, "session_required")
-        _, new_world, _ = self.enter()
-        self.assertNotEqual(new_world["context"], after_expiry["context"])
-        self.assertNotEqual(new_world["session"]["character_id"], after_expiry["session"]["character_id"])
-        self.assert_error(self.save(after_expiry, order), 409, "context_mismatch")
