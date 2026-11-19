@@ -22,7 +22,7 @@ from .visitor_routes import VisitorRoutes
 
 WEB = Path(__file__).resolve().parents[1] / "web"
 UNAVAILABLE = "연속 시연에서 이 API는 아직 지원하지 않습니다."
-BACKGROUND_RUNNING = "배경 방문객의 유입·체류·퇴장이 실행 중입니다."
+BACKGROUND_RUNNING = "배경 방문객의 유입·체류·퇴장과 단일 회차 운행이 실행 중입니다."
 RECOMMENDATION_ERRORS = {
     "context_mismatch": 409, "session_expired": 409, "session_not_ready": 409,
     "snapshot_stale": 409, "position_stale": 409, "run_ended": 409, "mock_data_unavailable": 503,
@@ -214,7 +214,10 @@ def make_server(port=8767, config_path=None, root=ROOT, web_root=None, *, host="
                               sign_facilities=SIGN_FACILITIES)
     handler = partial(Handler, store=store, web_root=web_root or Path(root) / "web",
                       mock_recommendation=mock, user_sessions=UserSessions(mock))
-    background = BackgroundRun(store.continuous, store.routes, map_hash=store.value['hashes']['map'], clock=clock)
+    single_rides = ('gyro-drop', 'gyro-swing', 'gyro-spin', 'arcana-ride')
+    operations = store.value['ride_operations']['facilities']
+    background = BackgroundRun(store.continuous, store.routes, map_hash=store.value['hashes']['map'],
+                               ride_operations={key: operations[key] for key in single_rides}, clock=clock)
     return ContinuousServer((host, port), handler, background)
 
 

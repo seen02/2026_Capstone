@@ -1,4 +1,4 @@
-"""연속 유입, 개인 체류, 대기열과 승하차 보행을 진행한다."""
+"""연속 유입, 개인 체류, 대기열과 시설 운행을 진행한다."""
 from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from itertools import count
@@ -8,6 +8,7 @@ from threading import Lock
 from time import monotonic
 from uuid import uuid4
 
+from .ride_operations import RideOperation
 from .scenario import SCENARIO_ID
 from .visitor_routes import FacilityPaths, Path, UNLOAD_GAP_S, WALK_M_PER_S
 
@@ -42,6 +43,7 @@ class Visitor:
     has_waited: bool = False
     withdrawing: bool = False
     expired: bool = False
+    vehicle_id: int | None = None
 
     def snapshot(self, now):
         state = self.phase
@@ -53,7 +55,7 @@ class Visitor:
         return {key: getattr(self, key) for key in ('visitor_id', 'entered_at_sim_s', 'leave_at_sim_s')} | {
             'state': state, 'facility_id': self.facility_id, 'queue_slot': self.slot,
             'point': self.motion.path.point_at(self.motion.distance_at(now)) if self.motion else None,
-            'departure_requested': self.expired,
+            'departure_requested': self.expired, 'vehicle_id': self.vehicle_id,
         }
 
 
@@ -73,7 +75,7 @@ class FacilityQueue:
 
 
 class BackgroundRun:
-    def __init__(self, config, routes=None, *, map_hash=None, clock=monotonic):
+    def __init__(self, config, routes=None, *, map_hash=None, ride_operations=None, clock=monotonic):
         self.run_id = f"continuous-{uuid4().hex}"
         self.clock = clock
         self.lock = Lock()
@@ -94,6 +96,8 @@ class BackgroundRun:
         self.entered_total = 0
         self.exited_total = 0
         self.admission_pending = False
+        self.rides = {key: RideOperation(self, self.queues[key], settings)
+                      for key, settings in (ride_operations or {}).items()}
         for _ in range(config['initial_people']):
             self._admit(0, initial_ages.random())
         self._schedule_admission(0)
@@ -165,6 +169,8 @@ class BackgroundRun:
         visitor.slot = queue.capacity - 1 - len(queue.members)
         visitor.motion = Motion(queue.paths.queue, now, 0, queue.paths.slots[visitor.slot])
         queue.members.append(visitor)
+        if ride := self.rides.get(visitor.facility_id):
+            ride.wake(now)
 
     def _compact(self, now, queue):
         for i, visitor in enumerate(queue.members):
@@ -213,6 +219,8 @@ class BackgroundRun:
         queue.members.remove(visitor)
         visitor.slot = None
         self._compact(now, queue)
+        if ride := self.rides.get(visitor.facility_id):
+            ride.wake(now)
         self._walk(now, visitor, 'leaving_queue', queue.paths.withdrawal, self._seek_queue,
                    queue.paths.withdrawal_merge, origin=shoulder_offset, target=0)
 
@@ -249,19 +257,27 @@ class BackgroundRun:
                 seats = capacity
             if type(seats) is not int or not 1 <= seats <= capacity:
                 raise ValueError('승차 요청 인원은 1회 탑승 정원 이내여야 합니다.')
-            if queue.batch or now < queue.lateral_until:
+            if facility_id in self.rides or queue.batch:
                 return ()
-            for visitor in queue.members[:seats]:
-                if visitor.withdrawing or now < visitor.motion.end:
-                    break
-                self._walk(now, visitor, 'walking_to_board', queue.paths.queue, self._finish_boarding,
-                           origin=queue.paths.slots[visitor.slot])
-                visitor.slot = None
-                queue.batch.append(visitor)
-            if queue.batch:
-                del queue.members[:len(queue.batch)]
-                self._compact(now, queue)
+            queue.batch = self._take_from_queue(now, queue, seats)
             return tuple(visitor.visitor_id for visitor in queue.batch)
+
+    def _take_from_queue(self, now, queue, seats, vehicle_id=None):
+        batch = []
+        if now < queue.lateral_until:
+            return batch
+        for visitor in queue.members[:seats]:
+            if visitor.withdrawing or now < visitor.motion.end:
+                break
+            self._walk(now, visitor, 'walking_to_board', queue.paths.queue, self._finish_boarding,
+                       origin=queue.paths.slots[visitor.slot])
+            visitor.slot = None
+            visitor.vehicle_id = vehicle_id
+            batch.append(visitor)
+        if batch:
+            del queue.members[:len(batch)]
+            self._compact(now, queue)
+        return batch
 
     def _finish_boarding(self, now, visitor):
         visitor.phase = 'at_boarding_point'
@@ -274,14 +290,23 @@ class BackgroundRun:
             if any(visitor.phase != 'at_boarding_point' for visitor in queue.batch):
                 return ()
             batch, queue.batch = queue.batch, []
-            for visitor in batch:
-                visitor.phase = 'awaiting_unload'
-                start = max(now, queue.next_unload)
-                self._schedule(start, self._unload_visitor, visitor, queue.paths)
-                queue.next_unload = start + UNLOAD_GAP_S
+            self._queue_unloading(now, queue, batch)
             return tuple(visitor.visitor_id for visitor in batch)
 
-    def _unload_visitor(self, now, visitor, paths):
+    def _queue_unloading(self, now, queue, batch, on_leave=None):
+        last_crossing = now
+        for visitor in batch:
+            visitor.phase = 'awaiting_unload'
+            start = max(now, queue.next_unload)
+            self._schedule(start, self._unload_visitor, visitor, queue.paths, on_leave)
+            queue.next_unload = start + UNLOAD_GAP_S
+            last_crossing = start + queue.paths.unloading.offsets[1] / WALK_M_PER_S
+        return last_crossing
+
+    def _unload_visitor(self, now, visitor, paths, on_leave):
+        if on_leave is not None:
+            on_leave(visitor)
+        visitor.vehicle_id = None
         self._walk(now, visitor, 'walking_from_ride', paths.unloading, self._seek_queue, paths.exit_merge)
 
     def snapshot(self):
@@ -293,6 +318,7 @@ class BackgroundRun:
                 'map_hash': self.map_hash,
                 'status': 'continuous_running',
                 'clock': {'sim_time_s': now, 'time_scale': self.time_scale},
+                'rides': {key: ride.snapshot(now) for key, ride in self.rides.items()},
                 'background': {
                     'target_people': self.target,
                     'entered_total': self.entered_total,
