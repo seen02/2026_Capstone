@@ -2,7 +2,7 @@
   "contract_version": "recommendation.v1",
   "context": {
     "scenario_id": "magic-island",
-    "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+    "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
     "run_id": "mock-run-contract-001",
     "timeline_epoch": 0
   },
@@ -92,14 +92,14 @@
         "facility_id": "comet-express",
         "observed_at": "2026-11-17T08:00:00Z",
         "as_of_sim_time_s": 600,
-        "operation": "suspended",
-        "admission": "not_accepting",
+        "operation": "open",
+        "admission": "accepting",
         "queue_people": 12,
-        "riding_people": 0,
+        "riding_people": 26,
         "wait": {
-          "status": "not_applicable",
-          "seconds": null,
-          "method": null
+          "status": "known",
+          "seconds": 480,
+          "method": "mock-fixture-v1"
         }
       },
       {

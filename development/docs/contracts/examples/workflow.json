@@ -3,7 +3,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -73,13 +73,6 @@
         "codes": [
           "wait_unknown"
         ]
-      },
-      {
-        "facility_id": "comet-express",
-        "codes": [
-          "operation_unavailable",
-          "admission_unavailable"
-        ]
       }
     ]
   },
@@ -87,7 +80,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -101,7 +94,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -111,13 +104,58 @@
     "session_id": "session-contract-001",
     "session_revision": 2,
     "snapshot_seq": 13,
-    "phase": "moving"
+    "phase": "moving",
+    "acceptance_event_id": "acceptance-contract-001",
+    "reward_status": "pending",
+    "reward_id": null
+  },
+  "acceptance_event": {
+    "contract_version": "recommendation.v1",
+    "context": {
+      "scenario_id": "magic-island",
+      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+      "run_id": "mock-run-contract-001",
+      "timeline_epoch": 0
+    },
+    "event_id": "acceptance-contract-001",
+    "command_id": "command-contract-001",
+    "recommendation_id": "recommendation-contract-001",
+    "visit_id": "visit-contract-001",
+    "session_id": "session-contract-001",
+    "character_id": "character-contract-001",
+    "facility_id": "gyro-spin",
+    "source": {
+      "kind": "mock",
+      "provider_id": "fixture-provider-v1"
+    },
+    "accepted_at": "2026-11-17T08:00:02Z",
+    "accepted_sim_time_s": 620
+  },
+  "reward_grant": {
+    "contract_version": "recommendation.v1",
+    "context": {
+      "scenario_id": "magic-island",
+      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+      "run_id": "mock-run-contract-001",
+      "timeline_epoch": 0
+    },
+    "reward_id": "reward-contract-001",
+    "visit_id": "visit-contract-001",
+    "session_id": "session-contract-001",
+    "source": {
+      "kind": "mock",
+      "provider_id": "fixture-provider-v1"
+    },
+    "reward_type": "recommendation_acceptance",
+    "granted_at": "2026-11-17T08:00:03Z",
+    "recommendation_id": "recommendation-contract-001",
+    "acceptance_event_id": "acceptance-contract-001"
   },
   "completion_event": {
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
+      "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -139,24 +177,5 @@
       ],
       "node_id": "gyro-spin-exit"
     }
-  },
-  "reward_grant": {
-    "contract_version": "recommendation.v1",
-    "context": {
-      "scenario_id": "magic-island",
-      "map_hash": "89a341266051f5c707871eef21898d943d06653fbb8c979e74f8baa34a1d2482",
-      "run_id": "mock-run-contract-001",
-      "timeline_epoch": 0
-    },
-    "reward_id": "reward-contract-001",
-    "visit_id": "visit-contract-001",
-    "session_id": "session-contract-001",
-    "completion_event_id": "completion-contract-001",
-    "source": {
-      "kind": "mock",
-      "provider_id": "fixture-provider-v1"
-    },
-    "reward_type": "simulation_experience",
-    "granted_at": "2026-11-17T08:01:11Z"
   }
 }

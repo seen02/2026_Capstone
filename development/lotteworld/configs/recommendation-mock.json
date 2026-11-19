@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "scenario_id": "magic-island",
+  "provider_id": "local-mock-v1",
+  "map_hash": "6d2c5df534fef53ea2e248eb80a7cdaf7c7dbea93b865cd3fee398caf36ad052",
+  "facilities": [
+    {"facility_id":"gyro-drop","operation":"open","admission":"accepting","queue_people":24,"riding_people":40,"wait":{"status":"known","seconds":900,"method":"mock-fixture-v1"}},
+    {"facility_id":"gyro-swing","operation":"closed","admission":"not_accepting","queue_people":0,"riding_people":0,"wait":{"status":"not_applicable","seconds":null,"method":null}},
+    {"facility_id":"atlantis","operation":"open","admission":"accepting","queue_people":null,"riding_people":null,"wait":{"status":"unknown","seconds":null,"method":null}},
+    {"facility_id":"comet-express","operation":"open","admission":"accepting","queue_people":12,"riding_people":26,"wait":{"status":"known","seconds":480,"method":"mock-fixture-v1"}},
+    {"facility_id":"gyro-spin","operation":"open","admission":"accepting","queue_people":8,"riding_people":40,"wait":{"status":"known","seconds":300,"method":"mock-fixture-v1"}},
+    {"facility_id":"arcana-ride","operation":"open","admission":"accepting","queue_people":0,"riding_people":16,"wait":{"status":"known","seconds":0,"method":"mock-fixture-v1"}}
+  ],
+  "node_routes": {
+    "west-center": {
+      "gyro-drop": [[143,145],[115.46323328856116,86.18818852347798],[115,86]],
+      "gyro-swing": [[143,145],[156,112],[204.5,72],[205,72]],
+      "atlantis": [[143,145],[156,180],[212,180],[260.5,158],[261,158]],
+      "comet-express": [[143,145],[108,122],[76.91914503001806,108.60608070142084],[76,109]],
+      "gyro-spin": [[143,145],[111.88491822238198,192.53425356716738],[111,193]],
+      "arcana-ride": [[143,145],[142.69723908375838,233.80208565293955],[143,234.2]]
+    },
+    "west-north": {
+      "gyro-drop": [[147,99],[115.46323328856116,86.18818852347798],[115,86]],
+      "gyro-swing": [[147,99],[204.5,72],[205,72]],
+      "atlantis": [[147,99],[180,112],[206,114],[216,130],[260.5,158],[261,158]],
+      "comet-express": [[147,99],[76.91914503001806,108.60608070142084],[76,109]],
+      "gyro-spin": [[147,99],[111.88491822238198,192.53425356716738],[111,193]],
+      "arcana-ride": [[147,99],[142.69723908375838,233.80208565293955],[143,234.2]]
+    },
+    "west-spin": {
+      "gyro-drop": [[151,215],[115.46323328856116,86.18818852347798],[115,86]],
+      "gyro-swing": [[151,215],[154,114],[204.5,72],[205,72]],
+      "atlantis": [[151,215],[236,168],[260.5,158],[261,158]],
+      "comet-express": [[151,215],[78,108],[76.91914503001806,108.60608070142084],[76,109]],
+      "gyro-spin": [[151,215],[111.88491822238198,192.53425356716738],[111,193]],
+      "arcana-ride": [[151,215],[142,234],[142.69723908375838,233.80208565293955],[143,234.2]]
+    }
+  }
+}
