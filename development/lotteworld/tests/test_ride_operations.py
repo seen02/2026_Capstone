@@ -1,4 +1,5 @@
-from math import dist
+from fractions import Fraction
+from math import dist, inf, nextafter
 import unittest
 
 from lotteworld_sim.background import BackgroundRun
@@ -16,9 +17,11 @@ class RideOperationTests(unittest.TestCase):
         cls.routes = VisitorRoutes(cls.scenario.map, cls.scenario.metadata()['queue_report'])
         cls.operations = cls.scenario.ride_operations['facilities']
 
-    def start(self, facilities, **config):
+    def start(self, facilities, *, operation_overrides=None, **config):
         self.now = 0
         settings = {key: self.operations[key].copy() for key in facilities}
+        for key, changes in (operation_overrides or {}).items():
+            settings[key].update(changes)
         continuous = dict(self.scenario.continuous, time_scale=1)
         continuous.update(config)
         return BackgroundRun(continuous, self.routes, ride_operations=settings, clock=lambda: self.now)
@@ -119,3 +122,140 @@ class RideOperationTests(unittest.TestCase):
         state = run.snapshot()['rides'][key]
         self.assertEqual(state['dispatch_count'], ride['dispatch_count'] + 1)
         self.assertGreaterEqual(state['last_dispatch_at_sim_s'], last_crossing + settings['boarding_and_check_seconds'])
+
+    def test_atlantis_and_comet_reuse_vehicles_with_station_course_and_seat_limits(self):
+        run = self.start((*SINGLE_RIDES, 'atlantis', 'comet-express'), initial_people=1500, target_people=1500)
+        departures = {'atlantis': [], 'comet-express': []}
+        max_stations = max_sections = 0
+        for self.now in range(1000):
+            state = run.snapshot()
+            people = state['background']
+            self.assertEqual(people['entered_total'], people['present_people'] + people['exited_total'])
+            self.assertLessEqual(people['present_people'], 1500)
+            riders = set()
+            for key, ride in state['rides'].items():
+                vehicles = ride['vehicles']
+                self.assertEqual([v['vehicle_id'] for v in vehicles], list(range(1, ride['vehicle_count'] + 1)))
+                stations = [v['station_slot'] for v in vehicles if v['station_slot'] is not None]
+                sections = [v['course_section'] for v in vehicles if v['course_section'] is not None]
+                self.assertEqual(len(stations), len(set(stations)))
+                self.assertEqual(len(sections), len(set(sections)))
+                self.assertTrue(all(1 <= slot <= ride['station_capacity'] for slot in stations))
+                self.assertTrue(all(1 <= section <= ride['course_section_count'] for section in sections))
+                for vehicle in vehicles:
+                    passengers = vehicle['passenger_ids']
+                    self.assertLessEqual(len(passengers), ride['seats_per_vehicle'])
+                    for passenger in passengers:
+                        self.assertNotIn((key, vehicle['vehicle_id'], passenger), riders)
+                        riders.add((key, vehicle['vehicle_id'], passenger))
+                if key == 'atlantis':
+                    max_stations = max(max_stations, len(stations))
+                    max_sections = max(max_sections, len(sections))
+                if key in departures and len(departures[key]) < ride['dispatch_count']:
+                    launch = ride['last_dispatch_at_sim_s']
+                    vehicle, = (v for v in vehicles if v['last_dispatched_at_sim_s'] == launch)
+                    self.assertEqual(vehicle['state'], 'running')
+                    self.assertTrue(vehicle['passenger_ids'])
+                    departures[key].append((launch, vehicle['vehicle_id']))
+            self.assertEqual(riders, {(v['facility_id'], v['vehicle_id'], v['visitor_id'])
+                                      for v in people['visitors'] if v['vehicle_id'] is not None})
+        self.assertEqual((max_stations, max_sections), (2, 4))
+        self.assertGreaterEqual(len(departures['atlantis']), 16)
+        first_two_rotations = [vehicle for _, vehicle in departures['atlantis'][:16]]
+        self.assertEqual(first_two_rotations, list(range(1, 9)) * 2)
+        self.assertGreaterEqual(len(departures['comet-express']), 3)
+        for key, interval, count, stations, seats in (('atlantis', 30, 8, 2, 8), ('comet-express', 230, 1, 1, 26)):
+            ride = state['rides'][key]
+            self.assertEqual((ride['vehicle_count'], ride['station_capacity'], ride['seats_per_vehicle']),
+                             (count, stations, seats))
+            times = [when for when, _ in departures[key]]
+            gaps = [second - first for first, second in zip(times, times[1:])]
+            self.assertTrue(all(gap >= interval - 1e-8 for gap in gaps))
+            if key == 'atlantis':
+                self.assertAlmostEqual(min(gaps), interval)
+
+    def test_ready_boat_waits_for_clear_course_even_after_dispatch_interval(self):
+        key = 'atlantis'
+        run = self.start((key,), operation_overrides={key: {'course_section_count': 2}},
+                         initial_people=1500, target_people=1500)
+        ride = run.rides[key]
+        for self.now in range(300):
+            run.advance()
+            if ride.dispatch_count == 1 and ride.next_dispatch_at <= self.now < ride.course_entry_at:
+                waiting = next((v for v in ride.vehicles if v.state == 'ready'), None)
+                if waiting:
+                    break
+        else:
+            self.fail('출발 간격이 지난 뒤 코스가 빌 때까지 기다리는 보트가 없습니다.')
+        clear = ride.course_entry_at
+        self.assertAlmostEqual(clear - ride.last_dispatch_at, 60)
+        self.now = clear - .01
+        run.advance()
+        self.assertEqual(ride.dispatch_count, 1)
+        self.assertEqual(waiting.state, 'ready')
+        self.now = clear
+        run.advance()
+        self.assertEqual(ride.dispatch_count, 2)
+        self.assertEqual(waiting.dispatched_at, clear)
+
+    def test_station_contention_delays_departures_and_serializes_shared_exit(self):
+        key = 'atlantis'
+        settings = {'ride_seconds': 12, 'course_section_count': 12, 'dispatch_interval_seconds': 1,
+                    'boarding_and_check_seconds': 0, 'unloading_seconds': 220}
+        run = self.start((key,), operation_overrides={key: settings}, initial_people=1500, target_people=1500,
+                         stay_sim_s=[86400, 86400])
+        ride = run.rides[key]
+        blocked = None
+        shared_exit = False
+        unload_starts = set()
+        for self.now in range(700):
+            previously_returning = list(ride.returning)
+            run.advance()
+            admitted = [v for v in previously_returning if v.state == 'unloading']
+            self.assertEqual(admitted, previously_returning[:len(admitted)])
+            if len(ride.station) == 2 and all(v.state == 'unloading' for v in ride.station.values()):
+                if ride.returning and blocked is None:
+                    blocked = (ride.dispatch_count, ride.last_dispatch_at, ride.returning[0])
+                # 두 번째 보트의 승강장은 준비됐어도 첫 보트 승객이 공용 통로를 먼저 사용한다.
+                shared_exit |= (not ride.returning and all(v.passengers for v in ride.station.values()))
+            unload_starts.update((v.visitor_id, v.motion.start) for v in run.visitors.values()
+                                 if v.facility_id == key and v.phase == 'walking_from_ride')
+            if blocked and ride.dispatch_count > blocked[0]:
+                self.assertGreater(ride.last_dispatch_at - blocked[1], settings['unloading_seconds'])
+                self.assertNotEqual(blocked[2].state, 'waiting_for_station')
+                break
+        else:
+            self.fail('승강장 대기 후 출발이 재개되지 않았습니다.')
+        self.assertTrue(shared_exit)
+        self.assertGreater(len(unload_starts), 8)
+        times = sorted(when for _, when in unload_starts)
+        self.assertTrue(all(b - a >= UNLOAD_GAP_S - 1e-8 for a, b in zip(times, times[1:])))
+
+    def test_fractional_course_clearance_keeps_sections_exclusive_at_boundaries(self):
+        key = 'atlantis'
+        run = self.start((key,), operation_overrides={key: {'course_section_count': 7, 'dispatch_interval_seconds': 1}},
+                         initial_people=1500, target_people=1500)
+        self.now = 150
+        ride = run.snapshot()['rides'][key]
+        self.assertEqual(ride['dispatch_count'], 1)
+        start = Fraction(ride['last_dispatch_at_sim_s'])
+        section_seconds = Fraction(120, 7)
+        clear = ride['course_entry_available_at_sim_s']
+        self.assertLess(Fraction(nextafter(clear, -inf)), start + section_seconds)
+        self.assertGreaterEqual(Fraction(clear), start + section_seconds)
+
+        for index in range(1, 7):
+            boundary = float(start + index * section_seconds)
+            for self.now in (nextafter(boundary, -inf), boundary, nextafter(boundary, inf)):
+                vehicles = run.snapshot()['rides'][key]['vehicles']
+                sections = [v['course_section'] for v in vehicles if v['course_section'] is not None]
+                self.assertEqual(len(sections), len(set(sections)))
+
+    def test_facilities_remain_idle_without_waiting_visitors(self):
+        run = self.start(self.operations, initial_people=0, admission_interval_sim_s=3600)
+        self.now = 1800
+        state = run.snapshot()
+        self.assertEqual(state['background']['present_people'], 0)
+        for ride in state['rides'].values():
+            self.assertEqual(ride['dispatch_count'], 0)
+            self.assertTrue(all(vehicle['state'] == 'available' for vehicle in ride['vehicles']))

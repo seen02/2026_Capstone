@@ -115,6 +115,9 @@ def validate_ride_operations(operations, facility_ids):
         for field, minimum in fields.items():
             require(integer(operation.get(field), minimum),
                     f"{facility_id}의 {field} 값은 {minimum} 이상의 정수여야 합니다.")
+        sections = operation.get("course_section_count", 1)
+        require(integer(sections, 1) and sections <= operation["ride_seconds"],
+                f"{facility_id}의 course_section_count 값은 1 이상이고 운행 초 이하여야 합니다.")
 
 
 def load_continuous(root):

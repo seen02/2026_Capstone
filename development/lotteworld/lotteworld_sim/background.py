@@ -75,7 +75,8 @@ class FacilityQueue:
 
 
 class BackgroundRun:
-    def __init__(self, config, routes=None, *, map_hash=None, ride_operations=None, clock=monotonic):
+    def __init__(self, config, routes=None, *, map_hash=None, ride_operations=None,
+                 ride_operations_hash=None, clock=monotonic):
         self.run_id = f"continuous-{uuid4().hex}"
         self.clock = clock
         self.lock = Lock()
@@ -87,6 +88,7 @@ class BackgroundRun:
         initial_ages = Random(config['seed'] + 1)
         self.routes = routes
         self.map_hash = map_hash
+        self.ride_operations_hash = ride_operations_hash
         self.queues = {key: FacilityQueue(paths) for key, paths in routes.facilities.items()} if routes else {}
         self.facility_ids = tuple(self.queues)
         self.walk_gap = routes.queue_headway_m / WALK_M_PER_S if routes else 0
@@ -316,6 +318,7 @@ class BackgroundRun:
                 'scenario_id': SCENARIO_ID,
                 'run_id': self.run_id,
                 'map_hash': self.map_hash,
+                'ride_operations_hash': self.ride_operations_hash,
                 'status': 'continuous_running',
                 'clock': {'sim_time_s': now, 'time_scale': self.time_scale},
                 'rides': {key: ride.snapshot(now) for key, ride in self.rides.items()},

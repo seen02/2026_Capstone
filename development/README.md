@@ -43,9 +43,9 @@
 
 ## 매직아일랜드 현재 범위
 
-[체크리스트](docs/implementation-checklist.md) 1–4번인 설정 분리, 3D 지도·시설 표시, 연속 유입·개인 체류·퇴장, 물리적 대기열과 승하차 보행을 구현했다. 지도에서 6개 시설과 다리·성·호수·보행로·대기 구획을 확인하고, 연속 시연 상태 API에서 방문객 위치와 대기열을 조회할 수 있다.
+[체크리스트](docs/implementation-checklist.md) 1–6번인 설정 분리, 3D 지도·시설 표시, 연속 유입·개인 체류·퇴장, 물리적 대기열과 승하차 보행, 회차·차량 운행을 구현했다. 지도에서 6개 시설과 다리·성·호수·보행로·대기 구획을 확인하고, 연속 시연 상태 API에서 방문객 위치와 대기열·차량 운행을 조회할 수 있다.
 
-매직아일랜드 서버는 수동 종료까지 배경 방문객을 순환시키고 `GET /api/state`에 진입·체류·퇴장 현황을 제공한다. 다음 작업은 개별 보행·물리적 대기열과 승하차다. CLI는 이전 일일 시간표를 포함해 설정을 검증하고 메타데이터를 내보낸다. [설정 계약](lotteworld/docs/configuration.md) · [연속 시연 검증](docs/verification/magic-island-continuous-arrivals.md)
+매직아일랜드 서버는 수동 종료까지 배경 방문객과 시설 운행을 순환시킨다. CLI는 이전 일일 시간표를 포함해 설정을 검증하고 메타데이터를 내보낸다. [설정 계약](lotteworld/docs/configuration.md) · [연속 시연 검증](docs/verification/magic-island-continuous-arrivals.md) · [회차·차량 운행 검증](docs/verification/magic-island-ride-operations.md)
 
 ## 검증
 

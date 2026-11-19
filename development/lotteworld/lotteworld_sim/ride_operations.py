@@ -1,6 +1,8 @@
-"""대기객을 받아 시설의 승차·운행·하차를 반복한다."""
+"""대기객을 받아 시설의 차량·편성과 승강장·코스를 운영한다."""
 from collections import deque
 from dataclasses import dataclass, field
+from fractions import Fraction
+from math import inf, nextafter
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -33,6 +35,9 @@ class RideOperation:
         self.dispatch_count = 0
         self.last_dispatch_at = None
         self.next_dispatch_at = 0
+        self.section_count = settings.get('course_section_count', 1)
+        self.section_seconds = Fraction(settings['ride_seconds'], self.section_count)
+        self.course_entry_at = 0
 
     def wake(self, when):
         if self.wake_at is None or when < self.wake_at:
@@ -50,12 +55,12 @@ class RideOperation:
                 vehicle.state = 'ready'
             if vehicle.state == 'ready':
                 ready.append(vehicle)
-        if ready and now >= self.next_dispatch_at:
+        if ready and now >= max(self.next_dispatch_at, self.course_entry_at):
             vehicle = min(ready, key=lambda v: v.boarding_started_at)
             self._dispatch(now, vehicle)
             ready.remove(vehicle)
         if ready:
-            self.wake(self.next_dispatch_at)
+            self.wake(max(self.next_dispatch_at, self.course_entry_at))
 
         while self.returning and self._station_has_space():
             self._start_unloading(now, self.returning.popleft())
@@ -112,6 +117,13 @@ class RideOperation:
         self.dispatch_count += 1
         self.last_dispatch_at = now
         self.next_dispatch_at = now + self.settings['dispatch_interval_seconds']
+        # 모든 차량이 같은 속도로 같은 길이의 가상 구간을 순서대로 통과한다.
+        # 첫 구간을 비운 뒤 출발하면 다음 구간에서도 선행 차량과 겹치지 않는다.
+        clear = Fraction(now) + self.section_seconds
+        self.course_entry_at = float(clear)
+        # 소수 초 경계를 시계의 부동소수점 시각으로 올림해 중복 점유를 피한다.
+        if self.course_entry_at < clear:
+            self.course_entry_at = nextafter(self.course_entry_at, inf)
         self.run._schedule(now + self.settings['ride_seconds'], self._return_from_course, vehicle)
 
     def _return_from_course(self, now, vehicle):
@@ -133,13 +145,21 @@ class RideOperation:
         self.available.append(vehicle)
         self.wake(now)
 
+    def _course_section(self, now, vehicle):
+        if vehicle.state != 'running':
+            return None
+        elapsed = Fraction(now) - Fraction(vehicle.dispatched_at)
+        return min(self.section_count, 1 + elapsed // self.section_seconds)
+
     def snapshot(self, now):
         return {
             'vehicle_count': len(self.vehicles), 'station_capacity': self.settings['station_capacity'],
             'seats_per_vehicle': self.seats, 'dispatch_count': self.dispatch_count,
             'last_dispatch_at_sim_s': self.last_dispatch_at, 'next_dispatch_min_at_sim_s': self.next_dispatch_at,
+            'course_section_count': self.section_count, 'course_entry_available_at_sim_s': self.course_entry_at,
             'vehicles': [
                 {'vehicle_id': v.vehicle_id, 'state': v.state, 'station_slot': v.station_slot,
+                 'course_section': self._course_section(now, v),
                  'last_dispatched_at_sim_s': v.dispatched_at,
                  'passenger_ids': [p.visitor_id for p in v.passengers]}
                 for v in self.vehicles

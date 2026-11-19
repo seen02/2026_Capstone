@@ -73,17 +73,26 @@ class ReloadTests(unittest.TestCase):
                 operations = json.loads(operations_path.read_text(encoding='utf-8'))
                 atlantis = operations['facilities']['atlantis']
                 atlantis['ride_seconds'] = 125
+                atlantis['vehicle_count'] = 7
                 operations_path.write_text(json.dumps(operations), encoding='utf-8')
                 updated_meta = get('/api/meta')
                 self.assertEqual(updated_meta['ride_operations']['facilities']['atlantis'], atlantis)
                 self.assertEqual(atlantis['dispatch_interval_seconds'], 30)
                 self.assertEqual(updated_meta['hashes']['map'], initial['hashes']['map'])
                 self.assertNotEqual(updated_meta['hashes']['ride_operations'], initial['hashes']['ride_operations'])
+                old_state = get('/api/state')
+                self.assertEqual(old_state['ride_operations_hash'], initial['hashes']['ride_operations'])
+                self.assertEqual(old_state['rides']['atlantis']['vehicle_count'], 8)
+                with make_server(0, root=root) as restarted:
+                    new_state = restarted.background.snapshot()
+                    self.assertEqual(new_state['ride_operations_hash'], updated_meta['hashes']['ride_operations'])
+                    self.assertEqual(new_state['rides']['atlantis']['vehicle_count'], 7)
                 atlantis['dispatch_interval_seconds'] = 0
                 operations_path.write_text(json.dumps(operations), encoding='utf-8')
                 with self.assertRaises(HTTPError) as invalid_operations:
                     get('/api/meta')
                 self.assertEqual(invalid_operations.exception.code, 422)
+                self.assertEqual(get('/api/state')['ride_operations_hash'], old_state['ride_operations_hash'])
                 atlantis['dispatch_interval_seconds'] = 35
                 operations_path.write_text(json.dumps(operations), encoding='utf-8')
                 self.assertEqual(get('/api/meta')['ride_operations']['facilities']['atlantis'], atlantis)

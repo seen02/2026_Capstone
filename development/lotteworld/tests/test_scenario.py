@@ -9,7 +9,7 @@ import unittest
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from lotteworld_sim.scenario import CONTINUOUS_PATH, ROOT, load_continuous, load_inputs, validate
+from lotteworld_sim.scenario import CONTINUOUS_PATH, ROOT, load_continuous, load_inputs, validate, validate_ride_operations
 from lotteworld_sim.server import make_server
 
 
@@ -110,8 +110,20 @@ class ScenarioTests(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         load_continuous(directory)
 
+    def test_course_section_count_validation(self):
+        scenario = load_inputs()
+        facilities = {row['id'] for row in scenario.map['facilities']}
+        for invalid in (True, None, 0, 2.5, 121):
+            ops = deepcopy(scenario.ride_operations)
+            ops['facilities']['atlantis']['course_section_count'] = invalid
+            with self.subTest(count=invalid), self.assertRaisesRegex(ValueError, 'course_section_count'):
+                validate_ride_operations(ops, facilities)
+        del ops['facilities']['atlantis']['course_section_count']
+        validate_ride_operations(ops, facilities)
+
     def test_metadata_and_continuous_runtime_api(self):
-        server = make_server(0)
+        now = 0
+        server = make_server(0, clock=lambda: now)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         base = f"http://127.0.0.1:{server.server_port}"
@@ -144,6 +156,8 @@ class ScenarioTests(unittest.TestCase):
             self.assertEqual(state["status"], "continuous_running")
             self.assertEqual(state["clock"]["time_scale"], data["continuous"]["time_scale"])
             self.assertEqual(state["map_hash"], data["hashes"]["map"])
+            self.assertEqual(state["ride_operations_hash"], data["hashes"]["ride_operations"])
+            self.assertEqual(set(state["rides"]), set(expected))
             people = state["background"]
             self.assertEqual(people["target_people"], data["continuous"]["target_people"])
             self.assertEqual(people["entered_total"], people["present_people"] + people["exited_total"])
@@ -151,6 +165,13 @@ class ScenarioTests(unittest.TestCase):
             self.assertEqual({key: queue['capacity'] for key, queue in people['queues'].items()},
                              {key: report['capacity'] for key, report in data['queue_report'].items()})
             self.assertTrue(all(len(visitor['point']) == 2 for visitor in people['visitors']))
+            now = 600 / data['continuous']['time_scale']
+            server.service_actions()
+            self.assertTrue(all(ride.dispatch_count >= 2 for ride in server.background.rides.values()))
+            with urlopen(base + "/api/state") as response:
+                running = json.load(response)
+            self.assertEqual(running['run_id'], state['run_id'])
+            self.assertTrue(all(ride['dispatch_count'] >= 2 for ride in running['rides'].values()))
             for asset in ('/navigation.mjs','/queue.mjs'):
                 with urlopen(base+asset) as response:
                     self.assertIn('text/javascript',response.headers['Content-Type'])
