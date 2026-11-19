@@ -1,4 +1,5 @@
 """연속 유입, 개인 체류, 대기열과 시설 운행을 진행한다."""
+from bisect import bisect_left, bisect_right
 from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from itertools import count
@@ -10,25 +11,39 @@ from uuid import uuid4
 
 from .ride_operations import RideOperation
 from .scenario import DEFAULT_PREFERENCE_BEHAVIOR, SCENARIO_ID
-from .visitor_routes import FacilityPaths, Path, UNLOAD_GAP_S, WALK_M_PER_S
-
-
+from .visitor_routes import FacilityPaths, Path, PUBLIC_WALK_VARIANTS, UNLOAD_GAP_S, WALK_M_PER_S
 @dataclass(frozen=True)
 class Motion:
     path: Path
     start: float
     origin: float
     target: float
+    speed_m_s: float = WALK_M_PER_S
 
     @property
     def end(self):
-        return self.start + abs(self.target - self.origin) / WALK_M_PER_S
+        return self.start + abs(self.target - self.origin) / self.speed_m_s
 
     def distance_at(self, now):
         if now >= self.end:
             return self.target
         direction = 1 if self.target >= self.origin else -1
-        return self.origin + (now - self.start) * WALK_M_PER_S * direction
+        return self.origin + (now - self.start) * self.speed_m_s * direction
+
+    def trail(self, now, lookback):
+        start = max(self.start, now - lookback)
+        first, last = self.distance_at(start), self.distance_at(now)
+        if first == last:
+            return None
+        low, high = sorted((first, last))
+        corners = range(bisect_right(self.path.offsets, low), bisect_left(self.path.offsets, high))
+        if first > last:
+            corners = reversed(corners)
+        points = [[start, *self.path.point_at(first)]]
+        points.extend([self.start + abs(self.path.offsets[index] - self.origin) / self.speed_m_s, *self.path.points[index]]
+                      for index in corners)
+        points.append([min(now, self.end), *self.path.point_at(last)])
+        return points
 
 
 @dataclass
@@ -49,21 +64,27 @@ class Visitor:
     wait_deadline: float | None = None
     waiting_source: str | None = None
     completed_rides: dict[str, int] = field(default_factory=dict)
+    walking_variant: int | None = None
+    public_speed_m_s: float = WALK_M_PER_S
 
-    def snapshot(self, now):
+    def snapshot(self, now, trail_sim_s=0):
         state = self.phase
         if state == 'in_queue':
             if now >= self.motion.end:
                 state = 'queued'
             else:
                 state = 'advancing_queue' if self.has_waited else 'joining_queue'
-        return {key: getattr(self, key) for key in ('visitor_id', 'entered_at_sim_s', 'leave_at_sim_s')} | {
+        snapshot = {key: getattr(self, key) for key in ('visitor_id', 'entered_at_sim_s', 'leave_at_sim_s')} | {
             'state': state, 'facility_id': self.facility_id, 'queue_slot': self.slot,
             'point': self.motion.path.point_at(self.motion.distance_at(now)) if self.motion else None,
             'departure_requested': self.expired, 'vehicle_id': self.vehicle_id,
             'preference_profile_id': self.profile['id'] if self.profile else None,
             'completed_rides': dict(self.completed_rides),
         }
+        if trail_sim_s and self.motion:
+            if trail := self.motion.trail(now, trail_sim_s):
+                snapshot['walk_trail'] = trail
+        return snapshot
 
 
 @dataclass
@@ -95,6 +116,7 @@ class BackgroundRun:
         initial_ages = Random(config['seed'] + 1)
         self.profile_random = Random(config['seed'] + 2)
         self.choice_random = Random(config['seed'] + 3)
+        self.walk_random = Random(config['seed'] + 4)
         self.profiles = preferences['profiles'] if preferences is not None else None
         self.behavior = (preferences.get('behavior', DEFAULT_PREFERENCE_BEHAVIOR)
                          if preferences is not None else DEFAULT_PREFERENCE_BEHAVIOR)
@@ -135,6 +157,8 @@ class BackgroundRun:
         if self.profiles is not None:
             visitor.profile = self.profile_random.choice(self.profiles)
             visitor.wait_patience = self.profile_random.uniform(*self.behavior['wait_patience_sim_s'])
+            visitor.walking_variant = self.walk_random.randrange(PUBLIC_WALK_VARIANTS)
+            visitor.public_speed_m_s = self.walk_random.uniform(1.15, 1.65)
         self.visitors[visitor.visitor_id] = visitor
         self._schedule(visitor.leave_at_sim_s, self._expire, visitor)
         if self.routes:
@@ -145,13 +169,17 @@ class BackgroundRun:
 
     def _walk(self, now, visitor, phase, path, arrival, *args, origin=0, target=None):
         visitor.phase = phase
-        visitor.motion = Motion(path, now, origin, path.length if target is None else target)
+        speed = visitor.public_speed_m_s if phase in ('walking_to_queue', 'walking_to_exit') else WALK_M_PER_S
+        visitor.motion = Motion(path, now, origin, path.length if target is None else target, speed)
         self._schedule(visitor.motion.end, arrival, visitor, *args)
+
+    def _public_path(self, visitor, source, target):
+        return self.routes.visitor_path(source, target, visitor.walking_variant)
 
     def _seek_queue(self, now, visitor, source, fraction=0, *, avoid=None):
         if visitor.expired:
             visitor.facility_id = None
-            path = self.routes.public_path(source, self.routes.boundary)
+            path = self._public_path(visitor, source, self.routes.boundary)
             self._walk(now, visitor, 'walking_to_exit', path, self._depart)
             return
         if visitor.profile is not None:
@@ -171,11 +199,11 @@ class BackgroundRun:
             next_stop = next(((key, queue) for key, queue in candidates
                               if self.routes.public_path(source, queue.paths.approach).length), None)
             if next_stop is None:
-                path = self.routes.public_path(source, self.routes.boundary)
+                path = self._public_path(visitor, source, self.routes.boundary)
                 self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, self.routes.boundary)
                 return
             key, queue = next_stop
-        path = self.routes.public_path(source, queue.paths.approach)
+        path = self._public_path(visitor, source, queue.paths.approach)
         self._walk_to_queue(now, visitor, key, path, fraction)
 
     @staticmethod
@@ -217,8 +245,8 @@ class BackgroundRun:
             score = visitor.profile['preferences'][key]
             if not score:
                 continue
-            path = self.routes.public_path(source, queue.paths.approach)
-            walk = path.length * (1 - fraction) / WALK_M_PER_S
+            path = self._public_path(visitor, source, queue.paths.approach)
+            walk = path.length * (1 - fraction) / visitor.public_speed_m_s
             budget = self._wait_budget(now + walk, visitor, key)
             head_walk = self.queue_times[key][0]
             if head_walk >= budget:
@@ -240,6 +268,11 @@ class BackgroundRun:
             return
         visitor.facility_id = None
         if not can_fit:
+            if isinstance(source, tuple):
+                stop = self.routes.exit_merges[source]
+                path = self._public_path(visitor, source, stop)
+                self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, stop)
+                return
             visitor.phase = 'waiting_to_exit'
             visitor.waiting_source = source
             visitor.motion = Motion(self.routes.public_path(source, source), now, 0, 0)
@@ -247,7 +280,7 @@ class BackgroundRun:
         # 현장에서 막힌 시설만 남으면 다른 공공 연결점까지 걸은 뒤 다시 확인한다.
         stops = dict.fromkeys(queue.paths.approach for queue in self.queues.values())
         for stop in (*stops, self.routes.boundary):
-            path = self.routes.public_path(source, stop)
+            path = self._public_path(visitor, source, stop)
             if path.length:
                 self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, stop)
                 return
@@ -345,8 +378,11 @@ class BackgroundRun:
         self.exited_total += 1
         self._schedule_admission(now)
 
+    def current_sim_time(self):
+        return (self.clock() - self.started) * self.time_scale
+
     def _advance(self):
-        now = (self.clock() - self.started) * self.time_scale
+        now = self.current_sim_time()
         while self.events and self.events[0][0] <= now:
             when, _, _, action, args = heappop(self.events)
             action(when, *args)
@@ -426,9 +462,13 @@ class BackgroundRun:
         key = visitor.facility_id
         visitor.completed_rides[key] = visitor.completed_rides.get(key, 0) + 1
         visitor.vehicle_id = None
-        self._walk(now, visitor, 'walking_from_ride', paths.unloading, self._seek_queue, paths.exit_merge)
+        if visitor.walking_variant is not None:
+            offset, release = paths.exit_releases[visitor.walking_variant % len(paths.exit_releases)]
+            self._walk(now, visitor, 'walking_from_ride', paths.unloading, self._seek_queue, release, target=offset)
+        else:
+            self._walk(now, visitor, 'walking_from_ride', paths.unloading, self._seek_queue, paths.exit_merge)
 
-    def snapshot(self):
+    def snapshot(self, *, with_motion=False):
         with self.lock:
             now = self._advance()
             return {
@@ -445,7 +485,8 @@ class BackgroundRun:
                     'entered_total': self.entered_total,
                     'present_people': len(self.visitors),
                     'exited_total': self.exited_total,
-                    'visitors': [visitor.snapshot(now) for visitor in self.visitors.values()],
+                    'visitors': [visitor.snapshot(now, self.time_scale * 1.2 if with_motion else 0)
+                                 for visitor in self.visitors.values()],
                     'queues': {key: {'capacity': queue.capacity, 'reserved_count': len(queue.members),
                                      'queued_count': sum(v.phase == 'in_queue' and v.motion.end <= now
                                                          for v in queue.members)}
