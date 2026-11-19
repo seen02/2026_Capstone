@@ -29,13 +29,14 @@ def stop_child(child):
             child.kill();child.wait()
 
 
-def supervise(root,port,config_path=None,stop_event=None):
+def supervise(root, port, config_path=None, stop_event=None, *, host="127.0.0.1", mock_data=None):
     stop_event=stop_event or threading.Event()
     if port==0:
         with socket.socket() as reservation:
-            reservation.bind(('127.0.0.1',0));port=reservation.getsockname()[1]
-    command=[sys.executable,'-m','lotteworld_sim.server','--port',str(port),'--no-reload']
+            reservation.bind((host,0));port=reservation.getsockname()[1]
+    command=[sys.executable,'-m','lotteworld_sim.server','--host',host,'--port',str(port),'--no-reload']
     if config_path: command+=['--config',str(Path(config_path).resolve())]
+    if mock_data: command+=['--mock-data',str(Path(mock_data).resolve())]
     child=None
     try:
         signature=python_signature(root)

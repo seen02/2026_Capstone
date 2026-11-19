@@ -1,4 +1,4 @@
-"""시나리오별 지도·운영·선호 계약. 시간표 실행과 시설 행동은 후속 구현이다."""
+"""매직아일랜드 지도·운영·선호·연속 시연 설정 계약."""
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -9,9 +9,11 @@ from .map_geometry import validate_geometry
 from .queue_capacity import validate_queue_capacity, queue_report
 
 ROOT = Path(__file__).resolve().parents[1]
+RIDE_OPERATIONS_PATH = Path("configs/ride-operations.json")
+CONTINUOUS_PATH = Path("configs/continuous.json")
 SCENARIO_ID = "magic-island"
 FACILITIES = {"atlantis", "gyro-drop", "gyro-swing", "gyro-spin", "comet-express", "arcana-ride"}
-NOT_READY = "매직아일랜드 3D 지도 표시는 준비됐습니다. 유입·보행·운행 엔진이 준비되지 않아 시뮬레이션을 실행할 수 없습니다."
+MAP_READY = "매직아일랜드 설정 검증을 마쳤습니다. 연속 유입을 실행하려면 서버를 시작하세요."
 
 
 def require(condition, message):
@@ -20,7 +22,7 @@ def require(condition, message):
 
 
 def number(value, minimum, maximum):
-    return type(value) in (int, float) and math.isfinite(value) and minimum <= value <= maximum
+    return type(value) in (int, float) and minimum <= value <= maximum and math.isfinite(value)
 
 
 def integer(value, minimum=0):
@@ -95,23 +97,66 @@ def validate(map_data, config, preferences):
         raise ValueError("설정의 필수 항목이 없거나 자료형이 올바르지 않습니다.") from exc
 
 
+def validate_ride_operations(operations, facility_ids):
+    facilities = operations.get("facilities")
+    require(isinstance(facilities, dict) and facilities.keys() == facility_ids,
+            "운행 설정의 시설 ID는 지도 시설 6개와 일치해야 합니다.")
+    require(bool(operations.get("provenance")), "운행 설정의 출처·가정 설명이 필요합니다.")
+    fields = {
+        "ride_seconds": 1,
+        "unloading_seconds": 0,
+        "boarding_and_check_seconds": 0,
+        "dispatch_interval_seconds": 1,
+        "vehicle_count": 1,
+        "station_capacity": 1,
+    }
+    for facility_id, operation in facilities.items():
+        require(isinstance(operation, dict), f"{facility_id} 운행 설정은 객체여야 합니다.")
+        for field, minimum in fields.items():
+            require(integer(operation.get(field), minimum),
+                    f"{facility_id}의 {field} 값은 {minimum} 이상의 정수여야 합니다.")
+
+
+def load_continuous(root):
+    config = read_json(Path(root) / CONTINUOUS_PATH)
+    provenance = config.get("provenance")
+    require(isinstance(provenance, str) and bool(provenance.strip()), "연속 시연 설정의 출처·가정 설명이 필요합니다.")
+    require(integer(config.get("seed")), "연속 시연 시드는 0 이상의 정수여야 합니다.")
+    target, initial = config.get("target_people"), config.get("initial_people")
+    require(integer(target, 1) and target <= 10000, "목표 인원은 1~10000명의 정수여야 합니다.")
+    require(integer(initial) and initial <= target, "초기 인원은 0명 이상이고 목표 인원 이하여야 합니다.")
+    interval = config.get("admission_interval_sim_s")
+    require(integer(interval, 1) and interval <= 3600, "입장 간격은 1~3600 내부 초의 정수여야 합니다.")
+    stay = config.get("stay_sim_s")
+    require(isinstance(stay, list) and len(stay) == 2 and all(number(v, 60, 86400) for v in stay)
+            and stay[0] <= stay[1], "체류 범위는 60~86400 내부 초의 오름차순 두 값이어야 합니다.")
+    require(number(config.get("time_scale"), 0.1, 60), "내부 시간 배속은 0.1~60이어야 합니다.")
+    return config
+
+
 @dataclass(frozen=True)
 class Scenario:
     map: dict
     config: dict
     preferences: dict
+    ride_operations: dict
+    continuous: dict
 
     def metadata(self):
-        parts = {"map": self.map, "config": self.config, "preferences": self.preferences}
+        parts = {"map": self.map, "config": self.config, "preferences": self.preferences,
+                 "ride_operations": self.ride_operations, "continuous": self.continuous}
         hashes = {key: sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")).hexdigest() for key, value in parts.items()}
         return dict(scenario_id=SCENARIO_ID, name="롯데월드 매직아일랜드", status="map_ready", map_ready=True, map_view="guide-map-3d",
-                    runnable=False, message=NOT_READY, hashes=hashes, queue_report=queue_report(self.map), **parts)
+                    runnable=False, message=MAP_READY, hashes=hashes, queue_report=queue_report(self.map), **parts)
 
 
-def load_inputs(root=ROOT, config_path=None):
+def load_inputs(root=ROOT, config_path=None, *, continuous=None):
     root = Path(root)
     scenario = Scenario(read_json(root / "configs/map.json"),
                         read_json(config_path or root / "configs/day.json"),
-                        read_json(root / "configs/preferences.json"))
+                        read_json(root / "configs/preferences.json"),
+                        read_json(root / RIDE_OPERATIONS_PATH),
+                        load_continuous(root) if continuous is None else continuous)
     validate(scenario.map, scenario.config, scenario.preferences)
+    validate_ride_operations(scenario.ride_operations, {facility["id"] for facility in scenario.map["facilities"]})
     return scenario

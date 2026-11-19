@@ -3,7 +3,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from .scenario import load_inputs, NOT_READY
+from .scenario import load_inputs
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
     except ValueError as exc:
         parser.error(str(exc))
     if not args.validate_only:
-        parser.error(NOT_READY + " 설정 확인에는 --validate-only를 사용하세요.")
+        parser.error("설정 확인에는 --validate-only를 사용하세요. 연속 유입을 실행하려면 서버를 시작하세요.")
     encoded = json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

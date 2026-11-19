@@ -17,10 +17,11 @@ def main():
     parser.add_argument("--mode", choices=("server", "cli"), default="server", help="서버 또는 CLI")
     args, extra = parser.parse_known_args()
     # 사용자 설정·결과 경로는 호출한 디렉터리 기준으로 유지한다.
+    path_options = ("--config", "--output", "--mock-data")
     for index, value in enumerate(extra):
-        if value in ("--config", "--output") and index + 1 < len(extra):
+        if value in path_options and index + 1 < len(extra):
             extra[index + 1] = str(Path(extra[index + 1]).resolve())
-        elif value.startswith(("--config=", "--output=")):
+        elif value.partition("=")[0] in path_options and "=" in value:
             key, path = value.split("=", 1)
             extra[index] = f"{key}={Path(path).resolve()}"
     folder, package = SCENARIOS[args.scenario]

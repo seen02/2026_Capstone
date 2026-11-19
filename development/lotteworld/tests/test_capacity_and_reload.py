@@ -11,7 +11,7 @@ import unittest
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
-from lotteworld_sim.scenario import ROOT,load_inputs,validate
+from lotteworld_sim.scenario import CONTINUOUS_PATH,RIDE_OPERATIONS_PATH,ROOT,load_inputs,validate
 from lotteworld_sim.server import make_server
 from lotteworld_sim.devserver import supervise
 
@@ -51,10 +51,40 @@ class ReloadTests(unittest.TestCase):
                 with urlopen(base+path,timeout=3) as response:return json.load(response)
             try:
                 initial=get('/api/meta');version=get('/api/dev-version')
+                run_id = get('/api/state')['run_id']
                 path=root/'configs/day.json';data=json.loads(path.read_text(encoding='utf-8'));data['seed']+=1;path.write_text(json.dumps(data),encoding='utf-8')
                 self.assertEqual(get('/api/meta')['config']['seed'],initial['config']['seed']+1)
                 self.assertEqual(get('/api/dev-version')['instance'],version['instance'])
                 self.assertNotEqual(get('/api/dev-version')['version'],version['version'])
+                continuous_path = root / CONTINUOUS_PATH
+                continuous = {**initial['continuous'], 'initial_people': 0, 'target_people': 1}
+                continuous_path.write_text(json.dumps(continuous), encoding='utf-8')
+                self.assertEqual(load_inputs(root=root).continuous, continuous)
+                self.assertEqual(get('/api/meta')['continuous'], initial['continuous'])
+                state = get('/api/state')
+                self.assertEqual(state['run_id'], run_id)
+                self.assertEqual(state['background']['target_people'], initial['continuous']['target_people'])
+                with make_server(0, root=root) as restarted:
+                    self.assertNotEqual(restarted.background.run_id, run_id)
+                    self.assertEqual(restarted.background.snapshot()['background']['target_people'], 1)
+                operations_path = root / RIDE_OPERATIONS_PATH
+                operations = json.loads(operations_path.read_text(encoding='utf-8'))
+                atlantis = operations['facilities']['atlantis']
+                atlantis['ride_seconds'] = 125
+                operations_path.write_text(json.dumps(operations), encoding='utf-8')
+                updated_meta = get('/api/meta')
+                self.assertEqual(updated_meta['ride_operations']['facilities']['atlantis'], atlantis)
+                self.assertEqual(atlantis['dispatch_interval_seconds'], 30)
+                self.assertEqual(updated_meta['hashes']['map'], initial['hashes']['map'])
+                self.assertNotEqual(updated_meta['hashes']['ride_operations'], initial['hashes']['ride_operations'])
+                atlantis['dispatch_interval_seconds'] = 0
+                operations_path.write_text(json.dumps(operations), encoding='utf-8')
+                with self.assertRaises(HTTPError) as invalid_operations:
+                    get('/api/meta')
+                self.assertEqual(invalid_operations.exception.code, 422)
+                atlantis['dispatch_interval_seconds'] = 35
+                operations_path.write_text(json.dumps(operations), encoding='utf-8')
+                self.assertEqual(get('/api/meta')['ride_operations']['facilities']['atlantis'], atlantis)
                 map_path=root/'configs/map.json';original=map_path.read_text(encoding='utf-8');updated=json.loads(original);updated['facilities'][0]['name']='갱신 시설';map_path.write_text(json.dumps(updated),encoding='utf-8')
                 self.assertEqual(get('/api/meta')['map']['facilities'][0]['name'],'갱신 시설')
                 map_path.write_text('{',encoding='utf-8')

@@ -9,7 +9,7 @@ import unittest
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from lotteworld_sim.scenario import ROOT, load_inputs, validate
+from lotteworld_sim.scenario import CONTINUOUS_PATH, ROOT, load_continuous, load_inputs, validate
 from lotteworld_sim.server import make_server
 
 
@@ -69,6 +69,7 @@ class ScenarioTests(unittest.TestCase):
             loaded = load_inputs(config_path=path)
             self.assertEqual(loaded.config["seed"], 12)
             self.assertEqual(loaded.metadata()["hashes"]["map"], scenario.metadata()["hashes"]["map"])
+            self.assertEqual(loaded.ride_operations, scenario.ride_operations)
             self.assertNotEqual(loaded.metadata()["hashes"]["config"], scenario.metadata()["hashes"]["config"])
             for invalid in ('[]', '{', '{"scenario_id":"aquarium","schema_version":1}'):
                 path.write_text(invalid, encoding="utf-8")
@@ -85,9 +86,31 @@ class ScenarioTests(unittest.TestCase):
             output = Path(directory) / "metadata.json"
             result = subprocess.run([sys.executable, "-m", "lotteworld_sim.cli", "--validate-only", "--output", str(output)], cwd=ROOT, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(json.loads(output.read_text(encoding="utf-8"))["status"], "map_ready")
+            metadata = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(metadata["status"], "map_ready")
+            self.assertEqual(metadata["ride_operations"], load_inputs().ride_operations)
+            self.assertEqual(metadata["continuous"], load_inputs().continuous)
 
-    def test_metadata_and_unavailable_runtime_api(self):
+    def test_invalid_continuous_settings(self):
+        defaults = load_inputs().continuous
+        cases = [
+            ("seed", True), ("seed", -1), ("target_people", 0), ("target_people", 10001),
+            ("initial_people", -1), ("initial_people", defaults["target_people"] + 1),
+            ("admission_interval_sim_s", 0), ("admission_interval_sim_s", 1.5),
+            ("stay_sim_s", [10800, 7200]), ("stay_sim_s", [True, 10800]), ("stay_sim_s", [60, 10**400]),
+            ("time_scale", 0), ("time_scale", float("inf")), ("time_scale", "6"),
+            ("schema_version", 2), ("scenario_id", "aquarium"), ("provenance", " "),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / CONTINUOUS_PATH
+            path.parent.mkdir()
+            for key, value in cases:
+                with self.subTest(key=key, value=value):
+                    path.write_text(json.dumps({**defaults, key: value}), encoding="utf-8")
+                    with self.assertRaises(ValueError):
+                        load_continuous(directory)
+
+    def test_metadata_and_continuous_runtime_api(self):
         server = make_server(0)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -96,11 +119,34 @@ class ScenarioTests(unittest.TestCase):
             with urlopen(base + "/api/meta") as response:
                 data = json.load(response)
             self.assertEqual(data["scenario_id"], "magic-island")
-            self.assertFalse(data["runnable"])
+            self.assertTrue(data["runnable"])
+            self.assertEqual(data["status"], "continuous_running")
+            self.assertEqual(data["continuous"], load_inputs().continuous)
+            self.assertIn("continuous", data["hashes"])
             self.assertNotIn("personas", data)
+            operations = data["ride_operations"]["facilities"]
+            expected = {
+                "atlantis": (120, 20, 40, 30, 8, 2),
+                "gyro-drop": (60, 25, 50, 135, 1, 1),
+                "gyro-swing": (100, 25, 50, 175, 1, 1),
+                "gyro-spin": (130, 40, 80, 250, 1, 1),
+                "comet-express": (140, 30, 60, 230, 1, 1),
+                "arcana-ride": (90, 20, 40, 150, 1, 1),
+            }
+            fields = ("ride_seconds", "unloading_seconds", "boarding_and_check_seconds",
+                      "dispatch_interval_seconds", "vehicle_count", "station_capacity")
+            self.assertEqual({key: tuple(value[field] for field in fields) for key, value in operations.items()}, expected)
             with urlopen(base) as response:
-                self.assertIn("롯데월드 매직아일랜드", response.read().decode())
+                self.assertIn("<h1>매직아일랜드</h1>", response.read().decode())
             self.assertEqual(data['map_view'], 'guide-map-3d')
+            with urlopen(base + "/api/state") as response:
+                state = json.load(response)
+            self.assertEqual(state["status"], "continuous_running")
+            self.assertEqual(state["clock"]["time_scale"], data["continuous"]["time_scale"])
+            people = state["background"]
+            self.assertEqual(people["target_people"], data["continuous"]["target_people"])
+            self.assertEqual(people["entered_total"], people["present_people"] + people["exited_total"])
+            self.assertEqual(len(people["visitors"]), people["present_people"])
             for asset in ('/navigation.mjs','/queue.mjs'):
                 with urlopen(base+asset) as response:
                     self.assertIn('text/javascript',response.headers['Content-Type'])
@@ -112,7 +158,7 @@ class ScenarioTests(unittest.TestCase):
                 with self.assertRaises(HTTPError) as caught:
                     urlopen(base + forbidden)
                 self.assertEqual(caught.exception.code, 404)
-            for path in ("/api/state", "/api/signs", "/api/report", "/api/reset", "/api/advance", "/api/seek", "/configs/day.json", "/floorplan.svg"):
+            for path in ("/api/signs", "/api/report", "/api/reset", "/api/advance", "/api/seek", "/configs/day.json", "/floorplan.svg"):
                 request = Request(base + path, data=b"{}") if path in ("/api/reset", "/api/advance", "/api/seek") else base + path
                 with self.subTest(path=path), self.assertRaises(HTTPError) as caught:
                     urlopen(request)
