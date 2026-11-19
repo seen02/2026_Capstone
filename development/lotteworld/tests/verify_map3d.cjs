@@ -81,9 +81,19 @@ async function routesInScene(page) {
       assert.equal(await page.locator('#facility-picker').isVisible(), false);
       assert.equal(await panel.isVisible(), false);
       assert.deepEqual(await routesInScene(page), []);
-      assert.ok(!/\d+\s*(?:명|분|자리)|운행\s*(?:중|정지)|재생바/.test(await page.locator('body').innerText()));
+      await page.locator('#population').waitFor();
+      const population = await page.locator('#population').locator('dd').allTextContents();
+      const [entered, present, exited] = population.map(value => Number.parseInt(value, 10));
+      assert.equal(entered, present + exited);
+      assert.ok(present > 0);
+      const live = await (await page.request.get(base + '/api/state')).json();
+      assert.deepEqual(await page.evaluate(() => window.inspectMagicMap().context), live.qr.context);
+      assert.equal(await page.evaluate(() => window.inspectMagicMap().clock.time_scale), live.clock.time_scale);
+      assert.ok(!await page.getByRole('slider').count());
       await page.screenshot({path: path.join(output, `map-${width}.png`), fullPage: true});
       const scene = await page.evaluate(() => window.inspectMagicMap());
+      assert.ok(scene.visibleVisitors > 0 && scene.visibleVisitors <= present);
+      assert.deepEqual(scene.visitorModels, {heads: scene.visibleVisitors, limbs: scene.visibleVisitors * 4});
       assert.equal(scene.renderer, 'three-webgl'); assert.ok(scene.drawCalls > 0);
       assert.equal(scene.publicSpace,'island-minus-reservations');
       assert.deepEqual(scene.landscapeBeds,meta.map.geometry.landscape_beds);
@@ -130,7 +140,11 @@ async function routesInScene(page) {
         assert.equal(await showRoutes.getAttribute('aria-pressed'), 'false');
         assert.equal(await routeDistances.isVisible(), false);
         assert.equal(await page.locator('[data-queue-capacity]').count(),0);
-        assert.ok(!/대기 수용|\d+\s*(?:명|분|자리)|운행\s*(?:중|정지)/.test(await panel.innerText()));
+        await panel.locator('#ride-metrics').waitFor();
+        assert.match(await panel.locator('#ride-queue').innerText(), /^\d+명$/);
+        assert.match(await panel.locator('#ride-passengers').innerText(), /^\d+명$/);
+        assert.match(await panel.locator('#ride-dispatches').innerText(), /^\d+회$/);
+        assert.ok(!/대기 수용|\d+\s*자리/.test(await panel.innerText()));
         await showRoutes.click();
         assert.equal(await showRoutes.getAttribute('aria-pressed'), 'true');
         assert.equal(await routeDistances.isVisible(), true);
@@ -230,6 +244,24 @@ async function routesInScene(page) {
       assert.equal(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight), true);
       assert.deepEqual(errors, []); assert.deepEqual(failed, []); assert.deepEqual(remote, []);
       assert.equal(await page.locator('body').textContent().then(text=>text.includes('지하 B1')),false);
+      if (width === 1920) {
+        await facilityList.click();
+        await page.locator('#facilities [data-facility="comet-express"]').click();
+        await showRoutes.click();
+        const beforeUpdate = await page.evaluate(() => window.inspectMagicMap().clock.sim_time_s);
+        await page.waitForFunction(previous => window.inspectMagicMap().clock.sim_time_s > previous, beforeUpdate);
+        assert.deepEqual(await state(page), home);
+        assert.equal(await routeDistances.isVisible(), true);
+        const mismatchedState = route => route.fulfill({json: {...live, map_hash: 'other-map'}});
+        await page.route('**/api/state', mismatchedState);
+        await page.getByText('지도 버전 불일치 · 새로고침 필요', {exact: true}).waitFor();
+        assert.equal(await page.locator('#population').isVisible(), false);
+        assert.equal(await page.evaluate(() => window.inspectMagicMap().visibleVisitors), 0);
+        await page.unroute('**/api/state', mismatchedState);
+        await page.getByText('시뮬레이션 연결됨', {exact: true}).waitFor();
+        assert.equal(await routeDistances.isVisible(), true);
+        assert.deepEqual(await state(page), home);
+      }
       console.log(`${width}×${height}: 지도 중심 배치·시설 선택 패널·동선 전환·WebGL·모형 6개·회전·확대·시점 복귀 검사 통과`);
       await page.close();
     }

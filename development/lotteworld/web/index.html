@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>매직아일랜드 시뮬레이션</title>
   <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/map-viewport.css">
   <link rel="stylesheet" href="/map.css">
   <script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
   <script type="module" src="/map.js"></script>
@@ -27,6 +28,14 @@
       <div id="loading" role="status">3D 지도를 불러오는 중…</div>
       <div class="labels"></div>
     </div>
+    <dl id="population" class="population overlay" aria-label="배경 방문객 집계" hidden>
+      <div><dt>총유입</dt><dd id="entered"></dd></div>
+      <div><dt>체류</dt><dd id="present"></dd></div>
+      <div><dt>총퇴장</dt><dd id="exited"></dd></div>
+      <div><dt><label for="qr-characters">QR 참여</label></dt><dd>
+        <select id="qr-characters" aria-label="QR 캐릭터 찾기"></select>
+      </dd></div>
+    </dl>
     <div class="map-tools">
       <div class="tool-group" role="group" aria-label="지도 도구">
         <button type="button" id="reset">전체 보기</button>
@@ -46,6 +55,8 @@
       <span><i class="entry" aria-hidden="true"></i>대기 입구</span>
       <span><i class="boarding" aria-hidden="true"></i>탑승 진입</span>
       <span><i class="exit" aria-hidden="true"></i>이용 후 퇴장</span>
+      <span><i class="walker" aria-hidden="true"></i>보행</span>
+      <span><i class="queued" aria-hidden="true"></i>대기열</span>
     </div>
     <section id="facility-picker" class="overlay menu" aria-labelledby="picker-title" hidden>
       <h2 id="picker-title">시설 선택</h2>
@@ -56,6 +67,18 @@
       <div id="detail">
         <h2 id="facility-title" tabindex="-1"></h2>
         <p id="facility-description"></p>
+        <div id="ride-metrics" hidden>
+          <dl class="route-distances">
+            <div><dt>운행 상태</dt><dd id="ride-status"></dd></div>
+            <div><dt>누적 회차</dt><dd id="ride-dispatches"></dd></div>
+            <div><dt>대기 인원</dt><dd id="ride-queue"></dd></div>
+            <div><dt>탑승 인원</dt><dd id="ride-passengers"></dd></div>
+          </dl>
+          <details>
+            <summary>차량별 상태</summary>
+            <ul id="ride-vehicles"></ul>
+          </details>
+        </div>
         <div class="detail-actions">
           <button type="button" id="show-routes" aria-pressed="false">동선 보기</button>
           <button type="button" data-action="focus">시설 가까이 보기</button>
@@ -65,6 +88,14 @@
           <div><dt>이용 후 퇴장 → 다리</dt><dd id="exit-distance"></dd></div>
         </dl>
       </div>
+    </aside>
+    <aside id="qr-panel" class="overlay facility-panel" aria-labelledby="qr-title" hidden>
+      <button type="button" id="close-qr" aria-label="QR 캐릭터 상세 닫기">×</button>
+      <h2 id="qr-title" tabindex="-1"></h2>
+      <p id="qr-phase"></p>
+      <p id="qr-progress" hidden></p>
+      <p id="qr-destination"></p>
+      <button type="button" id="focus-qr">캐릭터 가까이 보기</button>
     </aside>
     <p id="error" class="map-error" role="alert" hidden></p>
     <p id="screen-message" class="screen-message" role="status" hidden></p>

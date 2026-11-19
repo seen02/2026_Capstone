@@ -4,6 +4,23 @@ import {box, cylinder, rod, polygon, rectPoints, band, material} from './geometr
 import {buildRide, buildCastle} from './rides.mjs';
 import {createNavigator} from './navigation.mjs';
 import {queueLayout} from './queue.mjs';
+import {VisitorTimeline} from './live-state.mjs';
+
+const walkerColors = ['#26496b', '#245c65', '#36496f'].map(color => new THREE.Color(color));
+const queueColor = new THREE.Color('#753e06');
+const queuedStates = new Set(['joining_queue', 'advancing_queue', 'queued']);
+const torsoGeometry = new THREE.CylinderGeometry(.25, .19, .8, 7).scale(1, 1, .68).translate(0, 1.24, 0);
+const headGeometry = new THREE.SphereGeometry(.22, 8, 6).translate(0, 1.89, 0);
+const limbGeometry = new THREE.BoxGeometry(1, 1, 1).translate(0, -.5, 0);
+const skin = new THREE.MeshBasicMaterial({color: '#efc39b'});
+const clothing = new THREE.MeshBasicMaterial();
+const qrClothing = new THREE.MeshBasicMaterial({color: '#653caa'});
+const qrRing = new THREE.MeshBasicMaterial({color: '#653caa', depthTest: false, depthWrite: false});
+const qrRingGeometry = new THREE.RingGeometry(1.25, 2.5, 24).rotateX(-Math.PI / 2);
+const joints = [
+  [-.15, .88, .19, .83, .2, 1], [.15, .88, .19, .83, .2, -1],
+  [-.32, 1.59, .15, .65, .16, -1], [.32, 1.59, .15, .65, .16, 1],
+];
 
 function inside([x,z], outline) {
   let result=false;
@@ -42,7 +59,11 @@ export class MagicIslandMap {
     this.controls.minPolarAngle=.08;this.controls.maxPolarAngle=Math.PI*.46;
     this.controls.screenSpacePanning=true;
     this.controls.addEventListener('change',()=>this.render());
-    this.controls.addEventListener('start',()=>{this.isHome=false;});
+    this.controls.addEventListener('start',()=>{
+      this.isHome=false;
+      this.stopFollowing();
+      host.dispatchEvent(new Event('map-interaction'));
+    });
     this.scene.add(new THREE.HemisphereLight('#f3f7f6','#819279',2.4));
     const sun=new THREE.DirectionalLight('#fff6e4',3);
     sun.position.set(-100,350,180);sun.castShadow=true;
@@ -51,7 +72,17 @@ export class MagicIslandMap {
     this.labels=[];this.pickables=[];this.rideGroups={};this.routes=[];
     this.scenery=new THREE.Group();this.scenery.name='배경';this.scene.add(this.scenery);
     this.routeGroup=new THREE.Group();this.routeGroup.name='선택 보행 경로';this.scene.add(this.routeGroup);
+    this.characterRoutes=new THREE.Group();this.scene.add(this.characterRoutes);
+    this.characters=new Map();
+    this.characterTimeline=new VisitorTimeline();
+    this.visitorTimeline=new VisitorTimeline();
+    this.visitorHeadings=new Map();
+    this.visitorPose=new THREE.Object3D();
+    this.limbPose=new THREE.Object3D();
+    this.limbMatrix=new THREE.Matrix4();
     this.build();
+    this.renderer.shadowMap.autoUpdate=false;
+    this.renderer.shadowMap.needsUpdate=true;
     this.ray=new THREE.Raycaster();let down=null;
     this.renderer.domElement.addEventListener('pointerdown',e=>{
       down=e.isPrimary&&e.button===0?[e.clientX,e.clientY]:null;
@@ -61,7 +92,7 @@ export class MagicIslandMap {
       const bounds=this.host.getBoundingClientRect();
       this.ray.setFromCamera(new THREE.Vector2((e.clientX-bounds.left)/bounds.width*2-1,1-(e.clientY-bounds.top)/bounds.height*2),this.camera);
       const hits=this.ray.intersectObjects(this.pickables,false);
-      if(hits.length)this.onSelect(hits[0].object.userData.facilityId);
+      if(hits.length)this.onSelect?.(hits[0].object.userData.facilityId);
     });
     this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(host);
     this.resize();this.home();
@@ -71,10 +102,11 @@ export class MagicIslandMap {
   }
 
   label(name,position,facility=null) {
-    const element=document.createElement(facility?'button':'span');
+    const interactive=facility && this.onSelect;
+    const element=document.createElement(interactive?'button':'span');
     element.className='map-label'+(facility?' facility-label':' landmark-label');
     element.textContent=name;
-    if(facility) {
+    if(interactive) {
       element.type='button';
       element.dataset.facility=facility;
       element.setAttribute('aria-label',name+' 상세 보기');
@@ -301,13 +333,231 @@ export class MagicIslandMap {
   }
 
   focus(id) {
-    this.isHome=false;
     const facility=this.map.facilities.find(f=>f.id===id);
-    const target=new THREE.Vector3(facility.label_anchor[0],5,facility.label_anchor[1]);
-    const delta=target.clone().sub(this.controls.target);
-    this.camera.position.add(delta);this.controls.target.copy(target);
-    this.camera.zoom=this.homeZoom*3;
-    this.camera.updateProjectionMatrix();this.controls.update();this.render();
+    this.focusPoint(facility.label_anchor);
+  }
+
+  focusPoint([x,z]) {
+    this.focusArea(new THREE.Vector3(x, 5, z), this.homeZoom * 3);
+  }
+
+  stopFollowing() {
+    this.trackedCharacter = null;
+  }
+
+  followCharacter(id) {
+    this.trackedCharacter = id;
+    const position = this.characters.get(id)?.position;
+    if (position) this.focusPoint([position.x, position.z]);
+  }
+
+  focusRoute(points) {
+    this.stopFollowing();
+    const bounds = new THREE.Box3().setFromPoints(points.map(([x, z]) => new THREE.Vector3(x, 0, z)));
+    this.focusArea(bounds.getCenter(new THREE.Vector3()), 1, points);
+  }
+
+  focusArea(target, zoom, points) {
+    this.isHome=false;
+    this.moveCameraTarget(target);
+    this.camera.zoom=zoom;
+    this.camera.updateProjectionMatrix();
+    if (points) {
+      this.camera.updateMatrixWorld();
+      const extent = Math.max(...points.map(([x, z]) => {
+        const point = new THREE.Vector3(x, 0, z).project(this.camera);
+        return Math.max(Math.abs(point.x), Math.abs(point.y));
+      }));
+      this.camera.zoom = THREE.MathUtils.clamp(.75 / extent, this.controls.minZoom, this.controls.maxZoom);
+      this.camera.updateProjectionMatrix();
+    }
+    this.controls.update();
+    this.render();
+  }
+
+  moveCameraTarget(target) {
+    this.camera.position.add(target.clone().sub(this.controls.target));
+    this.controls.target.copy(target);
+  }
+
+  setVisitors(visitors, clock) {
+    const now = performance.now();
+    if (clock) this.visitorTimeline.push(visitors, clock, now);
+    else this.visitorTimeline.clear();
+    this.updateVisitors(now);
+  }
+
+  updateVisitors(now) {
+    const {people, pending} = this.visitorTimeline.sample(now);
+    if (people.length || this.visitors) this.drawVisitors(people, now);
+    const qr = this.characterTimeline.sample(now);
+    for (const {id, x, z, dx, dz, aboard} of qr.people) {
+      const character = this.characters.get(id);
+      if (character) this.placeCharacter(id, character, x, z, dx, dz, now, aboard);
+    }
+    if (this.visitorFrame === undefined && (pending || qr.pending)) {
+      const animate = timestamp => {
+        if (timestamp - now < 30) {
+          this.visitorFrame = requestAnimationFrame(animate);
+          return;
+        }
+        this.visitorFrame = undefined;
+        this.updateVisitors(timestamp);
+        if (this.characterTimeline.frames.length) this.render();
+        else this.renderer.render(this.scene, this.camera);
+      };
+      this.visitorFrame = requestAnimationFrame(animate);
+    }
+  }
+
+  drawVisitors(people, now) {
+    if (!this.visitors || this.visitors[0].instanceMatrix.count < people.length) {
+      for (const batch of this.visitors ?? []) {
+        this.scene.remove(batch);
+        batch.dispose();
+      }
+      const capacity = Math.max(256, people.length * 2);
+      this.visitors = [
+        new THREE.InstancedMesh(torsoGeometry, clothing, capacity),
+        new THREE.InstancedMesh(headGeometry, skin, capacity),
+        new THREE.InstancedMesh(limbGeometry, clothing, capacity * joints.length),
+      ];
+      for (const batch of this.visitors) {
+        batch.frustumCulled = false;
+        batch.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.scene.add(batch);
+      }
+    }
+    const [torsos, heads, limbs] = this.visitors;
+    const person = this.visitorPose;
+    const limb = this.limbPose;
+    const headings = new Map();
+    people.forEach(({id, x, z, state, dx, dz}, index) => {
+      const moving = Math.hypot(dx, dz) > .03;
+      const heading = moving ? Math.atan2(dx, dz) : (this.visitorHeadings.get(id) ?? 0);
+      headings.set(id, heading);
+      person.position.set(x, .16, z);
+      person.rotation.y = heading;
+      person.updateMatrix();
+      const color = queuedStates.has(state) ? queueColor : walkerColors[id % walkerColors.length];
+      torsos.setMatrixAt(index, person.matrix);
+      torsos.setColorAt(index, color);
+      heads.setMatrixAt(index, person.matrix);
+      const swing = moving ? Math.sin(now * .014 + id) * .28 : 0;
+      joints.forEach(([side, y, width, length, depth, sign], joint) => {
+        limb.position.set(side, y, 0);
+        limb.rotation.x = swing * sign;
+        limb.scale.set(width, length, depth);
+        limb.updateMatrix();
+        const slot = index * joints.length + joint;
+        limbs.setMatrixAt(slot, this.limbMatrix.multiplyMatrices(person.matrix, limb.matrix));
+        limbs.setColorAt(slot, color);
+      });
+    });
+    this.visitorHeadings = headings;
+    torsos.count = heads.count = people.length;
+    limbs.count = people.length * joints.length;
+    for (const batch of this.visitors) {
+      batch.instanceMatrix.needsUpdate = true;
+      if (batch.instanceColor) batch.instanceColor.needsUpdate = true;
+    }
+  }
+
+  placeCharacter(id, {position, figure, limbs, element}, x, z, dx, dz, now, aboard = false) {
+    position.set(x, 4.7, z);
+    figure.visible = !aboard;
+    element.toggleAttribute('data-aboard', aboard);
+    figure.position.set(x, .15, z);
+    const moving = Math.hypot(dx, dz) > .02;
+    if (moving) figure.rotation.y = Math.atan2(dx, dz);
+    const swing = moving ? Math.sin(now * .014) * .28 : 0;
+    limbs.forEach((limb, index) => { limb.rotation.x = swing * joints[index][5]; });
+    if (this.trackedCharacter === id) this.moveCameraTarget(new THREE.Vector3(x, this.controls.target.y, z));
+  }
+
+  setCharacters(characters, onSelect, clock) {
+    const active = new Set(characters.map(character => character.character_id));
+    for (const [id, label] of this.characters) {
+      if (active.has(id)) continue;
+      label.element.remove();
+      this.scene.remove(label.figure);
+      this.labels.splice(this.labels.indexOf(label), 1);
+      this.characters.delete(id);
+    }
+    for (const {character_id: id, position: {point}, map_point} of characters) {
+      const [x, z] = point ?? map_point;
+      if (!this.characters.has(id)) {
+        const element = document.createElement(onSelect ? 'button' : 'span');
+        element.className = 'map-label character-label';
+        element.textContent = onSelect ? 'QR 참여자' : '내 캐릭터';
+        if (onSelect) {
+          element.type = 'button';
+          element.setAttribute('aria-label', `QR 캐릭터 ${id.slice(-6)} 보기`);
+          element.onclick = () => onSelect(id, element);
+        }
+        this.host.querySelector('.labels').append(element);
+        const figure = new THREE.Group();
+        const marker = new THREE.Mesh(qrRingGeometry, qrRing);
+        marker.position.y = .16;
+        marker.renderOrder = 14;
+        figure.add(marker, new THREE.Mesh(torsoGeometry, qrClothing), new THREE.Mesh(headGeometry, skin));
+        const limbs = joints.map(([x, y, width, length, depth]) => {
+          const limb = new THREE.Mesh(limbGeometry, qrClothing);
+          limb.position.set(x, y, 0);
+          limb.scale.set(width, length, depth);
+          figure.add(limb);
+          return limb;
+        });
+        figure.scale.setScalar(1.65);
+        this.scene.add(figure);
+        const label = {element, figure, limbs, position: new THREE.Vector3(x, 4.7, z)};
+        this.labels.push(label);
+        this.characters.set(id, label);
+        this.placeCharacter(id, label, x, z, 0, 0, 0, point === null);
+      }
+    }
+    const timed = characters.some(character => Object.hasOwn(character, 'walk_trail'));
+    if (clock && (timed || this.characterTimeline.frames.length)) {
+      const key = characters.map(character => `${character.character_id}:${character.revision}`).join(',');
+      if (key === this.characterFrameKey) return;
+      this.characterFrameKey = key;
+      const now = performance.now();
+      this.characterTimeline.push(characters.map(character => ({
+        visitor_id: character.character_id, point: character.position.point ?? character.map_point,
+        state: character.phase, walk_trail: character.walk_trail, aboard: character.position.point === null,
+      })), clock, now);
+      this.updateVisitors(now);
+    } else {
+      this.characterTimeline.clear();
+      this.characterFrameKey = undefined;
+      for (const {character_id: id, position: {point}, map_point} of characters) {
+        const [x, z] = point ?? map_point;
+        this.placeCharacter(id, this.characters.get(id), x, z, 0, 0, 0, point === null);
+      }
+    }
+  }
+
+  showCharacterRoute(route) {
+    if (JSON.stringify(route) === JSON.stringify(this.characterRoute)) return;
+    this.characterRoute = route;
+    for (const object of [...this.characterRoutes.children]) {
+      this.characterRoutes.remove(object);
+      object.geometry.dispose();
+      object.material.dispose();
+    }
+    if (!route) return;
+    const positions = route.points.map(([x, z]) => new THREE.Vector3(x, .4, z));
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(positions),
+      new THREE.LineDashedMaterial({color: '#653caa', dashSize: 2.2, gapSize: 1.1, depthTest: false, depthWrite: false}));
+    line.computeLineDistances();
+    line.renderOrder = 12;
+    this.characterRoutes.add(line);
+    const target = new THREE.Mesh(new THREE.RingGeometry(1.5, 2.5, 24),
+      new THREE.MeshBasicMaterial({color: '#653caa', depthTest: false, depthWrite: false}));
+    target.rotation.x = -Math.PI / 2;
+    target.position.copy(positions.at(-1));
+    target.renderOrder = 13;
+    this.characterRoutes.add(target);
   }
 
   render() {
@@ -330,6 +580,10 @@ export class MagicIslandMap {
   inspect() {
     return {
       renderer:'three-webgl',
+      visibleVisitors: this.visitors?.[0].count ?? 0,
+      visitorModels: this.visitors ? {heads: this.visitors[1].count, limbs: this.visitors[2].count} : null,
+      characters: Object.fromEntries([...this.characters].map(([id, {position}]) => [id, [position.x, position.z]])),
+      characterRoute: structuredClone(this.characterRoute ?? null),
       publicSpace:this.map.geometry.public_space,
       landscapeBeds:this.map.geometry.landscape_beds,
       castleGate:this.scenery.getObjectByName('castle-gate').getWorldPosition(new THREE.Vector3()).toArray(),

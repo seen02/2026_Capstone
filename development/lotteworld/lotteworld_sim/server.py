@@ -39,8 +39,10 @@ ASSETS = {
     "/user": ("user.html", "text/html"),
     "/user.css": ("user.css", "text/css"),
     "/map.css": ("map.css", "text/css"),
+    "/map-viewport.css": ("map-viewport.css", "text/css"),
     **{f"/{name}": (name, "text/javascript") for name in (
-        "map.js", "map3d.js", "geometry.mjs", "rides.mjs", "route.mjs", "navigation.mjs", "queue.mjs", "user.js",
+        "map.js", "map3d.js", "geometry.mjs", "rides.mjs", "route.mjs", "navigation.mjs", "queue.mjs",
+        "user.js", "live-state.mjs",
         "vendor/three/three.module.js", "vendor/three/three.core.js", "vendor/three/OrbitControls.js")},
     "/vendor/three/LICENSE": ("vendor/three/LICENSE", "text/plain"),
 }

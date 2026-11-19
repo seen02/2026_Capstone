@@ -1,4 +1,5 @@
 import {MagicIslandMap} from './map3d.js';
+import {characterPhase, characterProgress, poll} from './live-state.mjs';
 
 const get = id => document.getElementById(id);
 const host = get('scene');
@@ -21,6 +22,15 @@ const descriptions = {
 let view;
 let selectedId;
 let selectionTrigger;
+let live;
+let selectedCharacter;
+let qrTrigger;
+const qrPicker = get('qr-characters');
+const vehicleStates = {
+  available: '출발 대기', boarding: '승차 중', ready: '출발 준비',
+  running: '코스 운행', waiting_for_station: '승강장 대기', unloading: '하차 중',
+};
+const vehicleLabels = new Map();
 
 function setPickerOpen(open) {
   picker.hidden = !open;
@@ -47,6 +57,7 @@ function highlightSelection(id) {
 }
 
 function select(id, trigger) {
+  closeCharacter(false);
   const facility = view.map.facilities.find(item => item.id === id);
   selectionTrigger = trigger ?? facilityList;
   setPickerOpen(false);
@@ -55,15 +66,16 @@ function select(id, trigger) {
   title.textContent = facility.name;
   get('facility-description').textContent = descriptions[id] ?? '매직아일랜드 시설 모형';
   panel.hidden = false;
+  renderRide();
   title.focus({preventScroll: true});
 }
 
-function closePanel() {
+function closePanel(restoreFocus = true) {
   selectedId = null;
   highlightSelection(null);
   panel.hidden = true;
   const focusTarget = selectionTrigger?.hidden ? facilityList : selectionTrigger;
-  (focusTarget ?? facilityList).focus({preventScroll: true});
+  if (restoreFocus) (focusTarget ?? facilityList).focus({preventScroll: true});
 }
 
 facilityList.onclick = () => {
@@ -71,7 +83,7 @@ facilityList.onclick = () => {
   setPickerOpen(open);
   if (open) (buttons.querySelector('[aria-pressed="true"]') ?? buttons.firstElementChild)?.focus();
 };
-get('close-panel').onclick = closePanel;
+get('close-panel').onclick = () => closePanel();
 routeButton.onclick = () => {
   if (!selectedId) return;
   if (routeButton.getAttribute('aria-pressed') === 'true') {
@@ -92,6 +104,7 @@ document.addEventListener('keydown', event => {
     setPickerOpen(false);
     facilityList.focus();
   } else if (!panel.hidden) closePanel();
+  else if (!get('qr-panel').hidden) closeCharacter();
   else return;
   event.preventDefault();
 });
@@ -123,6 +136,117 @@ function showError(message) {
   get('error').hidden = false;
 }
 
+function renderRide() {
+  const ride = live?.rides[selectedId];
+  const queue = live?.background.queues[selectedId];
+  const metrics = get('ride-metrics');
+  metrics.hidden = !ride || !queue;
+  if (metrics.hidden) return;
+  const running = ride.vehicles.filter(vehicle => vehicle.state === 'running').length;
+  get('ride-status').textContent = running ? `코스 운행 ${running}대` : '코스 운행 차량 없음';
+  get('ride-dispatches').textContent = `${ride.dispatch_count}회`;
+  get('ride-queue').textContent = `${queue.queued_count}명`;
+  get('ride-passengers').textContent = `${ride.riding_people}명`;
+  const vehicles = get('ride-vehicles');
+  const rows = ride.vehicles.map((vehicle, index) => {
+    const place = vehicle.station_slot !== null ? ` · 승강장 ${vehicle.station_slot}`
+      : vehicle.course_section !== null ? ` · 코스 구간 ${vehicle.course_section}` : '';
+    return `${index + 1}번 · ${vehicleStates[vehicle.state]}${place}`;
+  });
+  if (vehicles.textContent !== rows.join('')) {
+    vehicles.replaceChildren(...rows.map(text => Object.assign(document.createElement('li'), {textContent: text})));
+  }
+}
+
+function renderCharacter() {
+  const person = live?.qr.characters.find(character => character.character_id === selectedCharacter);
+  if (!person) {
+    closeCharacter(false);
+    return;
+  }
+  const preview = person.route_preview;
+  const facility = view.map.facilities.find(item => item.id === preview?.facility_id);
+  get('qr-title').textContent = `QR 캐릭터 · ${person.character_id.slice(-6)}`;
+  get('qr-phase').textContent = characterPhase[person.phase];
+  const progress = characterProgress(person);
+  get('qr-progress').textContent = progress;
+  get('qr-progress').hidden = !progress;
+  get('qr-destination').textContent = facility ? `모의 추천 목적지 · ${facility.name}` : '추천 경로 대기';
+  view.showCharacterRoute(preview?.route ?? null);
+}
+
+function selectCharacter(id, trigger) {
+  if (!panel.hidden) closePanel(false);
+  setPickerOpen(false);
+  selectedCharacter = id;
+  qrTrigger = trigger;
+  qrPicker.value = id;
+  view.characters.forEach(({element}, key) => element.setAttribute('aria-pressed', String(key === id)));
+  get('qr-panel').hidden = false;
+  renderCharacter();
+  if (trigger === qrPicker) centerCharacter();
+  else view.render();
+  get('qr-title').focus({preventScroll: true});
+}
+
+function closeCharacter(restoreFocus = true) {
+  if (!selectedCharacter) return;
+  selectedCharacter = null;
+  qrPicker.value = '';
+  view.characters.forEach(({element}) => element.setAttribute('aria-pressed', 'false'));
+  get('qr-panel').hidden = true;
+  view.showCharacterRoute(null);
+  view.render();
+  if (restoreFocus) (qrTrigger?.isConnected && !qrTrigger.hidden ? qrTrigger : qrPicker).focus();
+}
+
+qrPicker.onchange = () => qrPicker.value ? selectCharacter(qrPicker.value, qrPicker) : closeCharacter(false);
+get('close-qr').onclick = () => closeCharacter();
+function centerCharacter() {
+  const person = live?.qr.characters.find(character => character.character_id === selectedCharacter);
+  if (person) view.focusPoint(person.position.point ?? person.map_point);
+}
+get('focus-qr').onclick = centerCharacter;
+
+function showLiveStatus(message, error = false) {
+  if (!get('error').hidden) return;
+  const status = get('map-status');
+  if (status.textContent !== message) status.textContent = message;
+  status.toggleAttribute('data-error', error);
+}
+
+function applyLive(snapshot) {
+  if (live?.run_id !== snapshot?.run_id) {
+    view.visitorTimeline.clear();
+    view.setCharacters([]);
+  }
+  live = snapshot;
+  const background = snapshot?.background;
+  const characters = snapshot?.qr.characters ?? [];
+  get('population').hidden = !snapshot;
+  if (background) {
+    get('entered').textContent = `${background.entered_total}명`;
+    get('present').textContent = `${background.present_people}명`;
+    get('exited').textContent = `${background.exited_total}명`;
+  }
+  if (qrPicker.options.length !== characters.length + 1 ||
+      characters.some((person, index) => qrPicker.options[index + 1]?.value !== person.character_id)) {
+    qrPicker.replaceChildren(new Option(`${characters.length}명`, ''), ...characters.map(person =>
+      new Option(`QR · ${person.character_id.slice(-6)}`, person.character_id)));
+    qrPicker.value = selectedCharacter ?? '';
+    qrPicker.disabled = !characters.length;
+  }
+  for (const [id, label] of vehicleLabels) {
+    const vehicles = snapshot?.rides[id]?.vehicles;
+    label.dataset.operation = vehicles?.some(v => v.state === 'running') ? 'running' : vehicles ? 'station' : '';
+  }
+  view.setVisitors(background?.visitors ?? [], snapshot?.clock);
+  view.setCharacters(characters, selectCharacter, snapshot?.clock);
+  renderRide();
+  renderCharacter();
+  view.render();
+}
+
 host.addEventListener('map-error', event => showError(event.detail));
 host.addEventListener('view-change', event => {
   get('scale').textContent = Math.round(event.detail.zoom * 100) + '%';
@@ -136,8 +260,9 @@ async function initialize() {
   try {
     const response = await fetch('/api/meta');
     if (!response.ok) throw new Error('지도 설정을 가져오지 못했습니다.');
-    const {map} = await response.json();
+    const {map, hashes} = await response.json();
     view = new MagicIslandMap(host, map, select);
+    for (const label of host.querySelectorAll('.facility-label')) vehicleLabels.set(label.dataset.facility, label);
     for (const facility of map.facilities) {
       const button = document.createElement('button');
       button.type = 'button';
@@ -148,9 +273,24 @@ async function initialize() {
       buttons.append(button);
     }
     get('loading').remove();
-    get('map-status').textContent = '정적 지도';
+    showLiveStatus('운영 상태 연결 중');
     // 브라우저 검증에 사용하는 읽기 전용 장면 상태.
-    window.inspectMagicMap = () => view.inspect();
+    window.inspectMagicMap = () => ({...view.inspect(), context: live?.qr.context, clock: live?.clock});
+    poll(async () => {
+      const response = await fetch('/api/state', {signal: AbortSignal.timeout(5000)});
+      if (!response.ok) throw new Error('운영 상태를 가져오지 못했습니다.');
+      return response.json();
+    }, snapshot => {
+      if (snapshot.map_hash !== hashes.map || snapshot.qr.context.map_hash !== hashes.map ||
+          snapshot.run_id !== snapshot.qr.context.run_id) {
+        if (live) applyLive(null);
+        showLiveStatus('지도 버전 불일치 · 새로고침 필요', true);
+        return;
+      }
+      if (live?.run_id !== snapshot.run_id) closeCharacter(false);
+      applyLive(snapshot);
+      showLiveStatus('시뮬레이션 연결됨');
+    }, () => showLiveStatus(live ? '운영 상태 갱신 지연' : '운영 상태 연결 지연', true), 400);
   } catch (error) {
     showError('3D 지도를 불러오지 못했습니다. 서버 연결과 브라우저의 WebGL 지원을 확인하세요.');
     get('loading').textContent = '3D 지도를 표시할 수 없습니다.';
