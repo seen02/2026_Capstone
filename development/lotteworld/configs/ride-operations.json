@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "scenario_id": "magic-island",
+  "facilities": {
+    "atlantis": {
+      "ride_seconds": 120,
+      "unloading_seconds": 20,
+      "boarding_and_check_seconds": 40,
+      "dispatch_interval_seconds": 30,
+      "vehicle_count": 8,
+      "station_capacity": 2
+    },
+    "gyro-drop": {
+      "ride_seconds": 60,
+      "unloading_seconds": 25,
+      "boarding_and_check_seconds": 50,
+      "dispatch_interval_seconds": 135,
+      "vehicle_count": 1,
+      "station_capacity": 1
+    },
+    "gyro-swing": {
+      "ride_seconds": 100,
+      "unloading_seconds": 25,
+      "boarding_and_check_seconds": 50,
+      "dispatch_interval_seconds": 175,
+      "vehicle_count": 1,
+      "station_capacity": 1
+    },
+    "gyro-spin": {
+      "ride_seconds": 130,
+      "unloading_seconds": 40,
+      "boarding_and_check_seconds": 80,
+      "dispatch_interval_seconds": 250,
+      "vehicle_count": 1,
+      "station_capacity": 1
+    },
+    "comet-express": {
+      "ride_seconds": 140,
+      "unloading_seconds": 30,
+      "boarding_and_check_seconds": 60,
+      "dispatch_interval_seconds": 230,
+      "vehicle_count": 1,
+      "station_capacity": 1
+    },
+    "arcana-ride": {
+      "ride_seconds": 90,
+      "unloading_seconds": 20,
+      "boarding_and_check_seconds": 40,
+      "dispatch_interval_seconds": 150,
+      "vehicle_count": 1,
+      "station_capacity": 1
+    }
+  },
+  "provenance": {
+    "reference": "docs/magic-island-research.md#시연용-초기값",
+    "ride_seconds": "영상 계측 또는 추정값을 일의 자리에서 반올림했다. 아트란티스와 혜성특급은 영상 추정값이다.",
+    "station_service": "하차와 승차·확인 시간은 시연용 가정이다.",
+    "dispatch": "아트란티스는 개장 초기 현장 보고서의 차량·승강장·출발 간격을 참고한다. 나머지 시설의 기본 출발 간격은 운행·하차·승차 확인 시간의 합이다."
+  }
+}

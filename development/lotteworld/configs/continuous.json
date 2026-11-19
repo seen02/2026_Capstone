@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "scenario_id": "magic-island",
+  "seed": 20261119,
+  "target_people": 240,
+  "initial_people": 240,
+  "admission_interval_sim_s": 5,
+  "stay_sim_s": [7200, 10800],
+  "time_scale": 6,
+  "provenance": "연속 시연용 가정. 배경 방문객 240명과 별도로 QR 참여자 1~2명을 가정한다. 실제 동시 인원·체류 시간·다리 처리량의 계측값은 아니다."
+}
