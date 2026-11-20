@@ -30,16 +30,32 @@ class Motion:
     origin: float
     target: float
     speed_m_s: float = WALK_M_PER_S
+    # 보행 시작점 기준의 시작 거리, 끝 거리, 구간 속도다.
+    slower: tuple[float, float, float] | None = None
 
     @property
     def end(self):
-        return self.start + abs(self.target - self.origin) / self.speed_m_s
+        return self.start + self.elapsed_at(abs(self.target - self.origin))
+
+    def elapsed_at(self, distance):
+        elapsed = distance / self.speed_m_s
+        if self.slower:
+            start, end, speed = self.slower
+            slow_distance = max(0, min(distance, end) - start)
+            elapsed += slow_distance * (1 / speed - 1 / self.speed_m_s)
+        return elapsed
 
     def distance_at(self, now):
         if now >= self.end:
             return self.target
+        elapsed = now - self.start
+        distance = elapsed * self.speed_m_s
+        if self.slower:
+            start, end, speed = self.slower
+            slower_elapsed = min(max(0, elapsed - start / self.speed_m_s), (end - start) / speed)
+            distance -= slower_elapsed * (self.speed_m_s - speed)
         direction = 1 if self.target >= self.origin else -1
-        return self.origin + (now - self.start) * self.speed_m_s * direction
+        return self.origin + distance * direction
 
     def trail(self, now, lookback):
         start = max(self.start, now - lookback)
@@ -47,12 +63,16 @@ class Motion:
         if first == last:
             return None
         low, high = sorted((first, last))
-        corners = range(bisect_right(self.path.offsets, low), bisect_left(self.path.offsets, high))
+        corners = self.path.offsets[bisect_right(self.path.offsets, low):bisect_left(self.path.offsets, high)]
+        if self.slower:
+            direction = 1 if self.target >= self.origin else -1
+            pace_offsets = (self.origin + direction * d for d in self.slower[:2])
+            corners = sorted(set(corners).union(offset for offset in pace_offsets if low < offset < high))
         if first > last:
             corners = reversed(corners)
         points = [[start, *self.path.point_at(first)]]
-        points.extend([self.start + abs(self.path.offsets[index] - self.origin) / self.speed_m_s, *self.path.points[index]]
-                      for index in corners)
+        points.extend([self.start + self.elapsed_at(abs(offset - self.origin)), *self.path.point_at(offset)]
+                      for offset in corners)
         points.append([min(now, self.end), *self.path.point_at(last)])
         return points
 
@@ -72,7 +92,6 @@ class Visitor:
     vehicle_id: int | None = None
     profile: dict | None = None
     wait_patience: float = 0
-    wait_deadline: float | None = None
     waiting_source: str | None = None
     completed_rides: dict[str, int] = field(default_factory=dict)
     walking_variant: int | None = None
@@ -104,6 +123,7 @@ class FacilityQueue:
     members: list[Visitor] = field(default_factory=list)
     batch: list[Visitor] = field(default_factory=list)
     next_entry: float = 0
+    approaching_people: int = 0
     lateral_until: float = 0
     next_withdrawal_merge: float = 0
     next_unload: float = 0
@@ -185,10 +205,10 @@ class BackgroundRun:
             self.admission_pending = False
             self._schedule_admission(now)
 
-    def _walk(self, now, visitor, phase, path, arrival, *args, origin=0, target=None):
+    def _walk(self, now, visitor, phase, path, arrival, *args, origin=0, target=None, slower=None):
         visitor.phase = phase
         speed = visitor.public_speed_m_s if phase in ('walking_to_queue', 'walking_to_exit') else WALK_M_PER_S
-        visitor.motion = Motion(path, now, origin, path.length if target is None else target, speed)
+        visitor.motion = Motion(path, now, origin, path.length if target is None else target, speed, slower)
         self._schedule(visitor.motion.end, arrival, visitor, *args)
 
     def _public_path(self, visitor, source, target):
@@ -229,9 +249,8 @@ class BackgroundRun:
         paths = queue.paths
         head_walk = paths.slots[-1] / WALK_M_PER_S
         board_walk = paths.queue.length / WALK_M_PER_S - head_walk
-        unload_walk = paths.unloading.length / WALK_M_PER_S
         if ride is None:
-            return head_walk, board_walk + unload_walk, 0
+            return head_walk, 0
         settings = ride.settings
         boarding = max(board_walk, settings['boarding_and_check_seconds'])
         unloading = settings['unloading_seconds']
@@ -239,18 +258,18 @@ class BackgroundRun:
         headway = max(settings['dispatch_interval_seconds'], float(ride.section_seconds),
                       (boarding + travel + unloading) / len(ride.vehicles),
                       (boarding + unloading) / settings['station_capacity'])
-        return head_walk, boarding + travel + max(unloading, unload_walk), headway
+        return head_walk, headway
 
-    def _observed_wait(self, key):
-        head_walk, _, headway = self.queue_times[key]
+    def _estimated_wait(self, key):
+        head_walk, headway = self.queue_times[key]
         queue = self.queues[key]
-        return max(head_walk, len(queue.members) * headway / queue.paths.boarding_capacity)
+        committed = len(queue.members) + queue.approaching_people
+        return max(head_walk, committed * headway / queue.paths.boarding_capacity)
 
-    def _wait_budget(self, now, visitor, key):
+    @staticmethod
+    def _wait_limit(visitor, key):
         score = visitor.profile['preferences'][key]
-        patience = visitor.wait_patience * (0.5 + score / 10)
-        service_time = self.queue_times[key][1]
-        return min(patience, visitor.leave_at_sim_s - now - service_time)
+        return visitor.wait_patience * (0.5 + score / 10)
 
     @staticmethod
     def _can_enter(now, queue):
@@ -258,22 +277,28 @@ class BackgroundRun:
 
     def _seek_preferred_queue(self, now, visitor, source, fraction, avoid):
         destinations, weights = [], []
-        can_fit = False
+        can_reach_queue = False
         for key, queue in self.queues.items():
             score = visitor.profile['preferences'][key]
             if not score:
                 continue
-            path = self._public_path(visitor, source, queue.paths.approach)
-            walk = path.length * (1 - fraction) / visitor.public_speed_m_s
-            budget = self._wait_budget(now + walk, visitor, key)
-            head_walk = self.queue_times[key][0]
-            if head_walk >= budget:
+            wait_limit = self._wait_limit(visitor, key)
+            if self.queue_times[key][0] >= wait_limit:
                 continue
-            can_fit = True
-            # 시설의 현재 줄은 입구 앞 공공 연결점에서만 관찰한다.
-            observed = queue.paths.approach == source
-            wait = self._observed_wait(key) if observed else head_walk
-            if key == avoid or (observed and (not self._can_enter(now, queue) or wait >= budget)):
+            wait = self._estimated_wait(key)
+            available = (key != avoid and len(queue.members) + queue.approaching_people < queue.capacity
+                         and wait < wait_limit
+                         and (source != queue.paths.approach or self._can_enter(now, queue)))
+            if not available and can_reach_queue:
+                continue
+            path = self._public_path(visitor, source, queue.paths.approach)
+            origin = fraction * path.length
+            pace = self._recommendation_pace(visitor, path, origin)
+            walk = Motion(path, now, origin, path.length, visitor.public_speed_m_s, pace).elapsed_at(path.length - origin)
+            if now + walk >= visitor.leave_at_sim_s:
+                continue
+            can_reach_queue = True
+            if not available:
                 continue
             repeat = self.behavior['repeat_weight'] if key in visitor.completed_rides else 1
             cost = 1 + (walk + wait) / self.behavior['time_cost_scale_sim_s']
@@ -285,50 +310,53 @@ class BackgroundRun:
             self._walk_to_queue(now, visitor, key, path, fraction)
             return
         visitor.facility_id = None
-        if not can_fit:
-            if isinstance(source, tuple):
-                stop = self.routes.exit_merges[source]
-                path = self._public_path(visitor, source, stop)
-                self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, stop)
-                return
+        if not can_reach_queue and not (isinstance(source, tuple) or source in self.routes.approach_nodes):
             visitor.phase = 'waiting_to_exit'
             visitor.waiting_source = source
             visitor.motion = Motion(self.routes.public_path(source, source), now, 0, 0)
             return
-        # 현장에서 막힌 시설만 남으면 다른 공공 연결점까지 걸은 뒤 다시 확인한다.
-        stops = dict.fromkeys(queue.paths.approach for queue in self.queues.values())
-        for stop in (*stops, self.routes.boundary):
+        # 당장 갈 시설이 없으면 입구를 돌지 않고 열린 광장을 걷다가 다시 확인한다.
+        desired_span = 50 + visitor.visitor_id % 8 * 5
+        stop = self.routes.plaza_stop(source, desired_span)
+        if stop is not None:
             path = self._public_path(visitor, source, stop)
-            if path.length:
-                self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, stop)
-                return
+            pace = self._recommendation_pace(visitor, path, 0)
+            self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, stop, slower=pace)
+            return
         self._schedule(now + self.walk_gap, self._seek_queue, visitor, source)
+
+    @staticmethod
+    def _recommendation_pace(visitor, path, origin):
+        if visitor.profile is None or origin > 0:
+            return None
+        start = 6 + visitor.visitor_id % 7
+        end = min(path.length - 4, start + 3 + (visitor.visitor_id // 7) % 5)
+        if end > start:
+            return start, end, visitor.public_speed_m_s * (.60 + visitor.visitor_id % 5 * .05)
 
     def _walk_to_queue(self, now, visitor, key, path, fraction):
         visitor.facility_id = key
         visitor.has_waited = False
-        visitor.withdrawing = False
-        self._walk(now, visitor, 'walking_to_queue', path, self._arrive_at_queue, origin=fraction * path.length)
+        self.queues[key].approaching_people += 1
+        origin = fraction * path.length
+        pace = self._recommendation_pace(visitor, path, origin)
+        self._walk(now, visitor, 'walking_to_queue', path, self._arrive_at_queue, origin=origin, slower=pace)
 
     def _arrive_at_queue(self, now, visitor):
         key = visitor.facility_id
         queue = self.queues[key]
-        budget = self._wait_budget(now, visitor, key) if visitor.profile is not None else None
-        if (visitor.expired or not self._can_enter(now, queue)
-                or (budget is not None and self._observed_wait(key) >= budget)):
+        queue.approaching_people -= 1
+        if visitor.expired or not self._can_enter(now, queue):
             self._seek_queue(now, visitor, queue.paths.approach, avoid=key)
             return
-        self._join_queue(now, visitor, queue, budget)
+        self._join_queue(now, visitor, queue)
 
-    def _join_queue(self, now, visitor, queue, budget=None, *, origin=0):
+    def _join_queue(self, now, visitor, queue, *, origin=0):
         queue.next_entry = now + self.walk_gap
         visitor.phase = 'in_queue'
         visitor.slot = queue.capacity - 1 - len(queue.members)
         visitor.motion = Motion(queue.paths.queue, now, origin, queue.paths.slots[visitor.slot])
         queue.members.append(visitor)
-        if budget is not None:
-            visitor.wait_deadline = now + budget
-            self._schedule(visitor.wait_deadline, self._wait_elapsed, visitor)
         if ride := self.rides.get(visitor.facility_id):
             ride.wake(now)
 
@@ -339,6 +367,7 @@ class BackgroundRun:
             self.qr_visitors[character_id] = visitor
             # 입구를 먼저 차지한 방문객이 통과하도록 마지막 공공 보행점에서 기다린다.
             hold = max(path.offsets[-2], path.length - .8)
+            self.queues[facility_id].approaching_people += 1
             self._walk(now, visitor, 'walking_to_queue', path, self._arrive_qr, target=hold)
 
     def _arrive_qr(self, now, visitor):
@@ -368,6 +397,7 @@ class BackgroundRun:
     def _join_qr_at_gate(self, now, visitor, queue):
         queue.entrance_waiters.popleft()
         if not visitor.expired:
+            queue.approaching_people -= 1
             self._join_queue(now, visitor, queue, origin=queue.paths.queue.offsets[2])
         self._admit_qr_waiter(now, queue)
 
@@ -381,31 +411,18 @@ class BackgroundRun:
             visitor.motion = Motion(queue.paths.queue, now, visitor.motion.distance_at(now), queue.paths.slots[slot])
 
     def _expire(self, now, visitor):
+        # 대기열에 합류했다면 하차할 때 이 표식을 보고 출구로 향한다.
         visitor.expired = True
         if not self.routes:
             self._depart(now, visitor)
-        elif visitor.phase == 'in_queue':
-            self._request_withdrawal(now, visitor)
         elif visitor.phase == 'waiting_to_exit':
             self._seek_queue(now, visitor, visitor.waiting_source)
 
-    def _wait_elapsed(self, now, visitor):
-        if visitor.wait_deadline == now:
-            self._request_withdrawal(now, visitor)
-
-    def _request_withdrawal(self, now, visitor):
-        if visitor.withdrawing:
-            return False
-        visitor.withdrawing = True
-        visitor.wait_deadline = None
-        self._schedule(now, self._try_withdrawal, visitor, priority=1)
-        return True
-
-    def _try_withdrawal(self, now, visitor):
+    def _try_qr_retirement(self, now, visitor):
         queue = self.queues[visitor.facility_id]
         resume = max(visitor.motion.end, queue.lateral_until)
         if resume > now:
-            self._schedule(resume, self._try_withdrawal, visitor, priority=1)
+            self._schedule(resume, self._try_qr_retirement, visitor, priority=1)
             return
         paths = queue.paths
         point = paths.queue.point_at(paths.slots[visitor.slot])
@@ -414,25 +431,19 @@ class BackgroundRun:
         travel_time = (dist(point, shoulder) + shoulder_offset) / WALK_M_PER_S
         earliest_start = queue.next_withdrawal_merge - travel_time
         if earliest_start > now + 1e-8:
-            self._schedule(earliest_start, self._try_withdrawal, visitor, priority=1)
+            self._schedule(earliest_start, self._try_qr_retirement, visitor, priority=1)
             return
         queue.next_withdrawal_merge = now + travel_time + self.walk_gap
-        self._walk(now, visitor, 'leaving_queue', Path([point, shoulder]), self._vacate_slot, shoulder_offset)
+        self._walk(now, visitor, 'retiring_qr', Path([point, shoulder]), self._vacate_qr_slot)
         queue.lateral_until = visitor.motion.end
 
-    def _vacate_slot(self, now, visitor, shoulder_offset):
+    def _vacate_qr_slot(self, now, visitor):
         queue = self.queues[visitor.facility_id]
         queue.members.remove(visitor)
         visitor.slot = None
         self._compact(now, queue)
         if ride := self.rides.get(visitor.facility_id):
             ride.wake(now)
-        self._walk(now, visitor, 'leaving_queue', queue.paths.withdrawal, self._finish_withdrawal,
-                   queue.paths.withdrawal_merge, origin=shoulder_offset, target=0)
-
-    def _finish_withdrawal(self, now, visitor, source):
-        if not isinstance(visitor, QRVisitor):
-            self._seek_queue(now, visitor, source, avoid=visitor.facility_id)
 
     def retire_qr_visit(self, character_id):
         with self.lock:
@@ -440,8 +451,11 @@ class BackgroundRun:
             visitor = self.qr_visitors.pop(character_id, None)
             if visitor is not None:
                 visitor.expired = True
-                if visitor.phase == 'in_queue':
-                    self._request_withdrawal(now, visitor)
+                if visitor.phase in ('walking_to_queue', 'waiting_at_entrance'):
+                    self.queues[visitor.facility_id].approaching_people -= 1
+                elif visitor.phase == 'in_queue':
+                    visitor.withdrawing = True
+                    self._schedule(now, self._try_qr_retirement, visitor, priority=1)
 
     def _depart(self, now, visitor):
         del self.visitors[visitor.visitor_id]
@@ -461,13 +475,6 @@ class BackgroundRun:
     def advance(self):
         with self.lock:
             self._advance()
-
-    def withdraw(self, visitor_id):
-        """대기열에서 옆 통로로 나오도록 요청한다."""
-        with self.lock:
-            now = self._advance()
-            visitor = self.visitors.get(visitor_id)
-            return bool(visitor and visitor.phase == 'in_queue' and self._request_withdrawal(now, visitor))
 
     def board_next(self, facility_id, seats=None):
         """첫 대기객부터 준비된 한 묶음을 탑승 지점까지 걷도록 보낸다."""
@@ -494,7 +501,6 @@ class BackgroundRun:
             self._walk(now, visitor, 'walking_to_board', queue.paths.queue, self._finish_boarding,
                        origin=queue.paths.slots[visitor.slot])
             visitor.slot = None
-            visitor.wait_deadline = None
             visitor.vehicle_id = vehicle_id
             batch.append(visitor)
         if batch:
@@ -587,6 +593,8 @@ class BackgroundRun:
                     'visitors': [visitor.snapshot(now, self.time_scale * 1.2 if with_motion else 0)
                                  for visitor in self.visitors.values()],
                     'queues': {key: {'capacity': queue.capacity, 'reserved_count': len(queue.members),
+                                     'approaching_count': queue.approaching_people,
+                                     'estimated_wait_sim_s': self._estimated_wait(key),
                                      'queued_count': sum(v.phase == 'in_queue' and v.motion.end <= now
                                                          for v in queue.members),
                                      'qr_reserved_count': sum(isinstance(v, QRVisitor) for v in queue.members),

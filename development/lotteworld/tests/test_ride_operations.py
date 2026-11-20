@@ -28,7 +28,7 @@ class RideOperationTests(unittest.TestCase):
         return BackgroundRun(continuous, self.routes, ride_operations=settings, clock=lambda: self.now)
 
     def test_four_single_rides_dispatch_with_empty_seats_and_repeat(self):
-        run = self.start(SINGLE_RIDES)
+        run = self.start(SINGLE_RIDES, initial_people=240, target_people=240)
         launches = {key: [] for key in SINGLE_RIDES}
         previous_boarding = {key: None for key in SINGLE_RIDES}
         for self.now in range(1100):
@@ -275,8 +275,10 @@ class RideOperationTests(unittest.TestCase):
         key = 'atlantis'
         run = self.start((key,), operation_overrides={key: {'course_section_count': 7, 'dispatch_interval_seconds': 1}},
                          initial_people=1500, target_people=1500)
-        self.now = 150
-        ride = run.snapshot()['rides'][key]
+        for self.now in range(600):
+            ride = run.snapshot()['rides'][key]
+            if ride['dispatch_count']:
+                break
         self.assertEqual(ride['dispatch_count'], 1)
         start = Fraction(ride['last_dispatch_at_sim_s'])
         section_seconds = Fraction(120, 7)

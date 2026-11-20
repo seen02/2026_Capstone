@@ -1,5 +1,6 @@
 from collections import Counter
-from math import dist
+from dataclasses import replace
+from math import ceil, dist
 import unittest
 
 from lotteworld_sim.background import BackgroundRun, Motion, Visitor
@@ -16,15 +17,6 @@ class TracedRun(BackgroundRun):
     def _walk_to_queue(self, now, visitor, key, path, fraction):
         self.trace.append(('choice', now, visitor.visitor_id, key))
         super()._walk_to_queue(now, visitor, key, path, fraction)
-
-    def _wait_elapsed(self, now, visitor):
-        if visitor.wait_deadline == now:
-            self.trace.append(('timeout', now, visitor.visitor_id, visitor.facility_id))
-        super()._wait_elapsed(now, visitor)
-
-    def _vacate_slot(self, now, visitor, shoulder_offset):
-        self.trace.append(('vacated', now, visitor.visitor_id, visitor.facility_id))
-        super()._vacate_slot(now, visitor, shoulder_offset)
 
     def _unload_visitor(self, now, visitor, paths, on_leave):
         self.trace.append(('completed', now, visitor.visitor_id, visitor.facility_id))
@@ -93,6 +85,7 @@ class VisitorBehaviorTests(unittest.TestCase):
         run.advance()
         self.assertEqual(tuple(person.facility_id for person in people), targets)
         early_headings = []
+        phone_starts = []
         for person in people:
             self.assertEqual(person.phase, 'walking_to_queue')
             path = person.motion.path
@@ -102,51 +95,133 @@ class VisitorBehaviorTests(unittest.TestCase):
                                 for offset in range(0, int(path.length) + 1)))
             ahead = path.point_at(6)
             early_headings.append(tuple(b - a for a, b in zip(path.points[0], ahead)))
+            start, end, pace = person.motion.slower
+            phone_starts.append(start)
+            self.assertGreaterEqual(start, 6)
+            self.assertLessEqual(end, path.length - 4)
+            self.assertGreater(pace, 0)
+            self.assertLess(pace, person.public_speed_m_s)
         self.assertGreater(dist(*early_headings), 1)
+        self.assertNotEqual(*phone_starts)
 
-    def test_unseen_congestion_is_rechecked_at_facility_approach(self):
+    def test_live_wait_is_read_before_walking_to_a_facility(self):
         key = 'comet-express'
         run, now = self.start(only=key, patience=300)
         queue = run.queues[key]
-        # 입구에서 관찰할 줄 인원만 준비한다. 만석 전에 대기 허용 시간으로 거절되는 경우다.
+        # 아직 만석이 아니지만 원격으로 확인한 대기 시간이 길다.
         queue.members = [Visitor(i, 0, 1000) for i in range(100, 140)]
         self.assertLess(len(queue.members), queue.capacity)
         now[0] = 1
         run.advance()
         visitor = run.visitors[1]
-        self.assertEqual(visitor.facility_id, key)
+        self.assertIsNone(visitor.facility_id)
+        self.assertIsNone(visitor.slot)
+        self.assertIn(visitor.motion.path.points[-1], [tuple(self.routes.nodes[node]) for node in self.routes.plaza_nodes])
+        self.assertGreater(visitor.motion.end, now[0])
+        queue.members.clear()
         now[0] = visitor.motion.end
         run.advance()
-        self.assertIsNone(visitor.slot)
-        self.assertIsNone(visitor.facility_id)
-        self.assertEqual(len(queue.members), 40)
-        self.assertGreater(visitor.motion.end, now[0])
+        self.assertEqual(visitor.facility_id, key)
 
-    def test_patience_timeout_releases_slot_only_after_stepping_into_side_path(self):
+    def test_arrival_checks_space_and_moves_on_without_a_phone_stop(self):
+        key = 'comet-express'
+        for full in (False, True):
+            with self.subTest(full=full):
+                run, now = self.start(only=key, patience=300, automatic=False)
+                queue = run.queues[key]
+                now[0] = 1
+                run.advance()
+                visitor = run.visitors[1]
+                self.assertEqual(visitor.facility_id, key)
+                queue.members = [Visitor(i, 0, 1000) for i in range(100, 100 + (queue.capacity if full else 40))]
+                head_walk, _ = run.queue_times[key]
+                run.queue_times[key] = head_walk, 230
+                self.assertGreater(run._estimated_wait(key), 300)
+                now[0] = visitor.motion.end
+                run.advance()
+                if full:
+                    self.assertIsNone(visitor.slot)
+                    self.assertIsNone(visitor.facility_id)
+                    self.assertEqual(visitor.motion.path.points[0], tuple(self.routes.nodes[queue.paths.approach]))
+                    self.assertGreater(visitor.motion.distance_at(now[0] + 1), 0)
+                    self.assertIn(visitor.motion.path.points[-1],
+                                  [tuple(self.routes.nodes[node]) for node in self.routes.plaza_nodes])
+                else:
+                    self.assertIn(visitor, queue.members)
+                    self.assertEqual(visitor.phase, 'in_queue')
+
+    def test_current_recommendations_count_visitors_already_walking_there(self):
         key = 'atlantis'
-        run, now = self.start(only=key, patience=180, automatic=False)
+        run, now = self.start(only=key, automatic=False, target_people=2)
+        queue = run.queues[key]
+        queue.paths = replace(queue.paths, slots=queue.paths.slots[-1:])
+        run.queue_times[key] = 0, 3 * queue.paths.boarding_capacity
+        now[0] = 2
+        before = run.snapshot()['background']['queues'][key]
+        first, second = run.visitors.values()
+        self.assertEqual(first.facility_id, key)
+        self.assertIsNone(second.facility_id)
+        self.assertEqual(queue.approaching_people, 1)
+        self.assertFalse(queue.members)
+        self.assertEqual((before['approaching_count'], before['reserved_count'], before['estimated_wait_sim_s']),
+                         (1, 0, 3))
+        now[0] = first.motion.end
+        after = run.snapshot()['background']['queues'][key]
+        self.assertEqual(queue.approaching_people, 0)
+        self.assertEqual(queue.members, [first])
+        self.assertEqual((after['approaching_count'], after['reserved_count'], after['estimated_wait_sim_s']),
+                         (0, 1, 3))
+
+    def test_visitor_joins_before_stay_ends_and_finishes_ride_after_it(self):
+        key = 'atlantis'
+        probe, probe_time = self.start(only=key, patience=180, automatic=False)
+        probe_time[0] = 1
+        probe.advance()
+        stay = ceil(probe.visitors[1].motion.end)
+        run, now = self.start(only=key, patience=180, automatic=False, stay_sim_s=[stay, stay])
         now[0] = 1
         run.advance()
         visitor = run.visitors[1]
         now[0] = visitor.motion.end
         run.advance()
-        deadline = now[0] + 180
-        self.assertEqual(visitor.wait_deadline, deadline)
+        slot = visitor.slot
+        self.assertIsNotNone(slot)
+        self.assertGreater(visitor.leave_at_sim_s - now[0], 0)
+        self.assertLessEqual(visitor.leave_at_sim_s - now[0], 2)
 
-        now[0] = deadline
+        now[0] = visitor.leave_at_sim_s
+        still_in_line, = run.snapshot()['background']['visitors']
+        self.assertTrue(still_in_line['departure_requested'])
+        self.assertEqual(still_in_line['queue_slot'], slot)
+
+        now[0] += 181
+        still_in_line, = run.snapshot()['background']['visitors']
+        self.assertEqual(still_in_line['state'], 'queued')
+        self.assertEqual(still_in_line['queue_slot'], slot)
+        self.assertEqual(run.board_next(key, 1), (visitor.visitor_id,))
+        now[0] = visitor.motion.end
+        self.assertEqual(run.unload(key), (visitor.visitor_id,))
         run.advance()
-        self.assertEqual(visitor.phase, 'leaving_queue')
-        self.assertIn(visitor, run.queues[key].members)
-        self.assertIsNotNone(visitor.slot)
+        self.assertEqual(visitor.phase, 'walking_from_ride')
         now[0] = visitor.motion.end
         run.advance()
-        self.assertNotIn(visitor, run.queues[key].members)
-        self.assertIsNone(visitor.slot)
-        self.assertFalse(visitor.completed_rides)
+        self.assertEqual(visitor.phase, 'walking_to_exit')
+        self.assertEqual(visitor.completed_rides, {key: 1})
         now[0] = visitor.motion.end
+        self.assertEqual(run.snapshot()['background']['exited_total'], 1)
+        self.assertNotIn(visitor.visitor_id, run.visitors)
+
+    def test_visitor_keeps_waiting_after_personal_limit_even_before_stay_ends(self):
+        key = 'atlantis'
+        run, now = self.start(only=key, patience=180, automatic=False)
+        now[0] = 1
         run.advance()
-        self.assertIsNone(visitor.facility_id)
-        self.assertGreater(visitor.motion.end, now[0])
+        visitor = run.visitors[1]
+        now[0] = visitor.motion.end + 181
+        run.advance()
+        self.assertFalse(visitor.expired)
+        self.assertEqual(visitor.phase, 'in_queue')
+        self.assertEqual(run.queues[key].members, [visitor])
 
     def test_completing_all_facilities_allows_repeats_until_scheduled_departure(self):
         run, now = self.start(stay_sim_s=[10000, 10000])
@@ -156,12 +231,14 @@ class VisitorBehaviorTests(unittest.TestCase):
         self.assertTrue(any(count > 1 for count in visitor['completed_rides'].values()))
         self.assertFalse(visitor['departure_requested'])
 
-        now[0] = 10300
-        state = run.snapshot()['background']
+        for now[0] in range(10001, 11202, 10):
+            state = run.snapshot()['background']
+            if state['exited_total']:
+                break
         self.assertEqual(state['exited_total'], 1)
         self.assertEqual(state['entered_total'], state['present_people'] + state['exited_total'])
 
-    def test_seed_reproduces_choices_timeouts_and_ride_history_across_polling_rates(self):
+    def test_seed_reproduces_choices_and_ride_history_across_polling_rates(self):
         config = dict(initial_people=240, target_people=240, admission_interval_sim_s=5)
         polled, polled_time = self.start(**config)
         jumped, jumped_time = self.start(**config)
@@ -175,9 +252,6 @@ class VisitorBehaviorTests(unittest.TestCase):
         jumped_state.pop('run_id')
         self.assertEqual(polled_state, jumped_state)
         self.assertEqual(polled.trace, jumped.trace)
-        counts = Counter(event for event, _, _, _ in polled.trace)
-        self.assertGreater(counts['timeout'], 0)
-        self.assertGreater(counts['vacated'], 0)
         completed = Counter((visitor, facility) for event, _, visitor, facility in polled.trace if event == 'completed')
         self.assertTrue(any(count > 1 for count in completed.values()))
 
@@ -207,3 +281,8 @@ class VisitorBehaviorTests(unittest.TestCase):
         path = Path([(0, 0), (2, 0), (2, 2)])
         self.assertEqual(Motion(path, 0, 0, 4, 1).trail(3, 2), [[1, 1, 0], [2, 2, 0], [3, 2, 1]])
         self.assertEqual(Motion(path, 0, 4, 0, 1).trail(5, 4), [[1, 2, 1], [2, 2, 0], [4, 0, 0]])
+
+    def test_walk_trail_includes_phone_pace_changes_without_stopping(self):
+        walk = Motion(Path([(0, 0), (3, 0), (3, 7)]), 0, 0, 10, 2, (2, 6, 1))
+        self.assertEqual([walk.distance_at(t) for t in range(8)], [0, 2, 3, 4, 5, 6, 8, 10])
+        self.assertEqual(walk.trail(6, 6), [[0, 0, 0], [1, 2, 0], [2, 3, 0], [5, 3, 3], [6, 3, 5]])

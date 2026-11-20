@@ -121,10 +121,16 @@ async function main() {
       const position = window.inspectMagicMap().characters[id];
       return position && Math.hypot(position[0] - start[0], position[1] - start[1]) > 1;
     }, {id: characterId, start: startPoint});
+    const meta = await (await overview.request.get(new URL('/api/meta', base).href)).json();
+    const facilityId = result.recommendation.facility_id;
+    const queue = meta.queue_report[facilityId];
+    const dispatchesAhead = Math.ceil(queue.capacity / queue.boarding_capacity);
+    const dispatchSeconds = meta.ride_operations.facilities[facilityId].dispatch_interval_seconds;
+    const boardingTimeout = 90_000 + dispatchesAhead * dispatchSeconds * 1000 / meta.continuous.time_scale;
     for (const phase of ['대기열에 합류함', '탑승 중', '시설 이용 중', '하차 중', '하차 완료']) {
       for (const page of [overview, reopened]) {
         await page.bringToFront();
-        await page.getByText(phase, {exact: true}).waitFor({timeout: 90_000});
+        await page.getByText(phase, {exact: true}).waitFor({timeout: phase === '탑승 중' ? boardingTimeout : 90_000});
       }
       if (phase === '대기열에 합류함') {
         assert.match(await overview.locator('#qr-progress').textContent(), /^대기 순서 \d+번째$/);

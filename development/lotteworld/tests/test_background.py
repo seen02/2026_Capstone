@@ -27,9 +27,9 @@ class BackgroundTests(unittest.TestCase):
                     self.assertEqual(visitor["entered_at_sim_s"], latest_slot)
                     self.assertEqual(visitor["leave_at_sim_s"], latest_slot + 60)
 
-    def test_default_population_conservation_and_reproducibility_over_14_days(self):
+    def test_240_people_conservation_and_reproducibility_over_14_days(self):
         real_time = 0
-        config = load_inputs().continuous
+        config = {**load_inputs().continuous, "target_people": 240, "initial_people": 240}
         run = BackgroundRun(config, clock=lambda: real_time)
         jumped = BackgroundRun(config, clock=lambda: real_time)
         initial = run.snapshot()["background"]
@@ -60,9 +60,10 @@ class BackgroundTests(unittest.TestCase):
         self.assertGreater(exited, target * 100)
         self.assertEqual(jumped.snapshot()["background"], people)
 
-    def test_1500_people_stay_near_target_for_two_accelerated_hours(self):
+    def test_default_1500_people_stay_near_target_for_two_accelerated_hours(self):
         real_time = 0
-        config = {**load_inputs().continuous, "target_people": 1500, "initial_people": 1500}
+        config = load_inputs().continuous
+        self.assertEqual((config["initial_people"], config["target_people"]), (1500, 1500))
         run = BackgroundRun(config, clock=lambda: real_time)
         for real_time in range(0, 7201, 10):
             people = run.snapshot()["background"]
