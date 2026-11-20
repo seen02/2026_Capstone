@@ -97,6 +97,9 @@ async function routesInScene(page) {
       assert.equal(scene.renderer, 'three-webgl'); assert.ok(scene.drawCalls > 0);
       assert.equal(scene.publicSpace,'island-minus-reservations');
       assert.deepEqual(scene.landscapeBeds,meta.map.geometry.landscape_beds);
+      for (const [x,z] of meta.map.geometry.landscape_trees ?? []) {
+        assert.ok(scene.landscapeTrees.some(([tx,tz]) => Math.hypot(tx-x,tz-z) < 1e-5));
+      }
       assert.equal(scene.plazaOverlayCount,0);
       assert.deepEqual(scene.surfaceMeshes.sort(),['public-pavement',...meta.map.geometry.edges.filter(e=>e.kind==='bridge').map(e=>'walk:'+e.id)].sort());
       assert.equal(Object.keys(scene.queues).length,6);
@@ -121,6 +124,7 @@ async function routesInScene(page) {
       assert.ok(scene.castleBounds.min[2]>=castleZ-.01 && scene.castleBounds.max[2]<=castleZ+castleD+.01);
       for (const facility of meta.map.facilities) {
         const object = scene.facilities[facility.id];
+        assert.deepEqual(object.exitPoint, points[facility.exit]);
         const [x, z, w, d] = facility.bounds;
         assert.ok(object.features.includes(features[facility.id]));
         // 실제 현장 치수가 아닌 표시 모형의 점유 구획을 검사한다.
@@ -222,6 +226,8 @@ async function routesInScene(page) {
       await page.keyboard.press('Enter');
       assert.equal(await page.locator('#detail h2').textContent(), '혜성특급');
       assert.equal(await panel.isVisible(), true);
+      assert.match(await page.locator('#ride-approaching').textContent(), /^\d+명$/);
+      assert.match(await page.locator('#ride-estimated-wait').textContent(), /^약 \d+분$/);
       assert.equal(await page.locator('#facility-picker').isVisible(), false);
       assert.equal(await page.evaluate(() => document.activeElement.id), 'facility-title');
       await showRoutes.click();

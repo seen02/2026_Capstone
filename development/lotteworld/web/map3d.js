@@ -4,13 +4,19 @@ import {box, cylinder, rod, polygon, rectPoints, band, material} from './geometr
 import {buildRide, buildCastle} from './rides.mjs';
 import {createNavigator} from './navigation.mjs';
 import {queueLayout} from './queue.mjs';
-import {VisitorTimeline} from './live-state.mjs';
+import {CrowdMovement, VisitorTimeline} from './live-state.mjs';
 
 const walkerColors = ['#26496b', '#245c65', '#36496f'].map(color => new THREE.Color(color));
 const queueColor = new THREE.Color('#753e06');
 const queuedStates = new Set(['joining_queue', 'advancing_queue', 'queued']);
-const torsoGeometry = new THREE.CylinderGeometry(.25, .19, .8, 7).scale(1, 1, .68).translate(0, 1.24, 0);
-const headGeometry = new THREE.SphereGeometry(.22, 8, 6).translate(0, 1.89, 0);
+const personScale = 1.95;
+const queuePostHeightScale = 1.85;
+const torsoGeometry = new THREE.CylinderGeometry(.23, .18, .83, 8).scale(1, 1, .72).translate(0, 1.285, 0);
+// 목과 머리를 한 메시로 그려 배경 방문객의 인스턴스 묶음을 유지한다.
+const headGeometry = new THREE.LatheGeometry([
+  [.065, 1.66], [.065, 1.78], [.128, 1.82], [.163, 1.90],
+  [.169, 1.96], [.142, 2.05], [.072, 2.10], [0, 2.11],
+].map(([radius, y]) => new THREE.Vector2(radius, y)), 8);
 const limbGeometry = new THREE.BoxGeometry(1, 1, 1).translate(0, -.5, 0);
 const skin = new THREE.MeshBasicMaterial({color: '#efc39b'});
 const clothing = new THREE.MeshBasicMaterial();
@@ -18,8 +24,8 @@ const qrClothing = new THREE.MeshBasicMaterial({color: '#653caa'});
 const qrRing = new THREE.MeshBasicMaterial({color: '#653caa', depthTest: false, depthWrite: false});
 const qrRingGeometry = new THREE.RingGeometry(1.25, 2.5, 24).rotateX(-Math.PI / 2);
 const joints = [
-  [-.15, .88, .19, .83, .2, 1], [.15, .88, .19, .83, .2, -1],
-  [-.32, 1.59, .15, .65, .16, -1], [.32, 1.59, .15, .65, .16, 1],
+  [-.12, .9, .17, .87, .19, 1], [.12, .9, .17, .87, .19, -1],
+  [-.25, 1.57, .13, .67, .15, -1], [.25, 1.57, .13, .67, .15, 1],
 ];
 
 function inside([x,z], outline) {
@@ -76,8 +82,10 @@ export class MagicIslandMap {
     this.characters=new Map();
     this.characterTimeline=new VisitorTimeline();
     this.visitorTimeline=new VisitorTimeline();
+    this.crowd=new CrowdMovement(this.navigator,map.geometry.queue_rules.person_radius_m);
     this.visitorHeadings=new Map();
     this.visitorPose=new THREE.Object3D();
+    this.visitorPose.scale.setScalar(personScale);
     this.limbPose=new THREE.Object3D();
     this.limbMatrix=new THREE.Matrix4();
     this.build();
@@ -159,7 +167,7 @@ export class MagicIslandMap {
       this.label(f.name,[cx,f.model_height_m+8,cz],f.id);
       for(const [key,color] of [['entrance','#287e63'],['exit','#b65f48']]) {
         const [px,pz]=this.points[f[key]];
-        cylinder(this.scene,px,.14,pz,1.3,.02,color,1.3,12);
+        cylinder(this.scene,px,.14,pz,1.3,.02,color,1.3,12).name=key+':'+f.id;
       }
     }
     const bridgeStart=this.points['bridge-island'],bridgeEnd=this.points[g.boundary];
@@ -172,6 +180,9 @@ export class MagicIslandMap {
       facility.boarding_capacity,facility.bounds,facility.queue_capacity);
     this.queueLayouts[facility.id]=layout;
     const group=new THREE.Group();group.name='queue:'+facility.id;this.scene.add(group);
+    const rails=new THREE.Group();rails.scale.y=queuePostHeightScale;group.add(rails);
+    const scale=this.map.geometry.queue_rules.layout_scale??1;
+    const postSpacing=2.5*scale;
     const posts=[];
     for(const path of layout.railPaths) {
       const vertices=[],indices=[];
@@ -182,13 +193,13 @@ export class MagicIslandMap {
       const geometry=new THREE.BufferGeometry();
       geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeVertexNormals();
       const belt=new THREE.Mesh(geometry,material('#254b67',{side:THREE.DoubleSide}));
-      belt.name='queue-belt';group.add(belt);
+      belt.name='queue-belt';rails.add(belt);
       // 곡선 세분점과 독립적으로 일정 간격의 기둥을 배치한다.
-      posts.push(path[0]);let remaining=2.5;
+      posts.push(path[0]);let remaining=postSpacing;
       for(let i=1;i<path.length;i++) {
         const a=path[i-1],b=path[i],length=Math.hypot(b[0]-a[0],b[1]-a[1]);
         let distance=remaining;
-        for(;distance<=length;distance+=2.5)posts.push([a[0]+(b[0]-a[0])*distance/length,a[1]+(b[1]-a[1])*distance/length]);
+        for(;distance<=length;distance+=postSpacing)posts.push([a[0]+(b[0]-a[0])*distance/length,a[1]+(b[1]-a[1])*distance/length]);
         remaining=distance-length;
       }
       posts.push(path.at(-1));
@@ -198,11 +209,11 @@ export class MagicIslandMap {
       [new THREE.CylinderGeometry(.045,.045,.95,8),material('#9ba9af',{metalness:.75,roughness:.25}),.08+.95/2],
       [new THREE.BoxGeometry(.13,.11,.13),material('#28373e'),1.03]
     ];
-    const dummy=new THREE.Object3D();
+    const dummy=new THREE.Object3D();dummy.scale.set(scale,1,scale);
     for(const [geometry,mat,y] of parts) {
       const mesh=new THREE.InstancedMesh(geometry,mat,posts.length);
       posts.forEach(([x,z],i)=>{dummy.position.set(x,y,z);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});
-      mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);
+      mesh.castShadow=true;mesh.receiveShadow=true;rails.add(mesh);
     }
     for(let i=1;i<layout.points.length;i++) {
       const a=layout.points[i-1],b=layout.points[i];
@@ -222,21 +233,27 @@ export class MagicIslandMap {
   landscape() {
     const g=this.map.geometry;
     const obstacles=[g.castle,g.plaza,...this.map.facilities.flatMap(f=>[f.bounds,f.queue,f.exit_area])];
-    // 재현 가능한 위치에만 식재하고, 반경 3m를 보행로·시설에서 비운다.
+    // 길목의 지정 식재와 기존 녹지의 재현 가능한 분산 식재를 함께 그린다.
     let seed=20261111;
     const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
-    const trees=[];
-    for(const bed of g.landscape_beds)polygon(this.scene,rectPoints(bed),'#aabb93',.12,.08);
+    const placedTrees=(g.landscape_trees??[]).map(([x,z],i)=>({
+      x,z,height:18+(i%4)*1.2,color:i%2?'#8aa77b':'#79987b'
+    }));
+    const trees=[...placedTrees];
+    for(const bed of g.landscape_beds)polygon(this.scene,rectPoints(bed),'#779963',.12,.08);
     for(const [bx,bz,bw,bd] of g.landscape_beds)for(let x=bx+3;x<bx+bw-2.6;x+=7)for(let z=bz+3;z<bz+bd-2.6;z+=7) {
       const px=x+(random()-.5)*.6,pz=z+(random()-.5)*.6;
+      if(placedTrees.some(tree=>Math.hypot(tree.x-px,tree.z-pz)<7))continue;
       if(!inside([px,pz],g.island_outline))continue;
       if(obstacles.some(([a,b,w,d])=>px>a-6&&px<a+w+6&&pz>b-6&&pz<b+d+6))continue;
       if(g.edges.some(e=>segmentDistance([px,pz],this.points[e.source],this.points[e.target])<e.width/2+5))continue;
       if(g.island_outline.some((a,i)=>segmentDistance([px,pz],a,g.island_outline[(i+1)%g.island_outline.length])<4))continue;
-      const height=5+random()*4;
+      // 약 4.1 높이의 방문객과 중형 가로수의 실제 높이 비율을 유지한다.
+      const height=18+random()*6;
       trees.push({x:px,z:pz,height,color:random()>.5?'#79987b':'#8aa77b'});
     }
     const trunks=new THREE.InstancedMesh(new THREE.CylinderGeometry(1,1,1,8),material('#8c8160'),trees.length);
+    trunks.name='landscape-trees';
     const crowns=new THREE.InstancedMesh(new THREE.CylinderGeometry(.25/2.6,1,1,8),material('#ffffff'),trees.length);
     const dummy=new THREE.Object3D();
     trees.forEach((tree,i)=>{
@@ -383,17 +400,27 @@ export class MagicIslandMap {
   setVisitors(visitors, clock) {
     const now = performance.now();
     if (clock) this.visitorTimeline.push(visitors, clock, now);
-    else this.visitorTimeline.clear();
+    else {
+      this.visitorTimeline.clear();
+      this.crowd.clear();
+    }
     this.updateVisitors(now);
   }
 
   updateVisitors(now) {
     const {people, pending} = this.visitorTimeline.sample(now);
-    if (people.length || this.visitors) this.drawVisitors(people, now);
     const qr = this.characterTimeline.sample(now);
     for (const {id, x, z, dx, dz, aboard} of qr.people) {
       const character = this.characters.get(id);
       if (character) this.placeCharacter(id, character, x, z, dx, dz, now, aboard);
+    }
+    if (people.length || this.visitors) {
+      const characters = [];
+      for (const [id, {position, figure}] of this.characters) {
+        if (figure.visible) characters.push({id, x: position.x, z: position.z});
+      }
+      const scale = this.visitorTimeline.frames.at(-1)?.scale ?? 1;
+      this.drawVisitors(this.crowd.update(people, characters, now, scale), now);
     }
     if (this.visitorFrame === undefined && (pending || qr.pending)) {
       const animate = timestamp => {
@@ -433,7 +460,7 @@ export class MagicIslandMap {
     const limb = this.limbPose;
     const headings = new Map();
     people.forEach(({id, x, z, state, dx, dz}, index) => {
-      const moving = Math.hypot(dx, dz) > .03;
+      const moving = Math.hypot(dx, dz) > .015;
       const heading = moving ? Math.atan2(dx, dz) : (this.visitorHeadings.get(id) ?? 0);
       headings.set(id, heading);
       person.position.set(x, .16, z);
@@ -498,7 +525,8 @@ export class MagicIslandMap {
         this.host.querySelector('.labels').append(element);
         const figure = new THREE.Group();
         const marker = new THREE.Mesh(qrRingGeometry, qrRing);
-        marker.position.y = .16;
+        marker.position.y = .16 / personScale;
+        marker.scale.setScalar(1.65 / personScale);
         marker.renderOrder = 14;
         figure.add(marker, new THREE.Mesh(torsoGeometry, qrClothing), new THREE.Mesh(headGeometry, skin));
         const limbs = joints.map(([x, y, width, length, depth]) => {
@@ -508,7 +536,7 @@ export class MagicIslandMap {
           figure.add(limb);
           return limb;
         });
-        figure.scale.setScalar(1.65);
+        figure.scale.setScalar(personScale);
         this.scene.add(figure);
         const label = {element, figure, limbs, position: new THREE.Vector3(x, 4.7, z)};
         this.labels.push(label);
@@ -586,6 +614,13 @@ export class MagicIslandMap {
       characterRoute: structuredClone(this.characterRoute ?? null),
       publicSpace:this.map.geometry.public_space,
       landscapeBeds:this.map.geometry.landscape_beds,
+      landscapeTrees:(()=>{
+        const trees=this.scenery.getObjectByName('landscape-trees'), matrix=new THREE.Matrix4();
+        return Array.from({length:trees.count},(_,i)=>{
+          trees.getMatrixAt(i,matrix);
+          return [matrix.elements[12],matrix.elements[14]];
+        });
+      })(),
       castleGate:this.scenery.getObjectByName('castle-gate').getWorldPosition(new THREE.Vector3()).toArray(),
       castleBounds:(()=>{const b=new THREE.Box3().setFromObject(this.scenery.getObjectByName('magic-castle'));return {min:b.min.toArray(),max:b.max.toArray()};})(),
       outline:this.map.geometry.island_outline,
@@ -595,7 +630,9 @@ export class MagicIslandMap {
       routes:this.routes.map(r=>({nodes:[...r.nodes],points:r.points.map(p=>[...p]),mode:r.mode,distance_m:r.distance_m})),
       facilities:Object.fromEntries(Object.entries(this.rideGroups).map(([id,group])=>{
         const bounds=new THREE.Box3().setFromObject(group);
-        return [id,{features:group.userData.features,min:bounds.min.toArray(),max:bounds.max.toArray()}];
+        const exit=this.scene.getObjectByName('exit:'+id).position;
+        return [id,{features:group.userData.features,min:bounds.min.toArray(),max:bounds.max.toArray(),
+                    exitPoint:[exit.x,exit.z]}];
       })),
       pickPoints:Object.fromEntries(Object.entries(this.rideGroups).map(([id,group])=>{
         const p=new THREE.Box3().setFromObject(group).getCenter(new THREE.Vector3()).project(this.camera);

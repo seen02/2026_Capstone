@@ -146,6 +146,9 @@ function renderRide() {
   get('ride-status').textContent = running ? `코스 운행 ${running}대` : '코스 운행 차량 없음';
   get('ride-dispatches').textContent = `${ride.dispatch_count}회`;
   get('ride-queue').textContent = `${queue.queued_count}명`;
+  get('ride-approaching').textContent = Number.isInteger(queue.approaching_count) ? `${queue.approaching_count}명` : '—';
+  get('ride-estimated-wait').textContent = Number.isFinite(queue.estimated_wait_sim_s)
+    ? `약 ${Math.ceil(queue.estimated_wait_sim_s / 60)}분` : '—';
   get('ride-passengers').textContent = `${ride.riding_people}명`;
   const vehicles = get('ride-vehicles');
   const rows = ride.vehicles.map((vehicle, index) => {
@@ -218,6 +221,7 @@ function showLiveStatus(message, error = false) {
 function applyLive(snapshot) {
   if (live?.run_id !== snapshot?.run_id) {
     view.visitorTimeline.clear();
+    view.crowd.clear();
     view.setCharacters([]);
   }
   live = snapshot;
@@ -240,8 +244,8 @@ function applyLive(snapshot) {
     const vehicles = snapshot?.rides[id]?.vehicles;
     label.dataset.operation = vehicles?.some(v => v.state === 'running') ? 'running' : vehicles ? 'station' : '';
   }
-  view.setVisitors(background?.visitors ?? [], snapshot?.clock);
   view.setCharacters(characters, selectCharacter, snapshot?.clock);
+  view.setVisitors(background?.visitors ?? [], snapshot?.clock);
   renderRide();
   renderCharacter();
   view.render();
