@@ -3,8 +3,12 @@ export function queueLayout(bounds, entrance, rules, boardingCapacity, rideBound
   const [x,z,w,d]=bounds;
   const side=entrance[0]===x?'left':entrance[0]===x+w?'right':entrance[1]===z?'top':'bottom';
   const horizontal=side==='left'||side==='right';
-  const length=horizontal?w:d,breadth=horizontal?d:w;
-  const baseTransform=([u,v])=>(side==='left'?[x+u,z+v]:side==='right'?[x+w-u,z+v]:side==='top'?[x+v,z+u]:[x+v,z+d-u]).map(n=>Math.round(n*1e6)/1e6);
+  const scale=rules.layout_scale??1;
+  const length=(horizontal?w:d)/scale,breadth=(horizontal?d:w)/scale;
+  const baseTransform=([u,v])=>{
+    u*=scale;v*=scale;
+    return (side==='left'?[x+u,z+v]:side==='right'?[x+w-u,z+v]:side==='top'?[x+v,z+u]:[x+v,z+d-u]).map(n=>Math.round(n*1e6)/1e6);
+  };
   const rows=[];
   for(let v=1.2;v<=breadth-1.2+1e-8;v+=2.4)rows.push(v);
   const near=3.6,far=length-2.4;
@@ -12,16 +16,17 @@ export function queueLayout(bounds, entrance, rules, boardingCapacity, rideBound
   const endU=rows.length%2?far:near;
   const reverseRows=!!rideBounds&&distance(baseTransform([endU,0]))<distance(baseTransform([endU,breadth]));
   const transform=([u,v])=>baseTransform([u,reverseRows?breadth-v:v]);
-  const rawEntryV=horizontal?entrance[1]-z:entrance[0]-x;
+  const rawEntryV=(horizontal?entrance[1]-z:entrance[0]-x)/scale;
   const entryV=reverseRows?breadth-rawEntryV:rawEntryV;
   const points=[],arrows=[],slots=[];
   const add=p=>{if(!points.length||Math.hypot(p[0]-points.at(-1)[0],p[1]-points.at(-1)[1])>1e-8)points.push(p);};
   add([0,entryV]);add([.9,entryV]);
-  if(Math.abs(entryV-rows[0])>=1.2)add([.9,rows[0]]);
+  if(Math.abs(entryV-rows[0])>=1.2-1e-8)add([.9,rows[0]]);
   add([near-.65,rows[0]]);add([near,rows[0]]);
   const shoulderStart=points.length-1;
-  const usable=Math.abs(far-near)-2*rules.end_clearance_m;
-  const maxPerRow=Math.max(0,Math.floor(usable/rules.spacing_m+1e-8)+1);
+  const clearance=rules.end_clearance_m/scale,spacing=rules.spacing_m/scale;
+  const usable=Math.abs(far-near)-2*clearance;
+  const maxPerRow=Math.max(0,Math.floor(usable/spacing+1e-8)+1);
   const capacity=queueCapacity??maxPerRow*rows.length;
   const perRow=Math.floor(capacity/rows.length),extra=capacity%rows.length;
   const slotIndices=[];
@@ -30,11 +35,11 @@ export function queueLayout(bounds, entrance, rules, boardingCapacity, rideBound
     arrows.push([transform(start),transform(end)]);
     const count=perRow+Number(i<extra),direction=end[0]>start[0]?1:-1;
     for(let j=0;j<count;j++) {
-      const slot=[start[0]+direction*(rules.end_clearance_m+j*rules.spacing_m),v];
+      const slot=[start[0]+direction*(clearance+j*spacing),v];
       slots.push(transform(slot));add(slot);slotIndices.push(points.length-1);
     }
     if(rideBounds&&i===rows.length-1) {
-      const bevel=Math.min(.45,rules.end_clearance_m*.8,(breadth-v)*.5);
+      const bevel=Math.min(.45,clearance*.8,(breadth-v)*.5);
       add([end[0]-direction*bevel,v]);add([end[0],v+bevel]);
     } else add(end);
     if(i<rows.length-1)for(let k=1;k<=12;k++) {
@@ -66,7 +71,7 @@ export function queueLayout(bounds, entrance, rules, boardingCapacity, rideBound
   const withdrawal=[transform([near,0]),...points.slice(shoulderStart,withdrawalEnd).map((_,i)=>offset(i+shoulderStart,-.64))];
   const rails=railPaths.flatMap(path=>path.slice(1).map((p,i)=>[path[i],p]));
   const minimum=Math.ceil(boardingCapacity*rules.minimum_boarding_multiple);
-  return {bounds:[...bounds],entrance:[...entrance],points:points.map(transform),boarding_exit:boardingExit,boarding_target:boardingTarget,reverse_rows:reverseRows,railPaths,rails,arrows,rowPitch_m:2.4,turnClearance_m:1.2,capacity:slots.length,slots,
+  return {bounds:[...bounds],entrance:[...entrance],points:points.map(transform),boarding_exit:boardingExit,boarding_target:boardingTarget,reverse_rows:reverseRows,railPaths,rails,arrows,rowPitch_m:2.4*scale,turnClearance_m:1.2*scale,capacity:slots.length,slots,
     boarding_capacity:boardingCapacity,minimum_capacity:minimum,meets_minimum:slots.length>=minimum,
     slot_indices:slotIndices,withdrawal,withdrawal_slot_indices:slotIndices.map(i=>i-shoulderStart+1)};
 }

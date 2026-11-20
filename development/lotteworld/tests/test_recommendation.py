@@ -1,5 +1,6 @@
 from copy import deepcopy
 import json
+from math import floor
 from pathlib import Path
 import tempfile
 import threading
@@ -11,6 +12,7 @@ from lotteworld_sim.recommendation import RecommendationError, RecommendationPol
 from lotteworld_sim.recommendation_mock import MOCK_FILENAME
 from lotteworld_sim.scenario import ROOT, load_inputs
 from lotteworld_sim.server import make_server
+from lotteworld_sim.visitor_routes import VisitorRoutes
 
 EXAMPLES = ROOT.parent / "docs" / "contracts" / "examples"
 MOCK_DATA = ROOT / "configs" / MOCK_FILENAME
@@ -22,6 +24,17 @@ def fixture(name):
 
 def indexed(rows):
     return {row["facility_id"]: row for row in rows}
+
+
+class MockRouteTests(unittest.TestCase):
+    def test_all_mock_routes_are_safe_to_walk(self):
+        scenario = load_inputs()
+        routes = VisitorRoutes(scenario.map, scenario.metadata()["queue_report"])
+        data = json.loads(MOCK_DATA.read_text(encoding="utf-8"))
+        for node_id, table in data["node_routes"].items():
+            for facility_id, points in table.items():
+                with self.subTest(node=node_id, facility=facility_id):
+                    self.assertIsNotNone(routes.entrance_path(facility_id, points))
 
 
 class PolicyTests(unittest.TestCase):
@@ -55,8 +68,11 @@ class PolicyTests(unittest.TestCase):
     def test_preference_wins_a_rounded_cost_tie(self):
         self.data["session"]["preference_order"] = ["gyro-drop", "gyro-spin", "arcana-ride", "atlantis", "comet-express", "gyro-swing"]
         self.states["gyro-spin"]["wait"]["seconds"] = 0
+        spin_cost = 0.1 + 0.2 * self.routes["gyro-spin"]["distance_m"] / 500
+        rounding_limit = (floor(spin_cost * 1e9 + 0.5) + 0.5) / 1e9
+        tied_drop_cost = (spin_cost + rounding_limit) / 2
         self.states["gyro-drop"]["wait"]["seconds"] = 12000 * (
-            0.1 + 0.2 * (self.routes["gyro-spin"]["distance_m"] - self.routes["gyro-drop"]["distance_m"]) / 500 + 2e-10
+            tied_drop_cost - 0.2 * self.routes["gyro-drop"]["distance_m"] / 500
         )
         answer = self.policy.recommend(self.data)["recommendation"]
         self.assertEqual(answer["facility_id"], "gyro-drop")

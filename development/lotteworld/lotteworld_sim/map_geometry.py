@@ -123,6 +123,8 @@ def validate_geometry(data, require, number):
     require(g['bridge_placement'] == 'castle-forecourt-to-southeast', '다리는 성 앞에서 남동쪽으로 이어져야 합니다.')
     require(g['public_space'] == 'island-minus-reservations', '섬 내부의 넓은 보행 공간 정의가 필요합니다.')
     require(isinstance(g['landscape_beds'],list) and all(rect(r) for r in g['landscape_beds']), '식재 구획 좌표가 올바르지 않습니다.')
+    trees = g.get('landscape_trees', [])
+    require(isinstance(trees, list) and all(point(tree) for tree in trees), '나무 좌표가 올바르지 않습니다.')
     require(number(g['castle_height_m'], 1, 100), '성의 표시 높이가 올바르지 않습니다.')
     require(isinstance(g['castle_forward'],list) and len(g['castle_forward'])==2 and all(number(v,.01,10000) for v in g['castle_forward']), '성 정면의 남동쪽 방향 벡터가 필요합니다.')
     require(number(g['castle_model_scale_xz'],.1,1) and number(g['forecourt_width_m'],12,30), '성 모형 배율·정면 광장 폭이 올바르지 않습니다.')
@@ -222,3 +224,6 @@ def validate_geometry(data, require, number):
                 p=(a[0]+(b[0]-a[0])*i/steps+nx*e['width']/2*side,
                    a[1]+(b[1]-a[1])*i/steps+ny*e['width']/2*side)
                 require(point_in_polygon(p, outline), f"다리가 아닌 보행로의 유효 폭이 섬 밖으로 나갑니다: {e['id']}")
+    require(all(any(x+.5 <= px <= x+w-.5 and z+.5 <= pz <= z+d-.5
+                    for x,z,w,d in g['landscape_beds']) for px,pz in trees),
+            '나무의 줄기는 식재 구획 가장자리에서 0.5m 이상 떨어져야 합니다.')

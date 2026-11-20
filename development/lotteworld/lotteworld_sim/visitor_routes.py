@@ -62,9 +62,9 @@ class VisitorRoutes:
                         for key in ('source', 'target')} - self.portals
         self.land_nodes = sorted(public_nodes - {self.boundary})
         self.exit_connections = {}
-        self.exit_merges = {}
         rules = geometry['queue_rules']
         self.radius = rules['person_radius_m']
+        self.queue_scale = rules.get('layout_scale', 1)
         self.shore = tuple(pairwise([*geometry['island_outline'], geometry['island_outline'][0]]))
         self.reservations = (geometry['castle'], *geometry['scenery_buildings'], *geometry['landscape_beds'],
                              *(facility[key] for facility in map_data['facilities']
@@ -72,7 +72,7 @@ class VisitorRoutes:
         self.bridge_width = next(edge['width'] for edge in geometry['edges'] if edge['kind'] == 'bridge')
         self.public_variants = {}
         # 줄 입구의 직각 구간에서도 이동 중인 두 사람의 몸체가 닿지 않도록 거리를 둔다.
-        self.queue_headway_m = max(1.0, rules['spacing_m'])
+        self.queue_headway_m = max(self.queue_scale, rules['spacing_m'])
         for node in public_nodes - {self.boundary}:
             if not public_walkable(map_data, self.nodes[node], self.radius):
                 raise ValueError(f'공공 보행 연결점이 보행 면 밖에 있습니다: {node}')
@@ -80,6 +80,23 @@ class VisitorRoutes:
             self.public_path(self.boundary, node)
         self.facilities = {facility['id']: self._facility_paths(facility, reports[facility['id']], public_nodes)
                            for facility in map_data['facilities']}
+        self.approach_nodes = {paths.approach for paths in self.facilities.values()}
+        main_nodes = {edge[end] for edge in geometry['edges'] if edge['kind'] == 'main'
+                      for end in ('source', 'target')}
+        self.plaza_nodes = tuple(node for node in self.land_nodes
+                                 if node in main_nodes and node not in self.approach_nodes and node != 'bridge-island')
+        self.plaza_stops = {}
+
+    def plaza_stop(self, source, desired_span):
+        key = (source, desired_span)
+        if key not in self.plaza_stops:
+            point = source if isinstance(source, tuple) else tuple(self.nodes[source])
+            self.plaza_stops[key] = min(
+                (node for node in self.plaza_nodes if tuple(self.nodes[node]) != point),
+                key=lambda node: abs(dist(point, self.nodes[node]) - desired_span),
+                default=None,
+            )
+        return self.plaza_stops[key]
 
     def public_path(self, source, target):
         key = (source, target)
@@ -190,7 +207,8 @@ class VisitorRoutes:
                     and all(segment_distance(a, b, c, d) >= self.radius - 1e-8 for c, d in shore))
 
         def outside_gate(gate, inside):
-            return [a + (a - b) * .8 / dist(gate, inside) for a, b in zip(gate, inside)]
+            distance = .8 * self.queue_scale / dist(gate, inside)
+            return [a + (a - b) * distance for a, b in zip(gate, inside)]
 
         entry_id = facility['entrance']
         entry = self.nodes[entry_id]
@@ -260,7 +278,6 @@ class VisitorRoutes:
                                 if self._public_segment_clear(point, self.nodes[node]))
                 if anchors:
                     self.exit_connections[point] = anchors
-                    self.exit_merges[point] = merge
                     releases.append((offset, point))
                     offset += 1.5
                     continue
@@ -286,7 +303,7 @@ class VisitorRoutes:
                     return False
             return True
 
-        if not separated(walking_lines, report['rails'], self.radius + .22):
+        if not separated(walking_lines, report['rails'], self.radius + .22 * self.queue_scale):
             raise ValueError(f'대기·이탈·탑승 보행이 기둥 또는 벨트를 침범합니다: {facility_id}')
         queue_lanes = pairwise(report['points'])
         if not separated(queue_lanes, withdrawal_lines[2:], 2 * self.radius):

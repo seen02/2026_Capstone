@@ -28,12 +28,12 @@ class QueueCapacityTests(unittest.TestCase):
                 self.assertTrue(row['meets_minimum'])
                 self.assertEqual(len(row['slots']),capacity)
                 for i,p in enumerate(row['slots']):
-                    self.assertTrue(all(math.dist(p,q)>=.8-1e-6 for q in row['slots'][i+1:]))
+                    self.assertTrue(all(math.dist(p,q)>=row['spacing_m']-1e-6 for q in row['slots'][i+1:]))
 
     def test_insufficient_capacity_and_body_overlap_rejected(self):
         scenario=load_inputs()
         for key,value in [('boarding_capacity',49),('queue_capacity',111),('queue_capacity',None),
-                          ('spacing_m',1),('person_radius_m',.5),('minimum_boarding_multiple',2)]:
+                          ('spacing_m',1),('person_radius_m',.5),('minimum_boarding_multiple',2),('layout_scale',0)]:
             data=deepcopy(scenario.map)
             if key in ('boarding_capacity','queue_capacity'):data['facilities'][0][key]=value
             else:data['geometry']['queue_rules'][key]=value

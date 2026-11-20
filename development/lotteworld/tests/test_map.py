@@ -56,6 +56,7 @@ class MapTests(unittest.TestCase):
             (['geometry','render_style'],'svg'),
             (['geometry','public_space'],'thin-paths-only'),
             (['geometry','landscape_beds'],[[141,130,14,14]]),
+            (['geometry','landscape_trees'],[[143,145]]),
             (['geometry','island_outline'],[[0,0],[10,0],[10,float('nan')],[5,10],[0,10]]),
             (['geometry','island_outline'],[[0,0],[100,100],[0,100],[100,0],[150,50]]),
             (['geometry','island_outline'],[[0,0],[50,0],[50,50],[0,50],[0,0]]),
@@ -127,7 +128,7 @@ class MapTests(unittest.TestCase):
     def test_broad_public_plazas_and_reserved_areas(self):
         data=self.scenario.map
         # 이전 녹지였던 길 바깥 공간도 이제 포장 광장으로 이동할 수 있다.
-        for p in ([137,130],[200,205],[80,120],[258,252.5]):
+        for p in ([137,130],[200,205],[84,120],[258,252.5]):
             self.assertTrue(public_walkable(data,p,.25),p)
         reserved=[f[key] for f in data['facilities'] for key in ('bounds','queue','exit_area')]
         for p in ([180,145],[33,151],[0,0],[314,320],*[[x+w/2,z+d/2] for x,z,w,d in reserved]):
@@ -148,7 +149,7 @@ class MapTests(unittest.TestCase):
             for other in ((x-2,y),(x+2,y),(x,y-2),(x,y+2)):
                 if other in public and other not in reached:
                     reached.add(other);pending.append(other)
-        for p in ((134,130),(200,204),(80,120)):
+        for p in ((134,130),(200,204),(84,120)):
             self.assertIn(p,reached)
         with self.assertRaises(ValueError): public_walkable(data,[float('nan'),10])
         with self.assertRaises(ValueError): public_walkable(data,[10,10],-1)

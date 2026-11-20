@@ -14,7 +14,8 @@ if (metadata.scenario_id !== 'magic-island' || !/^[0-9a-f]{64}$/.test(hashes?.ma
   throw new Error('매직아일랜드의 지도 메타데이터가 필요합니다.');
 }
 
-const navigator = createNavigator(map);
+// 선분을 일정 간격으로 검사할 때 코너에서 몸체 여유를 확보한다.
+const navigator = createNavigator(map, {radius: map.geometry.queue_rules.person_radius_m + .1});
 const nodes = new Map(map.geometry.nodes.map(({ id, point }) => [id, point]));
 const routes = Object.entries(mock.node_routes).map(([nodeId]) => {
   const point = nodes.get(nodeId);

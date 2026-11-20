@@ -7,6 +7,7 @@ import {queueLayout} from '../web/queue.mjs';
 const map=JSON.parse(readFileSync(new URL('../configs/map.json',import.meta.url),'utf8'));
 const nodes=Object.fromEntries(map.geometry.nodes.map(n=>[n.id,n.point]));
 const nav=createNavigator(map);
+const {layout_scale: scale=1}=map.geometry.queue_rules;
 let shorter=0;
 for(const facility of map.facilities) {
   const queue=queueLayout(facility.queue,nodes[facility.entrance],map.geometry.queue_rules,
@@ -18,7 +19,7 @@ for(const facility of map.facilities) {
   assert.equal(queue.capacity,facility.queue_capacity);
   assert.deepEqual(queue.slot_indices.map(i=>queue.points[i]),queue.slots);
   assert.ok(queue.withdrawal_slot_indices.every((i,j)=>Math.abs(
-    Math.hypot(...queue.withdrawal[i].map((value,k)=>value-queue.slots[j][k]))-.64)<1e-6));
+    Math.hypot(...queue.withdrawal[i].map((value,k)=>value-queue.slots[j][k]))-.64*scale)<1e-6));
   const rideDistance=([a,b])=>Math.hypot(Math.max(facility.bounds[0]-a,0,a-facility.bounds[0]-facility.bounds[2]),Math.max(facility.bounds[1]-b,0,b-facility.bounds[1]-facility.bounds[3]));
   assert.ok(rideDistance(queue.boarding_exit)<rideDistance(nodes[facility.entrance]),facility.id+' 탑승 진입이 시설에 더 가까워야 합니다.');
   assert.deepEqual(queue.points.at(-1),queue.boarding_exit);
@@ -29,9 +30,12 @@ for(const facility of map.facilities) {
     assert.ok(path.length>50);
     assert.ok(path.every(p=>p.every(Number.isFinite)));
     // 반원 회전부가 세분된 연속 경계이며 서로 떨어진 직선 칸막이가 아니다.
-    assert.ok(path.slice(1).filter((p,i)=>Math.hypot(p[0]-path[i][0],p[1]-path[i][1])<.64).length>40);
+    assert.ok(path.slice(1).filter((p,i)=>Math.hypot(p[0]-path[i][0],p[1]-path[i][1])<.64*scale).length>40);
   }
-  for(const p of [...queue.points,...queue.rails.flat(),...queue.withdrawal])assert.ok(p[0]>=x&&p[0]<=x+w&&p[1]>=z&&p[1]<=z+d);
+  const edgeTolerance=1e-8;
+  for(const [px,pz] of [...queue.points,...queue.rails.flat(),...queue.withdrawal]) {
+    assert.ok(px>=x-edgeTolerance&&px<=x+w+edgeTolerance&&pz>=z-edgeTolerance&&pz<=z+d+edgeTolerance);
+  }
   for(const [source,target] of [[map.geometry.boundary,facility.entrance],[facility.exit,map.geometry.boundary]]) {
     const result=nav.route(source,target);
     assert.equal(result.mode,'open-plaza');

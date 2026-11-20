@@ -6,8 +6,11 @@ def queue_layout(bounds, entrance, rules, boarding_capacity, ride_bounds=None, q
     x,z,w,d=bounds
     side='left' if entrance[0]==x else 'right' if entrance[0]==x+w else 'top' if entrance[1]==z else 'bottom'
     horizontal=side in ('left','right')
-    length,breadth=(w,d) if horizontal else (d,w)
+    # 줄의 굽이와 이탈 통로는 같은 비율로 넓히고, 결과는 지도 좌표로 돌려놓는다.
+    scale=rules.get('layout_scale',1)
+    length,breadth=(w/scale,d/scale) if horizontal else (d/scale,w/scale)
     def base_transform(u,v):
+        u,v=u*scale,v*scale
         if side=='left': return [round(x+u,6),round(z+v,6)]
         if side=='right': return [round(x+w-u,6),round(z+v,6)]
         if side=='top': return [round(x+v,6),round(z+u,6)]
@@ -25,16 +28,16 @@ def queue_layout(bounds, entrance, rules, boarding_capacity, ride_bounds=None, q
     end_u=far if len(rows)%2 else near
     reverse_rows=bool(ride_bounds and distance(base_transform(end_u,0))<distance(base_transform(end_u,breadth)))
     def transform(u,v): return base_transform(u,breadth-v if reverse_rows else v)
-    raw_entry_v=entrance[1]-z if horizontal else entrance[0]-x
+    raw_entry_v=(entrance[1]-z if horizontal else entrance[0]-x)/scale
     entry_v=breadth-raw_entry_v if reverse_rows else raw_entry_v
     points=[]
     def add(point):
         if not points or math.dist(point,points[-1])>1e-8: points.append(point)
     add([0,entry_v]);add([.9,entry_v])
-    if abs(entry_v-rows[0])>=1.2: add([.9,rows[0]])
+    if abs(entry_v-rows[0])>=1.2-1e-8: add([.9,rows[0]])
     add([near-.65,rows[0]]);add([near,rows[0]])
     shoulder_start=len(points)-1
-    clearance=rules['end_clearance_m'];spacing=rules['spacing_m']
+    clearance=rules['end_clearance_m']/scale;spacing=rules['spacing_m']/scale
     usable=abs(far-near)-2*clearance
     max_per_row=max(0,math.floor(usable/spacing+1e-8)+1)
     max_capacity=max_per_row*len(rows)
@@ -88,7 +91,7 @@ def queue_layout(bounds, entrance, rules, boarding_capacity, ride_bounds=None, q
     rails=[[a,b] for path in rail_paths for a,b in zip(path,path[1:])]
     minimum=math.ceil(boarding_capacity*rules['minimum_boarding_multiple'])
     return dict(capacity=len(slots),boarding_capacity=boarding_capacity,minimum_capacity=minimum,
-                meets_minimum=len(slots)>=minimum,slots=slots,rails=rails,railPaths=rail_paths,boarding_exit=boarding_exit,boarding_target=boarding_target,reverse_rows=reverse_rows,person_radius_m=rules['person_radius_m'],spacing_m=spacing,
+                meets_minimum=len(slots)>=minimum,slots=slots,rails=rails,railPaths=rail_paths,boarding_exit=boarding_exit,boarding_target=boarding_target,reverse_rows=reverse_rows,person_radius_m=rules['person_radius_m'],spacing_m=rules['spacing_m'],
                 points=[transform(*p) for p in points],slot_indices=slot_indices,withdrawal=withdrawal,
                 withdrawal_slot_indices=[i-shoulder_start+1 for i in slot_indices])
 
@@ -103,6 +106,8 @@ def queue_report(map_data):
 def validate_queue_capacity(map_data, require, number):
     from .map_geometry import distance_to_segment, segment_rect_distance
     rules=map_data['geometry']['queue_rules']
+    scale=rules.get('layout_scale',1)
+    require(number(scale,1,2),'대기줄 배치 확대 비율이 올바르지 않습니다.')
     require(number(rules['person_radius_m'],.23,.5),'대기 자리 반경이 올바르지 않습니다.')
     require(number(rules['spacing_m'],rules['person_radius_m']*2,2),'대기 자리 간격이 몸체 지름보다 작습니다.')
     require(number(rules['end_clearance_m'],rules['person_radius_m'],2),'대기줄 회전 여백이 부족합니다.')
@@ -115,17 +120,17 @@ def validate_queue_capacity(map_data, require, number):
     reports=queue_report(map_data)
     for facility in map_data['facilities']:
         report=reports[facility['id']];x,z,w,d=facility['queue'];radius=rules['person_radius_m']
-        require(all(x<=px<=x+w and z<=pz<=z+d for px,pz in [*report['points'], *report['withdrawal'],
-                                                             *(p for path in report['railPaths'] for p in path)]),
+        require(all(x-1e-8<=px<=x+w+1e-8 and z-1e-8<=pz<=z+d+1e-8
+                    for px,pz in [*report['points'], *report['withdrawal'], *(p for path in report['railPaths'] for p in path)]),
                 '대기 보행이나 벨트가 대기 구획 밖으로 나갑니다.')
         entry=next(n['point'] for n in map_data['geometry']['nodes'] if n['id']==facility['entrance'])
         boarding=report['boarding_exit'];target=report['boarding_target']
         require(math.dist(boarding,target)<math.hypot(max(facility['bounds'][0]-entry[0],0,entry[0]-facility['bounds'][0]-facility['bounds'][2]),max(facility['bounds'][1]-entry[1],0,entry[1]-facility['bounds'][1]-facility['bounds'][3])),'대기줄 입구보다 탑승 진입점이 놀이기구에 가까워야 합니다.')
         obstacles=[map_data['geometry']['castle'],*map_data['geometry']['scenery_buildings'],*map_data['geometry']['landscape_beds']]
         obstacles += [f[k] for f in map_data['facilities'] for k in ('bounds','queue','exit_area') if f['id']!=facility['id'] or k=='exit_area']
-        require(all(segment_rect_distance(boarding,target,r)>=.3 for r in obstacles),'탑승 진입 연결이 다른 구획을 침범합니다.')
+        require(all(segment_rect_distance(boarding,target,r)>=radius for r in obstacles),'탑승 진입 연결이 다른 구획을 침범합니다.')
         require(report['meets_minimum'],f"{facility['name']} 대기 자리가 1회 탑승 정원의 2.5배보다 적습니다.")
         for i,point in enumerate(report['slots']):
             require(x+radius<=point[0]<=x+w-radius and z+radius<=point[1]<=z+d-radius,'대기 자리 몸체가 구획 밖으로 나갑니다.')
             require(all(math.dist(point,other)>=rules['spacing_m']-1e-6 for other in report['slots'][i+1:]),'대기 자리 간격이 겹칩니다.')
-            require(all(distance_to_segment(point,*rail)>=radius+.22 for rail in report['rails']),'대기 자리 몸체가 기둥·벨트를 침범합니다.')
+            require(all(distance_to_segment(point,*rail)>=radius+.22*scale for rail in report['rails']),'대기 자리 몸체가 기둥·벨트를 침범합니다.')

@@ -89,7 +89,7 @@ $result = Invoke-RestMethod "$base/api/recommendation" -Method Post -ContentType
 $result | ConvertTo-Json -Depth 12
 ```
 
-기본 파일의 이 요청은 자이로스핀(`gyro-spin`), 선호 2순위, 예상 대기 300초, 가상 보행 경로 약 57.8m를 반환한다. 응답에는 경로·한국어 이유·제외 사유·`source.kind: mock`·`snapshot_seq`·평가 및 만료 시각이 들어 있다. 같은 모의 값과 위치·선호를 다시 요청하면 선택과 근거가 같다. 요청마다 새 모의 관측을 계산하므로 시각·스냅샷 번호·추천 ID는 새로 발행한다.
+기본 파일의 이 요청은 자이로스핀(`gyro-spin`), 선호 2순위, 예상 대기 300초, 가상 보행 경로 약 61.8m를 반환한다. 응답에는 경로·한국어 이유·제외 사유·`source.kind: mock`·`snapshot_seq`·평가 및 만료 시각이 들어 있다. 같은 모의 값과 위치·선호를 다시 요청하면 선택과 근거가 같다. 요청마다 새 모의 관측을 계산하므로 시각·스냅샷 번호·추천 ID는 새로 발행한다.
 
 | HTTP | 결과 |
 | --- | --- |
