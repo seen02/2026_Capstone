@@ -79,6 +79,58 @@ class PolicyTests(unittest.TestCase):
         self.states["gyro-drop"]["wait"]["seconds"] += 0.001
         self.assertEqual(self.policy.recommend(self.data)["recommendation"]["facility_id"], "gyro-spin")
 
+    def test_unridden_facilities_are_prioritized_then_most_recent_ride_is_deferred(self):
+        policy = RecommendationPolicy(load_inputs().metadata(), sign_facilities=("gyro-spin", "gyro-drop", "comet-express"))
+        self.data.update(policy_id=policy.policy_id)
+        self.data["session"]["preference_order"] = ["gyro-spin", "gyro-drop", "comet-express"]
+
+        for completed, last, expected in (
+            ((), None, "gyro-spin"),
+            (("gyro-spin",), "gyro-spin", "gyro-drop"),
+            (("gyro-spin", "gyro-drop"), "gyro-drop", "comet-express"),
+        ):
+            with self.subTest(completed=completed):
+                rec = policy.recommend(self.data, completed_facilities=completed,
+                                       last_completed_facility=last)["recommendation"]
+                self.assertEqual(rec["facility_id"], expected)
+
+        self.states["comet-express"]["admission"] = "not_accepting"
+        completed = ("gyro-spin", "gyro-drop")
+        rec = policy.recommend(self.data, completed_facilities=completed, last_completed_facility="gyro-drop")["recommendation"]
+        self.assertEqual(rec["facility_id"], "gyro-spin")
+        self.states["gyro-spin"]["admission"] = "not_accepting"
+        rec = policy.recommend(self.data, completed_facilities=completed, last_completed_facility="gyro-drop")["recommendation"]
+        self.assertEqual(rec["facility_id"], "gyro-drop")
+
+    def test_round_start_skips_last_ride_even_when_it_is_the_only_available_facility(self):
+        result = self.policy.recommend(self.data, last_completed_facility="gyro-spin")
+        self.assertNotEqual(result["recommendation"]["facility_id"], "gyro-spin")
+
+        for facility, row in self.states.items():
+            if facility != "gyro-spin":
+                row["admission"] = "not_accepting"
+        result = self.policy.recommend(self.data, last_completed_facility="gyro-spin")
+        self.assertEqual(result["result"], "no_candidate")
+        self.assertEqual(indexed(result["excluded"])["gyro-spin"]["codes"], ["round_start_recent_ride"])
+
+    def test_unridden_candidates_are_ranked_by_preferences_wait_and_distance(self):
+        policy = RecommendationPolicy(load_inputs().metadata(), sign_facilities=("gyro-spin", "gyro-drop", "comet-express"))
+        self.data.update(policy_id=policy.policy_id)
+        self.data["session"]["preference_order"] = ["gyro-drop", "gyro-spin", "comet-express"]
+        self.states["gyro-spin"]["wait"]["seconds"] = 0
+        self.states["comet-express"]["wait"]["seconds"] = 0
+        completed = ("gyro-drop",)
+
+        rec = policy.recommend(self.data, completed_facilities=completed)["recommendation"]
+        self.assertEqual((rec["facility_id"], rec["rank"]), ("gyro-spin", 2))
+        self.states["gyro-spin"]["wait"]["seconds"] = 3600
+        rec = policy.recommend(self.data, completed_facilities=completed)["recommendation"]
+        self.assertEqual((rec["facility_id"], rec["rank"]), ("comet-express", 3))
+        self.data["session"]["preference_order"] = ["gyro-drop", "comet-express", "gyro-spin"]
+        self.states["gyro-spin"]["wait"]["seconds"] = 0
+        rec = policy.recommend(self.data, completed_facilities=completed)["recommendation"]
+        self.assertEqual((rec["facility_id"], rec["rank"]), ("comet-express", 2))
+
     def test_recommendation_keeps_independent_exclusion_reasons(self):
         self.states["gyro-drop"].update(admission="full", queue_people=110)
         self.states["gyro-spin"]["wait"].update(status="stale", seconds=None)

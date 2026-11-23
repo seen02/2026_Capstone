@@ -1,0 +1,31 @@
+@font-face {
+  font-family: "Great Vibes";
+  src: url("/vendor/fonts/great-vibes.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --magic-night: #20143b;
+  --magic-light-ink: #fff6e6;
+  --magic-action: #56349b;
+  --magic-gold: #f3cb79;
+  --magic-paper: #f7f3ed;
+  --magic-panel: #fffaf3;
+  --magic-hover: #f2ece3;
+  --magic-border: #ddd2c4;
+  --magic-muted: #665a78;
+  --magic-selection: #f1e8fa;
+  --magic-ui-font: system-ui, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --magic-label-size: .8125rem;
+  --magic-body-size: .875rem;
+  --magic-heading-size: 1.125rem;
+  --magic-card-radius: 16px;
+  --magic-wordmark: "Great Vibes", Gabriola, "Snell Roundhand", "Segoe Script", cursive;
+  --magic-wordmark-shift: .08em;
+  --magic-ticket-star: polygon(50% 0%, 63% 37%, 100% 50%, 63% 63%, 50% 100%, 37% 63%, 0% 50%, 37% 37%);
+}
+
+.ticket-large, .ticket-small, .workspace-ticket {
+  mask: radial-gradient(circle at 0 50%, #0000 var(--notch), #000 calc(var(--notch) + 1px)) left / 51% 100% no-repeat,
+        radial-gradient(circle at 100% 50%, #0000 var(--notch), #000 calc(var(--notch) + 1px)) right / 51% 100% no-repeat;
+}

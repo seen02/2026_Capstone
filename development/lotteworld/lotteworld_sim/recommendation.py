@@ -216,7 +216,7 @@ class RecommendationPolicy:
             require(points == [] and route["distance_m"] is None and route["walking_seconds"] is None,
                     "사용할 수 없는 경로에는 거리·시간·경유점이 없어야 합니다.")
 
-    def recommend(self, data):
+    def recommend(self, data, *, completed_facilities=frozenset(), last_completed_facility=None):
         """서버가 조립한 완전한 RecommendationInput으로 평가한다."""
         fields(data, "input", "contract_version", "context", "evaluation_at", "policy_id", "session", "snapshot", "routes")
         check_version(data["contract_version"])
@@ -254,19 +254,23 @@ class RecommendationPolicy:
                 continue
             if route["status"] != "reachable":
                 codes.append(f"route_{route['status']}")
+            recently_completed = facility == last_completed_facility
+            if recently_completed and not completed_facilities:
+                codes.append("round_start_recent_ride")
             if codes:
                 excluded.append({"facility_id": facility, "codes": codes})
                 continue
             rank, seconds, distance = ranks[facility], row["wait"]["seconds"], route["distance_m"]
             cost = 0.5 * (rank - 1) / rank_span + 0.3 * min(seconds / 3600, 1) + 0.2 * min(distance / 500, 1)
-            candidates.append((math.floor(cost * 1e9 + 0.5) / 1e9, rank, seconds, distance, facility))
+            priority = (facility in completed_facilities, recently_completed)
+            candidates.append((priority, math.floor(cost * 1e9 + 0.5) / 1e9, rank, seconds, distance, facility))
 
         result = {"contract_version": VERSION, "context": context, "result": "no_candidate",
                   "session_id": session["session_id"], "session_revision": session["revision"],
                   "snapshot_seq": snapshot["snapshot_seq"], "source": source, "policy_id": self.policy_id,
                   "evaluated_at": utc_text(evaluation), "recommendation": None, "excluded": excluded}
         if candidates:
-            cost, rank, seconds, distance, facility = min(candidates)
+            _, cost, rank, seconds, distance, facility = min(candidates)
             identity = [context, self.policy_id, session["session_id"], session["character_id"], session["revision"],
                         snapshot["snapshot_seq"], result["evaluated_at"], facility, rank, seconds, distance]
             recommendation_id = sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()

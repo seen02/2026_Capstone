@@ -19,10 +19,9 @@ ROUTE_METHOD = "open-plaza-v1"
 
 
 class MockRecommendation:
-    def __init__(self, store, path, *, sign_facilities):
+    def __init__(self, store, path):
         self.store = store
         self.path = Path(path)
-        self.sign_facilities = sign_facilities
         self.lock = threading.Lock()
         self.key = None
 
@@ -34,7 +33,6 @@ class MockRecommendation:
                 return
             self.key = None
             policy = RecommendationPolicy(metadata)
-            sign_policy = RecommendationPolicy(metadata, sign_facilities=self.sign_facilities)
             definition = fields(read_json(self.path), "mock", "map_hash", "provider_id", "facilities", "node_routes")
             require(definition["map_hash"] == policy.map_hash, "모의 경로의 지도 해시가 현재 지도와 다릅니다.")
             identifier(definition["provider_id"], "mock.provider_id")
@@ -55,7 +53,7 @@ class MockRecommendation:
             self.key = None
             raise RecommendationError("mock_data_unavailable", f"모의 추천 데이터를 사용할 수 없습니다. {error}") from error
 
-        self.policy, self.sign_policy = policy, sign_policy
+        self.policy = policy
         self.definition, self.routes_by_node = definition, routes_by_node
         self.context = {"scenario_id": SCENARIO_ID, "map_hash": policy.map_hash,
                         "run_id": f"mock-{uuid.uuid4().hex}", "timeline_epoch": 0}
@@ -65,9 +63,8 @@ class MockRecommendation:
 
     @staticmethod
     def _observe(row, now, sim_time):
-        # 요청마다 모의 모형의 새 관측을 산출한다. 저장 파일에는 과거 관측 시각이 없다.
-        fields(row, "mock.facility", "operation", "admission", "queue_people", "riding_people", "wait")
-        wait = fields(row["wait"], "mock.wait", "status", "seconds", "method")
+        fields(row, "facility", "operation", "admission", "queue_people", "riding_people", "wait")
+        wait = fields(row["wait"], "facility.wait", "status", "seconds", "method")
         measured = wait["status"] != "unknown" or row["queue_people"] is not None or row["riding_people"] is not None
         return {**row, "observed_at": utc_text(now) if measured else None,
                 "as_of_sim_time_s": sim_time if measured else None}
@@ -94,34 +91,15 @@ class MockRecommendation:
                     "positions": [{"node_id": node, "point": self.policy.nodes[node]} for node in sorted(self.routes_by_node)],
                     "facility_ids": sorted(self.policy.entrances)}
 
-    def _input(self, policy, now, sim_time, session, routes, *, context=None, time_scale=1):
+    def _input(self, policy, now, sim_time, session, routes):
         self.seq += 1
         stamp = utc_text(now)
-        return {"contract_version": VERSION, "context": self.context if context is None else context, "evaluation_at": stamp,
+        return {"contract_version": VERSION, "context": self.context, "evaluation_at": stamp,
                 "policy_id": policy.policy_id, "session": session, "routes": routes,
                 "snapshot": {"snapshot_seq": self.seq, "generated_at": stamp,
                              "source": {"kind": "mock", "provider_id": self.definition["provider_id"]},
-                             "clock": {"sim_time_s": sim_time, "time_scale": time_scale, "mode": "running"},
+                             "clock": {"sim_time_s": sim_time, "time_scale": 1, "mode": "running"},
                              "facilities": [self._observe(row, now, sim_time) for row in self.definition["facilities"]]}}
-
-    def recommend_for_user(self, context, session, anchor, *, sim_time, time_scale):
-        with self.lock:
-            now = datetime.now(timezone.utc)
-            self._refresh(now)
-            policy = self.sign_policy
-            policy.context(context)
-            position = session["position"]
-            anchor_routes = self.routes_by_node.get(anchor, [])
-            require(bool(anchor_routes), "표지판을 연결할 모의 경로가 없습니다.", "mock_data_unavailable")
-            routes = [
-                self._route(policy, route["facility_id"], position,
-                            [position["point"], *route["points"]] if route["status"] == "reachable" else None)
-                for route in anchor_routes
-            ]
-            # 캐릭터는 초기 위치에 정지해 있으므로 평가 시점에 같은 위치를 관측한다.
-            data = self._input(policy, now, sim_time, {**session, "position_sim_time_s": sim_time}, routes,
-                               context=context, time_scale=time_scale)
-        return policy.recommend(data)
 
     def recommend(self, request):
         fields(request, "request", "contract_version", "context", "session_id", "character_id", "revision", "position", "preference_order")

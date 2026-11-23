@@ -2,47 +2,99 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>시설 선호 순위 · 매직아일랜드</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#20143b">
+  <title>Magic Pass · 매직아일랜드</title>
   <link rel="icon" href="data:,">
+  <link rel="preload" href="/vendor/fonts/great-vibes.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/vendor/fonts/noto-serif-kr.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/magic-pass.css">
   <link rel="stylesheet" href="/map-viewport.css">
   <link rel="stylesheet" href="/user.css">
   <script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
   <script type="module" src="/user.js"></script>
 </head>
 <body>
-  <header class="site-header"><div class="container">매직아일랜드</div></header>
-  <main class="container">
-    <header class="intro">
-      <h1>시설 선호 순위</h1>
-      <p id="order-help">손잡이를 끌어 타고 싶은 순서로 놓고 저장해 주세요. 키보드에서는 손잡이에 초점을 맞춘 뒤 위·아래 방향키를 누르세요.</p>
-    </header>
-    <form id="preferences" aria-describedby="order-help" hidden>
-      <fieldset id="controls">
-        <legend class="visually-hidden">시설 순위 조정</legend>
-        <ol id="facility-order" class="card"></ol>
-        <button class="save" type="submit">선호 저장</button>
-      </fieldset>
-    </form>
-    <p id="status" role="status" aria-live="polite">가상 캐릭터를 연결하는 중입니다.</p>
-    <button type="button" id="retry" hidden>다시 연결</button>
-    <section class="card" id="character" aria-labelledby="character-title" hidden>
-      <h2 id="character-title">내 가상 캐릭터</h2>
-      <p id="character-id"></p>
-      <p id="character-position"></p>
-      <p id="character-phase"></p>
-      <p id="character-progress" hidden></p>
-      <p id="destination-note"></p>
-      <button type="button" id="destination" hidden></button>
-      <button type="button" id="accept-recommendation" hidden>추천 수락하고 출발</button>
-      <p id="accept-status" role="status"></p>
-      <div id="user-map-frame" hidden>
-        <div id="user-scene" class="viewport"><div class="labels"></div></div>
-        <button type="button" id="resume-follow" hidden>내 캐릭터 다시 따라가기</button>
+  <section id="splash" aria-label="Magic Pass">
+    <div class="ticket-art" aria-hidden="true">
+      <div class="ticket-orbit"></div>
+      <div class="ticket-stars"><span>✦</span><span>✧</span><span>✦</span><span>✦</span></div>
+      <div class="ticket-back"></div>
+      <div class="ticket-large"><span class="ticket-star"></span></div>
+    </div>
+    <div class="splash-brand">
+      <div class="splash-wordmark" lang="en">Magic Pass</div>
+      <p>기다림을 줄이는 <strong>마법</strong></p>
+    </div>
+    <span class="visually-hidden" role="status">Magic Pass를 여는 중입니다.</span>
+  </section>
+
+  <div id="app" hidden>
+    <header class="site-header">
+      <div class="container brand">
+        <span class="ticket-small" aria-hidden="true"><span class="ticket-star"></span></span>
+        <h1 lang="en">Magic Pass</h1>
+        <span class="island">매직아일랜드</span>
       </div>
-      <p id="character-sync" role="status"></p>
-    </section>
-    <noscript>이 화면을 사용하려면 브라우저에서 JavaScript를 켜 주세요.</noscript>
-  </main>
+    </header>
+    <main class="container">
+      <section class="card notice" id="connection" hidden aria-label="연결 상태">
+        <p id="status" role="status"></p>
+        <button type="button" class="text-button" id="retry">다시 연결</button>
+      </section>
+
+      <section class="card" id="preferences" aria-labelledby="preference-title" hidden>
+        <h2 id="preference-title">선호 순위</h2>
+        <fieldset id="controls">
+          <legend class="visually-hidden">시설 순위 조정</legend>
+          <p id="order-help" class="visually-hidden">손잡이를 위아래로 끌거나 방향키를 눌러 순위를 바꾸면 자동 저장됩니다.</p>
+          <ol id="facility-order"></ol>
+        </fieldset>
+        <p id="save-announcement" class="visually-hidden" role="status"></p>
+        <div class="notice" id="save-error" hidden>
+          <p role="status">순위를 저장하지 못했어요.</p>
+          <button type="button" class="text-button" id="retry-save">다시 시도</button>
+        </div>
+      </section>
+
+      <section class="card recommendation" id="recommendation" aria-labelledby="recommendation-title" hidden>
+        <div class="offer" aria-live="polite">
+          <div class="offer-detail">
+            <h2 class="offer-label" id="recommendation-title">추천 놀이기구</h2>
+            <strong id="ride-name"></strong>
+          </div>
+          <div class="offer-detail offer-side" id="ride-wait" hidden>
+            <span class="offer-label" id="wait-caption">예상 대기 시간</span>
+            <strong class="offer-value" id="wait-time"><span id="wait-minutes"></span><span class="offer-unit">분</span></strong>
+          </div>
+          <div class="queue-metrics" id="queue-metrics" hidden>
+            <div class="offer-detail offer-side" id="queue-wait" hidden>
+              <span class="offer-label">예상 대기</span>
+              <strong class="offer-value" id="queue-wait-time"><span id="queue-wait-minutes"></span><span class="offer-unit">분</span></strong>
+            </div>
+            <div class="offer-detail offer-side">
+              <span class="offer-label">대기 순서</span>
+              <strong class="offer-value" id="queue-place"><span id="queue-position"></span><span class="offer-unit">번째</span></strong>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="primary" id="accept-recommendation" hidden>수락하고 출발 <span aria-hidden="true">→</span></button>
+        <div class="ride-status" id="ride-status" role="status" hidden>
+          <strong id="character-phase"></strong>
+        </div>
+        <p id="recommendation-status" class="inline-status" role="status"></p>
+        <button type="button" class="text-button" id="refresh-recommendation" hidden>추천 새로고침</button>
+      </section>
+
+      <section class="card" id="user-map-frame" aria-label="시뮬레이션 지도" hidden>
+        <div id="user-scene" class="viewport" hidden><div class="labels"></div></div>
+        <p id="map-status" role="status">지도를 불러오는 중입니다.</p>
+      </section>
+    </main>
+  </div>
+  <noscript>
+    <style>#splash { display: none; }</style>
+    <p class="container">이 화면을 사용하려면 브라우저에서 JavaScript를 켜 주세요.</p>
+  </noscript>
 </body>
 </html>

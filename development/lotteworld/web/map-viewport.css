@@ -15,7 +15,6 @@
 }
 .facility-label { min-height: 0; pointer-events: auto; background: #fffef5f5; border-color: #c6d4bf; }
 .facility-label::after { content: ""; position: absolute; left: 50%; top: 100%; height: 6px; border-left: 1px solid #7b9682; }
-.landmark-label { background: #f7fcfbe6; color: #426066; font-size: clamp(10px, .72vw, 13px); }
 .character-label {
   z-index: 1;
   display: inline-flex;

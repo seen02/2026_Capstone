@@ -3,7 +3,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "a9cac5d67eabce12a6ec58750a24431a01e4248345a8abb3f1468080858a2638",
+      "map_hash": "4aaab4090eb375c9fb9ae2f08a7160b9add66f606bc1384a27850a3da7d74338",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -22,8 +22,8 @@
       "facility_id": "gyro-spin",
       "rank": 2,
       "wait_seconds": 300,
-      "distance_m": 61.77924339624845,
-      "cost": 0.149711697,
+      "distance_m": 57.84562164790122,
+      "cost": 0.148138249,
       "route": {
         "facility_id": "gyro-spin",
         "status": "reachable",
@@ -41,19 +41,15 @@
             145
           ],
           [
-            110,
-            180
-          ],
-          [
-            111.88491822238198,
-            192.53425356716738
+            111,
+            192.08
           ],
           [
             111,
             193
           ]
         ],
-        "distance_m": 61.77924339624845,
+        "distance_m": 57.84562164790122,
         "method": "open-plaza-v1",
         "walking_seconds": null
       },
@@ -62,20 +58,20 @@
       "reason_codes": [
         "preference_wait_distance"
       ],
-      "reason_text": "선호 2순위, 예상 대기 300초, 가상 보행 경로 61.8m를 함께 고려했습니다."
+      "reason_text": "선호 2순위, 예상 대기 300초, 가상 보행 경로 57.8m를 함께 고려했습니다."
     },
     "excluded": [
+      {
+        "facility_id": "atlantis",
+        "codes": [
+          "wait_unknown"
+        ]
+      },
       {
         "facility_id": "gyro-swing",
         "codes": [
           "operation_unavailable",
           "admission_unavailable"
-        ]
-      },
-      {
-        "facility_id": "atlantis",
-        "codes": [
-          "wait_unknown"
         ]
       }
     ]
@@ -84,7 +80,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "a9cac5d67eabce12a6ec58750a24431a01e4248345a8abb3f1468080858a2638",
+      "map_hash": "4aaab4090eb375c9fb9ae2f08a7160b9add66f606bc1384a27850a3da7d74338",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -98,7 +94,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "a9cac5d67eabce12a6ec58750a24431a01e4248345a8abb3f1468080858a2638",
+      "map_hash": "4aaab4090eb375c9fb9ae2f08a7160b9add66f606bc1384a27850a3da7d74338",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -117,7 +113,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "a9cac5d67eabce12a6ec58750a24431a01e4248345a8abb3f1468080858a2638",
+      "map_hash": "4aaab4090eb375c9fb9ae2f08a7160b9add66f606bc1384a27850a3da7d74338",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -139,7 +135,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "a9cac5d67eabce12a6ec58750a24431a01e4248345a8abb3f1468080858a2638",
+      "map_hash": "4aaab4090eb375c9fb9ae2f08a7160b9add66f606bc1384a27850a3da7d74338",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -159,7 +155,7 @@
     "contract_version": "recommendation.v1",
     "context": {
       "scenario_id": "magic-island",
-      "map_hash": "a9cac5d67eabce12a6ec58750a24431a01e4248345a8abb3f1468080858a2638",
+      "map_hash": "4aaab4090eb375c9fb9ae2f08a7160b9add66f606bc1384a27850a3da7d74338",
       "run_id": "mock-run-contract-001",
       "timeline_epoch": 0
     },
@@ -176,8 +172,8 @@
     "completed_sim_time_s": 1300,
     "exit_position": {
       "point": [
-        50,
-        186
+        42.25,
+        211.25
       ],
       "node_id": "gyro-spin-exit"
     }

@@ -709,6 +709,25 @@ class BackgroundRun:
             now = self._advance()
             return self._qr_visit_state(self.qr_visitors[character_id], now)
 
+    def recommendation_observation(self):
+        with self.lock:
+            now = self._advance()
+            facilities = []
+            for key, queue in self.queues.items():
+                ride = self.rides.get(key)
+                count = len(queue.members)
+                facilities.append({
+                    'facility_id': key,
+                    'operation': 'open' if ride is not None else 'closed',
+                    'admission': ('not_accepting' if ride is None else
+                                  'full' if count >= queue.capacity else 'accepting'),
+                    'queue_people': count,
+                    'riding_people': ride.riding_people if ride is not None else 0,
+                    'wait': {'status': 'known', 'seconds': self._estimated_wait(key), 'method': 'queue-headway-v1'}
+                    if ride is not None else {'status': 'not_applicable', 'seconds': None, 'method': None},
+                })
+            return now, facilities
+
     def snapshot(self, *, with_motion=False, with_qr=False):
         with self.lock:
             now = self._advance()

@@ -2,7 +2,7 @@
   "contract_version": "recommendation.v1",
   "context": {
     "scenario_id": "magic-island",
-    "map_hash": "a9cac5d67eabce12a6ec58750a24431a01e4248345a8abb3f1468080858a2638",
+    "map_hash": "4aaab4090eb375c9fb9ae2f08a7160b9add66f606bc1384a27850a3da7d74338",
     "run_id": "simulation-fixture-contract-001",
     "timeline_epoch": 0
   },
@@ -150,15 +150,15 @@
           145
         ],
         [
-          115.46323328856116,
-          86.18818852347798
+          115.92,
+          86
         ],
         [
           115,
           86
         ]
       ],
-      "distance_m": 65.43922304794056,
+      "distance_m": 65.83784346387363,
       "method": "open-plaza-v1",
       "walking_seconds": null
     },
@@ -179,15 +179,7 @@
           145
         ],
         [
-          156,
-          112
-        ],
-        [
-          194,
-          74
-        ],
-        [
-          204.5,
+          204.08,
           72
         ],
         [
@@ -195,7 +187,7 @@
           72
         ]
       ],
-      "distance_m": 100.39719023532999,
+      "distance_m": 96.10280516984146,
       "method": "open-plaza-v1",
       "walking_seconds": null
     },
@@ -216,15 +208,11 @@
           145
         ],
         [
-          154,
-          180
+          182,
+          170
         ],
         [
-          212,
-          180
-        ],
-        [
-          260.5,
+          260.08,
           158
         ],
         [
@@ -232,7 +220,7 @@
           158
         ]
       ],
-      "distance_m": 148.4443276635087,
+      "distance_m": 126.24168858781043,
       "method": "open-plaza-v1",
       "walking_seconds": null
     },
@@ -253,23 +241,19 @@
           145
         ],
         [
-          90,
-          110
-        ],
-        [
-          78,
+          118,
           108
         ],
         [
-          77.37871754502709,
-          108.40912105213125
+          76,
+          108.08
         ],
         [
           76,
           109
         ]
       ],
-      "distance_m": 77.92319281920035,
+      "distance_m": 87.57430331393931,
       "method": "open-plaza-v1",
       "walking_seconds": null
     },
@@ -290,19 +274,15 @@
           145
         ],
         [
-          110,
-          180
-        ],
-        [
-          111.88491822238198,
-          192.53425356716738
+          111,
+          192.08
         ],
         [
           111,
           193
         ]
       ],
-      "distance_m": 61.77924339624845,
+      "distance_m": 57.84562164790122,
       "method": "open-plaza-v1",
       "walking_seconds": null
     },
@@ -323,15 +303,15 @@
           145
         ],
         [
-          142.39447816751672,
-          233.40417130587912
+          142.08,
+          234.2
         ],
         [
           143,
           234.2
         ]
       ],
-      "distance_m": 89.40624503375787,
+      "distance_m": 90.12474426845243,
       "method": "open-plaza-v1",
       "walking_seconds": null
     }

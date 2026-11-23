@@ -17,7 +17,7 @@ from .scenario import load_continuous, load_inputs, RIDE_OPERATIONS_PATH, ROOT, 
 from .devserver import signatures, supervise
 from .recommendation import VERSION, RecommendationError, require
 from .recommendation_mock import MOCK_FILENAME, MockRecommendation
-from .user_sessions import SESSION_LIFETIME, SIGN_FACILITIES, UserSessions
+from .user_sessions import SESSION_IDLE_TIMEOUT, UserSessions, sign_position_metadata
 from .visitor_routes import VisitorRoutes
 
 WEB = Path(__file__).resolve().parents[1] / "web"
@@ -36,6 +36,7 @@ RECOMMENDATION_ERRORS = {
 SESSION_COOKIE = "magic_island_session"
 ASSETS = {
     "/": ("index.html", "text/html"),
+    "/magic-pass.css": ("magic-pass.css", "text/css"),
     "/user": ("user.html", "text/html"),
     "/user.css": ("user.css", "text/css"),
     "/map.css": ("map.css", "text/css"),
@@ -45,6 +46,8 @@ ASSETS = {
         "user.js", "live-state.mjs",
         "vendor/three/three.module.js", "vendor/three/three.core.js", "vendor/three/OrbitControls.js")},
     "/vendor/three/LICENSE": ("vendor/three/LICENSE", "text/plain"),
+    **{f"/vendor/fonts/{name}.woff2": (f"vendor/fonts/{name}.woff2", "font/woff2")
+       for name in ("great-vibes", "noto-serif-kr")},
 }
 
 
@@ -68,6 +71,11 @@ class ScenarioStore:
                     scenario = load_inputs(root=self.root, config_path=self.config_path, continuous=self.continuous)
                     metadata = dict(scenario.metadata(), status="continuous_running",
                                     runnable=True, message=BACKGROUND_RUNNING)
+                    metadata["signs"] = [
+                        {**sign_position_metadata(scenario.map, metadata["hashes"]["map"], sign_id),
+                         "name": sign["name"], "facility_ids": sign["facility_ids"]}
+                        for sign_id, sign in scenario.map["geometry"]["signposts"].items()
+                    ]
                     if not hasattr(self, 'value') or self.value['hashes']['map'] != metadata['hashes']['map']:
                         self.routes = VisitorRoutes(scenario.map, metadata['queue_report'])
                     self.value = metadata
@@ -85,11 +93,13 @@ class ScenarioStore:
 
 
 class ContinuousServer(ThreadingHTTPServer):
-    def __init__(self, address, handler, background):
-        self.background = background
+    def __init__(self, address, handler, user_sessions):
+        self.user_sessions = user_sessions
+        self.background = user_sessions.background
         super().__init__(address, handler)
 
     def service_actions(self):
+        self.user_sessions.retire_expired()
         self.background.advance()
 
 
@@ -104,9 +114,13 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def respond(self, data, status=200, html=False, content_type=None, cookie=None):
-        body = (data if html else json.dumps(data, ensure_ascii=False, allow_nan=False)).encode("utf-8")
+        if isinstance(data, bytes):
+            body = data
+        else:
+            body = (data if html else json.dumps(data, ensure_ascii=False, allow_nan=False)).encode("utf-8")
+            content_type = (content_type or ("text/html" if html else "application/json")) + "; charset=utf-8"
         self.send_response(status)
-        self.send_header("Content-Type", (content_type or ("text/html" if html else "application/json")) + "; charset=utf-8")
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         if cookie is not None:
@@ -164,18 +178,29 @@ class Handler(BaseHTTPRequestHandler):
 
     def enter_user(self):
         result, token = self.user_sessions.enter(self.session_token(), self.request_json())
-        cookie = None
-        if token is not None:
-            max_age = int(SESSION_LIFETIME.total_seconds())
-            cookie = f"{SESSION_COOKIE}={token}; Path=/api/user/; Max-Age={max_age}; HttpOnly; SameSite=Strict"
-        return self.respond(result, cookie=cookie)
+        return self.respond(result, cookie=self.user_session_cookie(token))
+
+    @staticmethod
+    def user_session_cookie(token, max_age=int(SESSION_IDLE_TIMEOUT.total_seconds())):
+        return f"{SESSION_COOKIE}={token}; Path=/api/user/; Max-Age={max_age}; HttpOnly; SameSite=Strict"
+
+    def get_user(self):
+        token = self.session_token()
+        result = self.user_sessions.get(token)
+        return self.respond(result, cookie=self.user_session_cookie(token))
+
+    def end_user(self):
+        result = self.user_sessions.end(self.session_token(), self.request_json())
+        return self.respond(result, cookie=self.user_session_cookie("", 0))
 
     def do_GET(self):
         path = urlparse(self.path).path
         if path in ASSETS:
             filename, mime = ASSETS[path]
             try:
-                return self.respond((self.web_root / filename).read_text(encoding="utf-8-sig"), html=True, content_type=mime)
+                asset = self.web_root / filename
+                content = asset.read_bytes() if mime == "font/woff2" else asset.read_text(encoding="utf-8-sig")
+                return self.respond(content, html=True, content_type=mime)
             except OSError:
                 return self.respond({'error':'화면 파일을 읽을 수 없습니다.'},503)
         if path == "/api/meta":
@@ -187,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/recommendation/mock":
             return self.api_response(lambda: self.respond(self.mock_recommendation.info()))
         if path == "/api/user/session":
-            return self.api_response(lambda: self.respond(self.user_sessions.get(self.session_token())))
+            return self.api_response(self.get_user)
         if path == "/api/user/recommendation":
             return self.api_response(lambda: self.respond(self.user_sessions.recommend(self.session_token())))
         if path == "/api/state":
@@ -215,19 +240,24 @@ class Handler(BaseHTTPRequestHandler):
                 self.user_sessions.save_preferences(self.session_token(), self.request_json())))
         self.respond({"error": "없는 API입니다."}, 404)
 
+    def do_DELETE(self):
+        if urlparse(self.path).path == "/api/user/session":
+            return self.api_response(self.end_user)
+        self.respond({"error": "없는 API입니다."}, 404)
+
 
 def make_server(port=8767, config_path=None, root=ROOT, web_root=None, *, host="127.0.0.1", mock_data=None, clock=monotonic):
     store=ScenarioStore(root,config_path)
-    mock = MockRecommendation(store, mock_data or Path(root) / "configs" / MOCK_FILENAME,
-                              sign_facilities=SIGN_FACILITIES)
+    mock = MockRecommendation(store, mock_data or Path(root) / "configs" / MOCK_FILENAME)
     background = BackgroundRun(store.continuous, store.routes, map_hash=store.value['hashes']['map'],
                                ride_operations=store.value['ride_operations']['facilities'],
                                ride_operations_hash=store.value['hashes']['ride_operations'],
                                preferences=store.value['preferences'], preferences_hash=store.value['hashes']['preferences'],
                                clock=clock)
+    user_sessions = UserSessions(store.value, background)
     handler = partial(Handler, store=store, web_root=web_root or Path(root) / "web",
-                      mock_recommendation=mock, user_sessions=UserSessions(mock, store.value, background))
-    return ContinuousServer((host, port), handler, background)
+                      mock_recommendation=mock, user_sessions=user_sessions)
+    return ContinuousServer((host, port), handler, user_sessions)
 
 
 def main():

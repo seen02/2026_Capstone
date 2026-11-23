@@ -1,6 +1,6 @@
 # 추천·시뮬레이션 공통 데이터 계약 v1
 
-기준일: 2026-11-18. 매직아일랜드 추천과 시뮬레이션의 공통 계약이다. 로컬 모의 추천 서버의 계산은 2–7절을 사용한다. HTTP 요청·응답 형식은 [로컬 추천 API](../../lotteworld/README.md#로컬-추천-api)와 [QR 사용자 진입 API](../../lotteworld/README.md#qr-사용자-진입과-선호-입력)에 있다. 현재 서버는 `GET /api/meta`로 설정을 제공하며 `/api/state` 등 엔진 API는 409를 반환한다. 이동·탑승 엔진과 8절의 수락·보상은 후속 작업이다.
+매직아일랜드 추천과 시뮬레이션의 공통 계약이다. 개발용 모의 추천과 QR 사용자 추천은 2–7절의 계산을 공유한다. 연속 시연 서버는 `GET /api/meta`로 설정을, `GET /api/state`로 실행 중인 시뮬레이션 상태를 제공한다. HTTP 요청·응답 형식은 [로컬 추천 API](../../lotteworld/README.md#로컬-추천-api)와 [QR 사용자 진입 API](../../lotteworld/README.md#qr-사용자-진입과-선호-입력)에 있다.
 
 2026-11-18에 보상 조건과 예제를 정정했다. 서버가 유효한 **추천 수락을 확정한 것**에 대해 보상을 지급한다. 이동·대기·탑승·이용 완료는 지급 조건에 포함되지 않는다.
 
@@ -57,7 +57,7 @@
 
 `Position`은 `{point: [number, number], node_id: string | null}`이다. `point`는 `[x,y]`, 단위는 가상 m, `x-right-y-down`이다. Three.js에서는 `[x, 높이, y]`로 표시한다. 위경도·화면 픽셀·실측 좌표가 아니다. `node_id`가 있으면 해당 노드 좌표와 일치해야 하며 임의 좌표는 `null`이다. 공공 보행 위치와 대기·탑승 중 전용 위치의 허용 영역은 캐릭터 phase에 따라 엔진이 검사한다. 현재 위치를 시설 모형 중심으로 대체하지 않는다.
 
-로컬 QR 진입은 표지판 `magic-island-west`를 자이로스핀·혜성특급·자이로드롭 사이의 가상 좌표 `[101, 149]`m에 등록한다. 생성 요청은 `contract_version`과 등록된 `sign_id`를 전달한다. 서버는 현재 지도의 공공 보행 구역을 검사하고 표지판 주변의 빈 가상 위치에 캐릭터를 배치한다. 응답의 `sign`은 `{sign_id, map_hash, position}`이다. 예제의 `west-center` 노드는 표지판 주변에서 기존 모의 경로 표로 연결하는 지점이다.
+로컬 QR 진입은 표지판 `magic-island-west`를 자이로스핀·혜성특급·자이로드롭 사이의 가상 좌표 `[123, 111]`m에 등록한다. 생성 요청은 `contract_version`과 등록된 `sign_id`를 전달한다. 서버는 현재 지도의 공공 보행 구역을 검사하고 표지판에서 걸어갈 수 있는 주변의 빈 가상 위치에 캐릭터를 배치한다. 응답의 `sign`은 `{sign_id, map_hash, position}`이다.
 
 표지판에는 자이로스핀(`gyro-spin`)·혜성특급(`comet-express`)·자이로드롭(`gyro-drop`) 방향 안내판이 각각 하나씩 있다. 같은 응답의 `facilities`에 이 세 시설을 내려주며, QR 선호 순위와 추천 대상은 서버에 설정된 안내판 목록을 따른다.
 
@@ -79,7 +79,7 @@
 | `clock` | Clock | 묶음의 재생 시각·모드 |
 | `facilities` | FacilityState[6] | 지도 시설별 정확히 한 건. 누락·중복 ID는 오류 |
 
-`Source`는 `{kind: "mock" | "simulation", provider_id: string}`이다. `mock`는 작성된 가상 현황, `simulation`은 실제 엔진 상태에서 얻은 현황이다. UI와 기록은 `kind`를 유지한다. 지도 설정·정적 대기 자리 좌표만으로 `simulation`을 발행하지 않는다. v1은 한 묶음에 다른 출처를 섞지 않는다. `video`·`manual` 및 영상/모형 혼합 추정은 향후 확장 때 지표별 출처·촬영/수신/분석 시각을 정의한 뒤 연결한다. 영상 인원만으로 예상 대기시간이 알려졌다고 처리하지 않는다.
+`Source`는 `{kind: "mock" | "simulation", provider_id: string}`이다. `mock`는 작성된 가상 현황, `simulation`은 실제 엔진 상태에서 얻은 현황이다. API 응답과 기록은 `kind`를 유지한다. 지도 설정·정적 대기 자리 좌표만으로 `simulation`을 발행하지 않는다. v1은 한 묶음에 다른 출처를 섞지 않는다. `video`·`manual` 및 영상/모형 혼합 추정은 향후 확장 때 지표별 출처·촬영/수신/분석 시각을 정의한 뒤 연결한다. 영상 인원만으로 예상 대기시간이 알려졌다고 처리하지 않는다.
 
 `Clock`은 `{sim_time_s: number ≥ 0, time_scale: number > 0, mode: "running" | "paused" | "ended"}`다. `time_scale`은 실제 1초에 진행할 시뮬레이션 초이며 일시정지 중에는 재개 시 배속이다. `paused`에서는 시뮬레이션 시간이 증가하지 않는다. `ended`는 명시적 실행 종료이며 고정 시간표 끝이나 표시 시각의 순환으로 자동 전환하지 않는다.
 
@@ -116,7 +116,7 @@
 | `session_id` | string | 서버가 발급한 익명 세션 ID. 인증 비밀값 자체는 아님 |
 | `character_id` | string | 같은 context에서 세션에 1:1 연결한 캐릭터 |
 | `revision` | integer ≥ 0 | 선호·위치·phase·현재 이용 변경 때 증가 |
-| `created_at`, `expires_at` | timestamp | 생성/만료 실제 시각. 로컬 QR 시연에서는 발급 후 30분 |
+| `created_at`, `expires_at` | timestamp | 생성/만료 실제 시각. 로컬 QR 시연에서는 마지막 진입 또는 세션 조회 후 5분에 만료 |
 | `phase` | enum | `awaiting_preferences`, `ready`, `moving`, `queued`, `riding`, `ended` |
 | `position` | Position | 서버/엔진이 관리하는 현재 가상 위치 |
 | `position_sim_time_s` | number ≥ 0 | 해당 위치의 재생 시각. snapshot clock보다 미래일 수 없음 |
@@ -127,7 +127,7 @@
 
 QR URL을 공유해도 독립 브라우저 프로필마다 세션·캐릭터를 발급한다. 서버는 무작위 자격을 `HttpOnly`·`SameSite=Strict` 쿠키로 보내고 세션을 메모리에 저장한다. 같은 쿠키로 다시 접속하면 기존 세션을 조회한다. 로컬 사용자 추천은 이 세션의 `position`과 `preference_order`를 사용한다. 세션·캐릭터 ID는 응답에서 식별용으로 제공한다.
 
-로컬 세션은 발급 후 실제 시간으로 30분에 만료되며 새로고침·재접속으로 연장되지 않는다. 만료된 세션의 조회·선호 저장·추천은 차단하며 다음 QR 진입 요청에서 배치 자리를 반환한다. 서버 재시작·epoch 변경 시 v1은 세션 재개를 지원하지 않는다. 세션·실행 문맥이 바뀐 뒤 이전 선호 저장을 재전송하면 충돌로 처리한다.
+로컬 세션은 마지막 `GET /api/user/session` 또는 QR 진입 후 실제 시간 5분에 만료된다. 두 요청 모두 서버 만료 시각과 쿠키를 갱신한다. 같은 쿠키로 만료 전에 재진입하면 캐릭터와 대기 순서를 이어간다. 전체 지도의 조회는 참여 신호에 포함되지 않는다. `DELETE /api/user/session`은 현재 쿠키와 본문의 `contract_version`, `session_id`로 세션을 종료한다. 성공하면 `status: "ended"`와 만료된 세션 쿠키를 반환한다. 쿠키가 가리키는 활성 세션 ID가 요청과 다르면 `session_mismatch`를 반환하고 해당 세션을 보존한다. 종료된 캐릭터는 다음 상태 갱신부터 공개 명단에서 빠진다. 만료된 세션의 조회·선호 저장·추천은 차단하며 다음 QR 진입 요청에서 배치 자리를 반환한다. 서버 재시작·epoch 변경 시 v1은 세션 재개를 지원하지 않는다. 세션·실행 문맥이 바뀐 뒤 이전 선호 저장을 재전송하면 충돌로 처리한다.
 
 수락·엔진 연동 이후에는 만료 시 신규 수락을 중지하고 진행 중 이용을 서버가 중단·종료로 정리한다. 이미 확정된 추천 수락의 보상 이력·미지급 의무는 보존한다.
 
@@ -148,7 +148,9 @@ QR URL을 공유해도 독립 브라우저 프로필마다 세션·캐릭터를 
 
 `RecommendationInput.routes`는 6개 시설별 정확히 한 건이다. context와 세션 revision이 같은 입력에서 계산하며 경로 origin은 session.position과 일치해야 한다. 도착점은 입구 좌표여야 한다. 거리 합 허용 오차는 0.001m이며 내부 계산은 반올림하지 않는다. 실제 보행 시간과 단순 거리÷임의 속도를 혼동하지 않는다. v1 점수에는 거리만 쓰며 `walking_seconds: null`이어도 추천할 수 있다.
 
-`route(source_node_id, target_node_id)`는 노드 ID를 받고 전용 입출구 접속부까지 처리한다. 로컬 모의 공급자는 이 함수로 생성한 경로 표를 현재 지도 해시와 대조해 사용한다. 기본 지원 위치는 `west-center`, `west-north`, `west-spin`이다. `between(start,end)`는 공공 보행 면 안의 경로를 찾고 전용 입구 접속부는 별도 처리한다. 임의 출발점에서 입구까지의 동적 경로 어댑터는 후속 구현이다. `open-plaza-v1`은 격자 2m·반경 0.25m의 정적 안내 거리다.
+`route(source_node_id, target_node_id)`는 노드 ID를 받고 전용 입출구 접속부까지 처리한다. 개발용 모의 공급자는 이 함수로 생성한 경로 표를 현재 지도 해시와 대조해 사용한다. 기본 지원 위치는 `west-center`, `west-north`, `west-spin`이다. `open-plaza-v1`은 격자 2m·반경 0.25m의 정적 안내 거리다.
+
+QR 추천의 `public-visibility-v1`은 캐릭터의 현재 좌표를 공공 보행 연결점과 장애물 바깥 모서리에 연결한다. 서버는 방문객 반경을 확보한 선분만 연결해 시설 입구 바깥 대기 지점까지 최단 경로를 찾고, 마지막 입구 접속부를 이어 붙인다. 첫 접속과 하차 후 추천 모두 이 방식을 쓰며, 같은 좌표열을 추천 거리·지도 표시·수락 후 이동에 사용한다.
 
 추천 계산은 전달받은 `RouteEstimate`만 사용한다. 브라우저와 서버가 서로 다른 직선/그래프 거리를 같은 `method`로 표시하지 않는다. 노드 기반 `walking_route`/`route.mjs`는 검사용 참조이며 광장 경로의 자동 대체가 아니다. 경로 공급 실패는 `unavailable`, 실제 연결 불가는 `unreachable`로 구분하며 직선거리로 숨겨 대체하지 않는다. 경로 알고리즘·격자·반경을 바꾸면 `method`도 바꾼다.
 
@@ -184,7 +186,7 @@ QR URL을 공유해도 독립 브라우저 프로필마다 세션·캐릭터를 
 
 필수 필드: `contract_version`, `context`, `result`(`recommended | no_candidate`), `session_id`, `session_revision`, `snapshot_seq`, `source`, `policy_id`, `evaluated_at`, `recommendation`, `excluded`.
 
-`recommendation`은 `no_candidate`일 때 `null`, 성공 시 다음 객체다. `excluded`는 `{facility_id, codes: string[]}` 배열이며 평가 대상 중 제외된 시설별 한 건이다. 코드는 `operation_unavailable`, `admission_unavailable`, `wait_unknown`, `wait_stale`, `observation_stale`, `route_unreachable`, `route_unavailable`을 사용하며 여러 사유를 보존할 수 있다.
+`recommendation`은 `no_candidate`일 때 `null`, 성공 시 다음 객체다. `excluded`는 `{facility_id, codes: string[]}` 배열이며 평가 대상 중 제외된 시설별 한 건이다. 코드는 `operation_unavailable`, `admission_unavailable`, `wait_unknown`, `wait_stale`, `observation_stale`, `route_unreachable`, `route_unavailable`, `round_start_recent_ride`를 사용하며 여러 사유를 보존할 수 있다.
 
 | 성공 객체 필드 | 자료형 | 의미 |
 | --- | --- | --- |
@@ -197,13 +199,21 @@ QR URL을 공유해도 독립 브라우저 프로필마다 세션·캐릭터를 
 | `reason_codes` | string[] | v1은 `preference_wait_distance` |
 | `reason_text` | string | 예: ‘선호 2순위이며 예상 대기 5분과 현재 위치에서의 경로 거리를 함께 고려했습니다.’ |
 
-만료 판정은 실제/재생 시각 중 하나라도 **만료 시각 이상**이면 만료다. 이유 문구는 보존한 근거로 만들며 ‘가장 빠름’·실측 보장 같은 계산 밖의 주장을 하지 않는다. `source`는 입력 그대로 보존하며 UI에 모의/시뮬레이션을 표시한다. 추천은 예약·입장 확약이 아니다.
+만료 판정은 실제/재생 시각 중 하나라도 **만료 시각 이상**이면 만료다. 이유 문구는 보존한 근거로 만들며 ‘가장 빠름’·실측 보장 같은 계산 밖의 주장을 하지 않는다. 응답의 `source`는 입력 그대로 보존한다. 사용자 웹의 추천 카드에는 시설명과 예상 대기 시간을 표시하고, 시뮬레이션 웹에서는 선택한 QR 캐릭터의 추천 목적지와 경로를 표시한다. 추천은 예약·입장 확약이 아니다.
+
+로컬 QR 추천의 출처는 `kind: simulation`, `provider_id: simulation-queue-v1`이다. 첫 추천, 선호 변경, 하차 후 추천은 각각 계산 시점의 시설 운영 여부와 대기열 여유, `/api/state`의 `estimated_wait_sim_s`와 동일한 시설별 추정식을 사용한다. 이 추정은 대기열에 들어간 인원과 입구로 오는 인원, 회차 간격, 탑승 정원을 반영한다. 대기열이 가득 찼거나 운행하지 않는 시설은 제외한다. 개발용 `POST /api/recommendation`의 출처는 `mock`이다.
+
+로컬 QR 세션은 현재 바퀴에 하차를 완료한 시설을 기록한다. 바퀴 도중에는 아직 타지 않은 시설을 우선하고, 이용 가능한 미탑승 시설이 없으면 방금 탄 시설을 뒤로 미뤄 기존 비용으로 비교한다. 안내 대상 세 시설의 하차를 완료하거나 저장된 선호 순위가 바뀌면 현재 바퀴의 기록을 초기화하고 직전 이용 시설은 기억한다. 동일한 순위를 다시 저장해도 진행 중인 바퀴는 유지된다.
+
+새 바퀴의 첫 추천에서는 직전 이용 시설을 `round_start_recent_ride`로 제외하고, 나머지 후보를 저장된 선호 순위, 현재 예상 대기 시간, 이동 거리로 평가한다. 나머지 시설이 모두 추천 불가이면 사용자 웹에서 시뮬레이션 대기열을 주기적으로 다시 조회한다. 응답의 `rank`는 저장한 선호 순위를 나타낸다.
 
 잘못된 입력은 추천 결과로 위장하지 않고 `{contract_version, error: {code, message}}`로 반환한다. 공통 오류 코드는 `invalid_input`, `unsupported_version`, `context_mismatch`, `session_expired`, `session_not_ready`, `snapshot_stale`, `position_stale`, `run_ended`다. `message`는 한국어다. HTTP 상태·인증·라우팅은 실제 서버 구현에서 이 의미에 맞춰 정한다.
 
 ## 8. 수락·상태 전이·보상
 
-로컬 QR 시연의 `POST /api/user/recommendation/accept`는 아래 명령 필드로 수락을 검증하고 엔진 이용을 메모리에 한 건 연결한다. 두 지도는 `moving`, `waiting_at_entrance`, `queued`, `boarding`, `riding`, `unloading`, `completed`를 표시한다. 마지막 상태는 시설의 하차 출구를 지나 공공 연결점에 도착했을 때 표시한다. 이용 완료 이벤트, 다음 추천, 수락 이벤트와 보상 응답은 전체 연동의 계약이다. [로컬 시연 API](../../lotteworld/README.md#qr-사용자-진입과-선호-입력)
+로컬 QR 시연의 `POST /api/user/recommendation/accept`는 아래 명령 필드로 수락을 검증하고 엔진 이용을 메모리에 연결한다. 두 지도는 `moving`, `waiting_at_entrance`, `queued`, `boarding`, `riding`, `unloading`, `completed` 상태를 공유한다. `queued`의 공개 캐릭터 상태에는 1부터 시작하는 대기 순번 `queue_position`과 탑승을 시작하기까지의 예상 시뮬레이션 초 `queue_wait_sim_s`가 들어 있다. 다른 이용 상태의 두 값은 `null`이다. 예상에는 줄 선 순서, 회차당 탑승 정원, 차량·승강장 운영 상태를 반영한다.
+
+`completed`는 하차 출구를 지나 공공 연결점에 도착했을 때 표시한다. 이 상태에서 `PUT /api/user/preferences` 또는 `GET /api/user/recommendation`을 호출하면 현 위치를 보존해 `ready`로 전환한다. 새 추천은 하차 지점과 시설 입구를 잇는 공공 보행 경로를 사용한다. 같은 세션의 기존 수락 요청은 다시 보내도 최초 성공 응답을 돌려준다. 이용 완료·수락 이벤트와 보상 응답은 전체 연동의 계약이다. [로컬 시연 API](../../lotteworld/README.md#qr-사용자-진입과-선호-입력)
 
 ### AcceptRecommendation
 
