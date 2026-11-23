@@ -20,6 +20,8 @@
 
 `--validate-only` 출력은 `status: map_ready`, `runnable: false`이고 실행 중 `GET /api/meta`는 `status: continuous_running`, `runnable: true`다. 양쪽 모두 `map_ready: true`, `map_view: guide-map-3d`와 다섯 설정·해시를 제공한다. 정렬된 JSON의 UTF-8 바이트를 SHA-256으로 계산하며 `day.json`은 `hashes.config`, 시설 운행은 `hashes.ride_operations`, 연속 시연은 `hashes.continuous`에 대응한다.
 
+실행 중 `GET /api/meta`의 `signs`는 가상 안내판의 `sign_id`, `name`, `map_hash`, `position`, `facility_ids`를 제공한다. `position.point`는 3D 지도와 같은 미터 좌표 `[x, z]`이며, QR 세션의 `sign.position`과 같은 값을 사용한다.
+
 서버의 기본 바인딩 주소는 `127.0.0.1`이다. `/`는 지도 화면을 제공하며 정적 자원 요청은 허용 목록을 사용한다. `GET /api/state`는 연속 시연 상태를 제공한다. 안내판·보고서·수동 진행·되감기·초기화 API는 HTTP 409, 없는 경로는 HTTP 404를 반환한다.
 
 ## 연속 시연 설정과 상태
@@ -37,6 +39,8 @@
 
 `GET /api/state`는 `scenario_id`, 서버 실행 중 일정한 `run_id`, 보행에 사용하는 `map_hash`, `status: continuous_running`, `clock.sim_time_s`·`clock.time_scale`을 반환한다. `background`는 `target_people`, `entered_total`(누적 진입), `present_people`(현재 체류), `exited_total`(누적 퇴장), 현재 체류 중인 `visitors`와 시설별 `queues`를 담는다. 예정 체류가 끝난 방문객도 다리 외부 경계를 통과할 때까지 현재 체류에 포함한다. 경계를 통과해 빈자리가 생기면 보충 간격을 적용한다. `entered_total = present_people + exited_total`을 유지한다.
 
+`background.visitor_flow`는 배경 방문객의 `sim_time_s`, `entered_total`, `exited_total`, `present_people`을 실행 시작과 이후 시뮬레이션 60초마다 집계한다. 기록은 시각 오름차순으로 최대 121개(최근 2시간)를 반환한다. 서버는 브라우저의 접속 여부와 관계없이 실행 중에 이를 기록하며, 새 `run_id`에는 새 기록이 생성된다.
+
 서버는 시작 시 검증한 연속 설정·지도 좌표·시설 운행·방문객 선호를 실행 전체에 사용한다. `/api/meta`의 지도·기존 시간표·시설 운행·선호 설정은 저장 후 다시 읽으며, 지도·운행·선호 변경은 서버 재시작 시 새 실행에 적용한다. `/api/state`의 `map_hash`·`ride_operations_hash`·`preferences_hash`로 현재 실행이 쓰는 입력을 식별한다. 지도 화면은 로드한 지도 해시가 실행과 일치할 때만 동적 상태를 합성한다. 1,500명은 혼잡 시연을 위한 동시 인원 가정이다. [연속 시연 검증 기록](../../docs/verification/magic-island-continuous-arrivals.md)
 
 `/api/state.qr`는 연속 실행의 `context`와 실제 시간 기준으로 유효한 `characters`를 제공한다. 쿠키가 필요한 `/api/user/session` 등은 동일한 형식의 행을 `character`로 제공한다. 수락한 캐릭터의 위치와 상태는 대기열·차량을 처리하는 엔진에서 함께 읽는다. 대기 순서 `queue_position`은 자리로 걸어가는 예약 인원도 포함한 1부터 시작하는 순서다. 차량 배정 시 `vehicle_id`를 제공한다. 이동 좌표가 없는 차량 이용 구간에서 `position.point`는 `null`이고 `map_point`는 화면에 표시할 탑승 기준점이다. QR은 시설의 대기 인원·탑승 인원에 포함하며 배경 방문객의 유입·체류·퇴장 보존식과 공개 명단은 별도로 유지한다.
@@ -45,23 +49,26 @@
 
 `visitors`는 실행 내 증가하는 정수 `visitor_id` 순이다. 각 행은 진입 시각 `entered_at_sim_s`, 예정 퇴장 시각 `leave_at_sim_s`, 평면 미터 좌표 `point: [x,z]`, `state`, `facility_id`, `queue_slot`, `vehicle_id`, `departure_requested`를 제공한다. `preference_profile_id`는 배정한 선호 유형 ID다. `completed_rides`는 하차 보행을 시작한 시점까지 시설별로 센 이용 횟수이며 첫 이용 전에는 빈 객체다. `queue_slot`은 해당 시설 `queue_report.slots`의 0부터 시작하는 예약 인덱스이며 값이 클수록 탑승 지점에 가깝다. 보행 중인 방문객의 좌표는 경로를 따라 갱신한다. `vehicle_id`는 승차 접근부터 하차 보행 시작 전까지 배정된 시설 내 차량 번호다. 시설·자리·차량 배정이 없거나 현재 보행 좌표가 없는 경우 해당 필드는 `null`이다. `departure_requested`는 예정 체류 만료 이후 참이다.
 
-최근 보행 구간이 있으면 `walk_trail`에 `[내부 초, x, z]` 배열을 시간순으로 제공한다. 직전 실제 시간 1.2초 안에서 현재 보행의 경유점과 끝점을 제공한다. 전체 지도는 약 0.5초 뒤 화면에 수신한 좌표와 경유점을 보간해 코너를 따라 움직이는 사람 모형을 그린다.
+최근 보행 구간이 있으면 `walk_trail`에 `[내부 초, x, z]` 배열을 시간순으로 제공한다. 직전 실제 시간 1.2초 안의 경유점과 끝점을 제공하고, 산책 중 경로나 목적이 바뀌면 전환 직전의 보행 궤적을 함께 보낸다. 전체 지도는 약 0.5초 뒤 화면에 수신한 좌표와 경유점을 보간해 코너를 따라 움직이는 사람 모형을 그린다. 대기 자리를 예약한 방문객의 `queue_entry_at_sim_s`는 초록색 입구에 도달하는 시각이며, 화면은 같은 시각의 보간 좌표에서 대기 색으로 바꾼다.
+
+퇴장 중인 방문객의 `exit_path`는 다리 바깥 경계까지 이어지는 `[x, z]` 경유점이다. 화면의 방문객이 충돌 회피로 뒤처진 경우 퇴장 집계 후에도 남은 경로를 걸어 다리 끝에서 화면을 벗어난다.
 
 전체 지도에서 공공 보행 중인 배경 방문객은 가까운 사람과의 간격을 확인한다. 앞으로 갈 수 없으면 잠깐 기다리고, 정체가 이어지면 뒤쪽이나 옆의 빈 포장면을 이용한다. 건물을 사이에 두고 경로에서 뒤처졌을 때는 공공 보행 구역에서 돌아가는 연결 경로를 찾는다. 이 조정은 3D 화면의 보행 위치에 적용된다. 서버의 대기 자리·탑승 순서·회차 시간과 모바일 QR 캐릭터 좌표는 서버 상태를 따른다.
 
 | 상태 | 동작 |
 | --- | --- |
-| `walking_to_queue` | 추천받은 시설 입구로 이동한다. 입구에 들어갈 수 없으면 바로 다른 목적지로 향한다. 당장 갈 시설이 없으면 열린 광장을 걸으며 추천을 다시 확인하고, 이때 `facility_id`는 `null`이다. |
-| `joining_queue`, `queued`, `advancing_queue` | 자리 하나를 예약하고 줄 중심선을 걷는다. 앞자리가 비면 대기 순서대로 전진한다. |
+| `walking_to_queue` | 현재 위치에서 선택한 시설의 입구 바깥까지 보행 경로를 따라 이동한다. 들어갈 수 없으면 도착 지점에서 다음 목적지로 바로 향한다. 갈 만한 시설이 없으면 포장면에서 무작위로 고른 위치로 걷고 이동 중에도 시설을 다시 확인한다. 산책 중 `facility_id`는 `null`이다. |
+| `approaching_queue_gate` | 자리 하나를 예약한 뒤 초록색 입구 표식까지 걷는다. 화면에는 보행 색을 쓴다. |
+| `joining_queue`, `queued`, `advancing_queue` | 입구를 밟으면 대기 색으로 전환한다. 앞자리가 비면 직선과 회전부를 따라 대기 순서대로 전진한다. |
 | `walking_to_board`, `at_boarding_point` | 선두부터 1회 정원 이내로 탑승 진입점을 거쳐 시설 경계까지 걷는다. 도착한 뒤에는 차량에서 출발을 기다리는 상태로, 전체 지도에서 배경 방문객의 보행 모형을 숨긴다. |
 | `on_ride`, `waiting_for_station` | 운행 중이거나 코스 주행을 마치고 빈 승강장을 기다린다. 현재 좌표는 `null`이다. |
-| `awaiting_unload`, `walking_from_ride` | 하차 순서를 기다리고 빨간 출구를 1 내부 초 간격으로 통과한다. 배경 방문객은 출구 뒤에 확보한 공공 보행 지점에서 각자의 다음 목적지로 방향을 틀고, QR 이용은 기존 출구 합류점에서 완료된다. |
+| `awaiting_unload`, `walking_from_ride` | 하차 순서를 기다리고 빨간 출구를 1 내부 초 간격으로 통과한다. 배경 방문객은 빨간 점 이후 여러 전용 하차 경로로 나뉘어 공용 보행 지점에서 각자의 다음 목적지로 향한다. QR 이용은 지정된 출구 합류점에서 완료된다. |
 | `waiting_to_exit` | 예정 체류 안에 입구까지 도달하고 새 대기열에 합류할 수 있는 시설이 없으면 현재 공공 연결점에서 예정 체류 만료까지 머문다. |
 | `walking_to_exit` | 다리 외부 경계로 돌아간다. 도착 시 명단에서 빠지고 `exited_total`이 증가한다. |
 
-시설별 `queues`에는 `capacity`(배치한 자리 수), `reserved_count`(줄에 합류해 자리를 배정받은 인원), `queued_count`(배정된 자리에 서 있는 인원), `approaching_count`(추천 수락 후 시설로 이동하거나 합류를 기다리는 인원), `estimated_wait_sim_s`(내부 초 단위의 예상 대기 시간)가 포함된다. 합류하면 수락 인원이 자리 예약으로 전환된다.
+시설별 `queues`에는 `capacity`(배치한 자리 수), `reserved_count`(대기 자리를 배정받은 인원), `waiting_count`(입구를 통과해 줄에 있는 인원), `queued_count`(배정된 자리에 서 있는 인원), `approaching_count`(시설로 이동하거나 합류를 기다리는 인원), `estimated_wait_sim_s`(내부 초 단위의 예상 대기 시간)가 포함된다. `waiting_count`는 입구를 통과한 뒤 배정 자리까지 걷거나 앞자리로 전진하는 인원을 포함하며, 탑승 이동을 시작했거나 참여를 종료한 인원은 집계에서 제외한다.
 
-기본 연속 시연에서 공공 보행은 방문객마다 시드로 정한 경로 변형과 내부 초당 1.15~1.65m의 속도를 사용한다. 변형은 광장의 장애물과 호안을 피하고 다리에서는 진행 방향에 따라 폭을 나눠 쓴다. 줄과 승하차 구간은 정해진 경로에서 내부 초당 1.4m로 이동한다. 대기열에 합류하는 보행과 만료된 QR 세션의 자리 정리는 경로를 따라 최소 1.15m 간격으로 시작한다. 공공 보행 중 체류가 만료되면 현재 경로의 합류점에서 다리로 향한다. 대기 합류부터 하차까지는 체류 만료 이후에도 진행한다. 예정 체류가 지난 방문객은 하차 후 다리로 향한다.
+기본 연속 시연에서 배경 방문객은 통과 가능한 공공 보행 연결점을 이용해 현재 위치에서 목적지까지의 최단 경로를 계산한다. 이를 기준으로 방문객마다 시드로 정한 경로 변형과 내부 초당 1.15~1.65m의 속도를 사용한다. 변형은 광장의 장애물과 호안을 피하고 다리에서는 진행 방향에 따라 폭을 나눠 쓴다. 줄과 승하차 구간은 정해진 경로에서 내부 초당 1.4m로 이동한다. 대기열에 합류하는 보행과 만료된 QR 세션의 자리 정리는 경로를 따라 최소 1.15m 간격으로 시작한다. 공공 보행 중 체류가 만료되면 현재 경로의 합류점에서 다리로 향한다. 대기 합류부터 하차까지는 체류 만료 이후에도 진행한다. 예정 체류가 지난 방문객은 하차 후 다리로 향한다.
 
 서버에서 가동하는 여섯 시설은 모두 자동으로 승하차를 진행한다. `BackgroundRun`에 운행 설정을 주지 않은 대기열 검증에서는 `board_next(facility_id, seats)`·`unload(facility_id)`로 한 묶음의 보행을 확인할 수 있다. QR 세션의 유효 시간이 지나면 대기열에서 차지한 자리를 이탈 통로를 통해 정리한다. [공간·런타임 검증](../../docs/verification/magic-island-physical-queues-and-boarding.md)
 
@@ -78,7 +85,9 @@
 
 기존 형식에서 `behavior`를 생략하면 표의 기본값을 적용한다. 개인의 시설별 대기 허용 시간은 기본 시간에 `0.5 + 선호 점수 / 10`을 곱한다. 선택 후보는 예정 체류 안에 입구까지 걸어갈 수 있고 예상 대기가 허용 시간보다 짧은 시설이다. 후보별 추첨 가중치는 `시설 가중치 × 개인 선호 점수 × 재탑승 계수 ÷ (1 + (공공 보행 + 예상 대기) / 비용 기준)`이다. 미이용 시설의 재탑승 계수는 1이다.
 
-배경 방문객은 휴대폰을 쓴다고 가정하며, 첫 목적지가 필요할 때나 하차했을 때, 기존 목적지로 갈 수 없을 때 현재 시설별 예상 대기를 조회한다. 대기는 `(대기 예약 인원 + 합류 전 인원) × 명목 출발 간격 ÷ 좌석 수`와 줄 선두까지의 보행 시간 중 큰 값으로 추정한다. 명목 간격은 설정한 최소 출발 간격, 코스 첫 구간 통과 시간, 차량당 명목 회차 시간 및 승강장당 승하차 시간 중 가장 긴 값이다. 합산 인원이 정원에 도달한 시설은 새 추천 후보에서 제외한다. 입구에서는 체류 만료 여부, 남은 자리, 안전한 진입 간격을 확인한다.
+배경 방문객은 휴대폰을 쓴다고 가정하며, 첫 목적지가 필요할 때나 하차했을 때, 기존 목적지로 갈 수 없을 때, 광장을 걷는 도중에 현재 시설별 예상 대기를 조회한다. 대기는 `(대기 예약 인원 + 합류 전 인원) × 명목 출발 간격 ÷ 좌석 수`와 줄 선두까지의 보행 시간 중 큰 값으로 추정한다. 명목 간격은 설정한 최소 출발 간격, 코스 첫 구간 통과 시간, 차량당 명목 회차 시간 및 승강장당 승하차 시간 중 가장 긴 값이다. 합산 인원이 정원에 도달한 시설은 새 추천 후보에서 제외한다. 입구에서는 체류 만료 여부, 남은 자리, 안전한 진입 간격을 확인한다.
+
+선호와 대기 허용 시간에 맞는 시설이 없으면 방문객 반경을 반영해 현재 위치에서 안전하게 도달할 수 있는 포장면의 좌표를 무작위로 고른다. 주변 인원이 적은 목적지를 조금 더 자주 고르고, 이동 중에도 방문객마다 다른 주기로 시설을 확인한다. 합류할 수 있는 시설을 선택하면 그때의 보행 위치와 대기열 입구를 연결하는 경로로 전환한다.
 
 휴대폰을 확인하는 보행 구간은 방문객마다 다르다. 하차 출구나 경로를 바꾼 입구에서 처음 6~12m는 평소 속도로 걷고, 보행 경로가 충분히 길면 잠시 감속한다. 도착 전 마지막 4m는 평소 속도로 걷는다. 출구 통과 순서와 대기줄 보행에는 이 감속을 적용하지 않는다.
 
@@ -109,7 +118,7 @@
 - 복귀한 차량은 공용 승강장이 찼으면 코스 밖의 논리적 복귀 대기 상태에 머무른다. 빈 승강장은 복귀 순서대로 먼저 배정하고, 이후 가용 차량을 투입한다. 승강장의 번호는 점유를 나타내는 논리적 위치다. 시설별 지도에는 하나의 승차 접근로와 하나의 빨간 출구를 사용한다.
 - 하차 보행은 승강장 배정부터 시작하고 모든 차량의 출구 통과를 1 내부 초 간격으로 예약한다. 하차 시간과 출구까지 걷는 시간은 겹쳐 진행되며, 설정한 하차 시간이 끝나고 마지막 승객이 빨간 출구를 통과한 뒤 승강장을 비운다. 퇴장 예정 시각이 지난 승객은 하차와 다리 보행을 마친 뒤 퇴장으로 집계한다.
 
-`GET /api/state`의 `rides`는 시설 ID별 `vehicle_count`, `station_capacity`, `seats_per_vehicle`, `dispatch_count`, `riding_people`, `last_dispatch_at_sim_s`, `next_dispatch_min_at_sim_s`, `course_section_count`, `course_entry_available_at_sim_s`를 제공한다. 화면의 대기 인원은 자리에 도달한 `queued_count`다. 탑승 인원 `riding_people`은 코스 운행 중이거나 복귀 후 승강장 진입을 기다리는 탑승객의 합이다. 최소 간격 시각과 첫 구간 가용 시각은 실제 출발의 하한이다. 첫 출발 전의 마지막 출발 시각은 `null`, 두 하한은 내부 시각 `0`이다.
+`GET /api/state`의 `rides`는 시설 ID별 `vehicle_count`, `station_capacity`, `seats_per_vehicle`, `dispatch_count`, `riding_people`, `last_dispatch_at_sim_s`, `next_dispatch_min_at_sim_s`, `course_section_count`, `course_entry_available_at_sim_s`를 제공한다. 화면의 대기 인원은 줄 안에서 전진 중인 사람도 포함하는 `queues.waiting_count`다. 탑승 인원 `riding_people`은 코스 운행 중이거나 복귀 후 승강장 진입을 기다리는 탑승객의 합이다. 최소 간격 시각과 첫 구간 가용 시각은 실제 출발의 하한이다. 첫 출발 전의 마지막 출발 시각은 `null`, 두 하한은 내부 시각 `0`이다.
 
 각 `vehicles` 행은 1부터 시작하는 시설별 `vehicle_id`, `state`, `station_slot`, `course_section`, `last_dispatched_at_sim_s`, 배경 `passenger_ids`와 `qr_character_ids`를 담는다. 두 명단의 합이 실제 정원 계산에 사용된다. 상태는 `available`(대기), `boarding`(접근·확인), `ready`(출발 대기), `running`(운행), `waiting_for_station`(복귀 후 승강장 대기), `unloading`(하차)이다. `station_slot`과 `course_section`은 점유 중에만 1부터 시작하는 번호를 제공한다. 승차로 배정된 방문객은 하차 보행을 시작할 때 차량 명단에서 빠진다. [검증 기록](../../docs/verification/magic-island-ride-operations.md)
 
@@ -117,28 +126,35 @@
 
 `geometry`는 `units: m`, `axis: x-right-y-down`이다. JSON의 두 번째 평면 좌표를 3D의 z로 옮기고 3D y를 높이로 사용한다. 길이·높이는 같은 가상 미터 단위다. 지도 픽셀을 실측 거리로 환산하지 않는다. 기본 `bounds`는 `[0,0,370,330]`이며 시설·구획과 참조 통행 폭은 범위 안에 있어야 한다.
 
-- `render_style: guide-map-3d`, `island_outline`: 섬 외곽의 유한한 2D 꼭짓점 목록. 중복·자기 교차·면적 없는 다각형을 거절한다. `island`·`lake` 사각형은 배경 범위의 기존 메타데이터이며 실제 섬 경계는 `island_outline`이다.
-- `public_space: island-minus-reservations`: 섬 내부의 넓은 포장 면에서 시설의 `bounds`·`queue`·`exit_area`, `castle`, `scenery_buildings`, `landscape_beds`를 제외한다. 나머지는 그래프 중심선 밖이라도 보행 가능하다. 섬 윤곽은 주 섬·남쪽 메이플 돌출부·다리 양옆 수면 홈을 구분한다. 섬 밖에서는 다리의 실제 직사각형 유효 폭만 허용한다. `public_walkable(map_data, point, radius=0)`가 개인 반경·해안 경계·제외 구획을 반영한다.
-- `landscape_beds`는 녹지로 표시하는 식재 사각형 목록이다. 시설 입구로 가는 길목 양옆의 녹지도 여기에 포함하며, 시설·대기 구획·보행로 유효 폭과 겹칠 수 없다. 선택 항목인 `landscape_trees`는 녹지 안에 지정해서 심는 나무의 좌표다. `scenery_buildings`는 성 뒤 배경 건물의 예약 구획이다. `castle_height_m`은 성의 표시 높이 기준이다. `castle_forward`는 성 정면과 다리의 공통 방향, `castle_model_scale_xz`는 회전 후 점유 구획에 맞춘 평면 배율, `forecourt_width_m`은 정면 광장의 표시 폭이다.
+- `render_style: guide-map-3d`, `island_outline`: 섬 외곽의 유한한 2D 꼭짓점 목록. 기본 지도는 진저브레드형 E안의 422개 해안 표본점을 사용한다. 다리 축과 해안이 만나는 점부터 폭 12m의 데크를 그린다. 중복·자기 교차·면적 없는 다각형을 거절한다. `island`·`lake` 사각형은 배경 범위의 기존 메타데이터이며 실제 섬 경계는 `island_outline`이다.
+- `public_space: island-minus-reservations`에서는 넓은 포장 면에서 시설의 `bounds`·`queue`·`exit_area`, `scenery_buildings`, `castle_footprint`, `landscape_areas`, `ride_access_areas`, `signposts`의 점유 면을 뺀다. `public_walkable(map_data, point, radius=0)`는 개인 반경과 해안·다리 경계도 반영한다. 다리 양쪽 수면 홈은 다리 축에 대칭이며, `south-east-bend`를 거치는 남쪽 참조 경로는 폭 8m다. 섬 밖 보행은 다리의 유효 직사각형 안에서 허용된다.
+- `signposts`는 안내판 ID별 이름, 3D 좌표 `point`, 안내 대상 `facility_ids`를 저장한다. `clearance_radius_m`은 기둥 주변에 확보하는 사각형 보행 여유의 반폭이다. 서쪽 안내판 좌표를 QR 참여 위치를 배정하는 기준으로 사용한다.
+- `castle_footprint`는 성 본체·정문·탑의 바닥을 따르는 한 개의 외곽선이다. 기본 지도에서 약 552㎡를 덮는다. `castle`은 성 모형의 기준 사각형이며 `castle_forward`는 성 정면과 다리의 공통 방향이다. `castle_height_m`은 높이, `castle_model_scale_xz`는 평면 배율, `forecourt_width_m`은 정면 광장 표시 폭이다. 이전 지도에서 `castle_footprint`를 생략하면 `castle` 사각형이 보행 장애물로 쓰인다.
+- `landscape_areas`에는 녹지의 `id`, `outline`, 필요하면 `holes`와 `coastal`을 둔다. `holes`는 녹지 안에 남긴 포장 면이며 해안 구역은 섬 외곽까지 이어진다. `landscape_beds`의 37개 사각형은 식재 후보 범위를 제공한다. `landscape_trees`에는 지정 식재 좌표를 둔다. 이전 지도에서 `landscape_areas`를 생략하면 `landscape_beds`가 보행 장애물로 쓰인다.
+- `ride_access_areas`의 각 행은 해당 놀이기구의 `facility_id`와 섬 내부의 단순 다각형 `outline`을 갖는다. 기본 지도는 시안의 주황선을 따라 승차·하차·대기 통로 주위 여섯 구역을 정의한다. 공용 보행과 산책에서는 이 구역을 피하고, 해당 시설의 대기 입구 접속·승하차·대기 이탈 경로는 자기 구역을 통과할 수 있다. 각 시설의 공용 입구 접근점과 하차 후 공용 합류점은 구역 바깥에 있다.
 - `nodes`: 고유 문자열 `id`와 유한한 두 좌표 `point`. ID에 붙은 숫자는 식별자이며 현재 좌표를 뜻하지 않는다. `boundary`는 다리 경계 노드를 참조한다. `bridge_placement: castle-forecourt-to-southeast`이며 `bridge-island`에서 외부 경계까지 한 개의 직선 다리로 연결한다. 성 중심·성 정문·다리 시작·끝은 `castle_forward`와 같은 축에 있어야 한다.
 - `edges`: 고유 `id`, 기존 노드를 가리키는 `source`·`target`, `width`, `kind`. 양방향이며 0 길이·중복 연결을 거절한다. 최소 참조 폭은 `main`·`bridge` 8m이며 기본 다리 폭은 12m다. `branch` 5m, `exit` 3m다. 이 폭은 보행 가능한 포장 면 전체를 제한하지 않는다. 다리 외 연결은 반폭까지 섬 내부에 있어야 한다.
 - 시설별 `shape`: `drop`, `swing`, `water-coaster`, `comet-coaster`, `disk`, `speedway`. `bounds`·`queue`·`exit_area`는 `[x,y,width,height]`다. `entrance`·`exit`는 서로 다른 노드를 참조한다. `model_height_m`은 모형 높이 기준, `label_anchor`는 이름표의 평면 기준점이다. 모든 시설은 `level: 0`이다. 혜성특급은 `comet-coaster`로 지상에 표시하며 B1·지하 절개는 사용하지 않는다.
 
-`validate_geometry`는 좌표·자료형·범위·참조, 모든 노드의 연결성과 다리에서 입출구까지의 왕복 경로, 예약 구획의 상호 겹침과 섬 내부 배치, 연결 동선의 유효 폭과 대기 완충을 검사한다. 대기 구획과 참조 동선에는 1.5m 완충을 적용하고 해당 입구 지선·전용 하차 접속부만 예외다. 입구는 대기 구획 경계에 있고 바깥쪽에서 접근해야 하며 출구는 전용 하차 합류 구획 안에 있어야 한다. `VisitorRoutes`는 이 그래프의 공공 연결과 별도의 입구 접속, 대기 중심선, 이탈 게이트, 승하차 전용 구간을 사용한다.
+`validate_geometry`는 좌표·자료형·범위·참조, 모든 노드의 연결성과 다리에서 입출구까지의 왕복 경로, 예약 구획의 상호 겹침과 섬 내부 배치, 연결 동선의 유효 폭과 대기 완충을 검사한다. 대기 구획과 참조 동선에는 1.5m 완충을 적용하고 해당 입구 지선·전용 하차 접속부만 예외다. 입구는 대기 구획 경계에 있고 바깥쪽에서 접근해야 하며 출구는 전용 하차 합류 구획 안에 있어야 한다. `VisitorRoutes`와 대기열 검증은 공공 보행 변형, 입구 접속, 줄 안 보행, 이탈 게이트, 승하차 연결에 방문객 반경과 장애물 경계를 적용한다. 전용 하차 경로의 분산은 빨간 점을 통과한 뒤 시작하며, 공용 구역에서 다음 경로로 연결한다.
 
 `walking_route(map_data, source, target)`와 `route.mjs`는 연결 그래프 내 최단 노드 목록과 거리를 반환하는 검사용 참조다. 실제 지도 표시 경로는 `navigation.mjs`의 `createNavigator(map).route(source,target)`를 사용한다. 결과의 `nodes`는 양 끝의 ID, `points`는 실제 표시 경로의 평면 좌표, `distance_m`은 좌표 간 거리 합, `mode`는 `open-plaza`다.
 
 표시 탐색은 2m 격자·반경 0.25m와 포장 면·장애물·해안·다리를 사용한다. 대각선 모서리 관통을 막고 직선 통과가 가능한 경유점을 합친다. 입출구는 전용 지선의 짧은 접속부로 공공 보행 면에 연결한다. 안내 거리는 격자 탐색과 직선화로 계산한다. 공공 광장의 일반적인 사람 사이 충돌 회피는 후속 범위다.
 
-`queue.mjs`의 `queueLayout(bounds,entrance,rules,boardingCapacity,rideBounds,queueCapacity)`와 Python `queue_capacity.py`는 같은 반원 회전부·벨트 경계(`railPaths`)와 직선 자리 좌표를 생성한다. 시설의 `queue_capacity`는 정수 대기 정원이다. 정원을 열별로 고르게 배분하고 남는 자리는 앞 열부터 한 자리씩 추가한다. 이 필드를 생략한 지도는 물리적으로 배치 가능한 자리 전체를 사용한다. 이탈 통로가 있는 쪽의 벨트는 첫 줄의 이탈 게이트에서 두 부분으로 나뉜다. `rails`는 간섭 검사용 선분이며 기둥은 경계의 호 길이에 따라 배치한다. 지도 라벨과 상세에는 수용 인원·자리 수를 표시하지 않는다. 시설의 `boarding_capacity`는 1회 탑승 정원이다. 아트란티스는 보트 1대 8명, 혜성특급은 열차 1편성 26명, 나머지는 1회차 정원이다.
+`queue.mjs`의 `queueLayout(bounds,entrance,rules,boardingCapacity,rideBounds,queueCapacity)`와 Python `queue_capacity.py`는 같은 반원 회전부·벨트 경계(`railPaths`)와 대기 자리 좌표를 생성한다. 시설의 `queue_capacity`는 정수 대기 정원이다. 정원을 열별로 고르게 배분하고 남는 자리는 앞 열부터 한 자리씩 추가한다. 일부 자리는 다음 열로 이어지는 회전부에 배치한다. 이 필드를 생략하면 직선 구간에 배치할 수 있는 자리 수로 정원을 산정한다. 이탈 통로가 있는 쪽의 벨트는 첫 줄의 이탈 게이트에서 두 부분으로 나뉜다. `rails`는 간섭 검사용 선분이며 기둥은 경계의 호 길이에 따라 배치한다. 지도 라벨과 상세에는 수용 인원·자리 수를 표시하지 않는다. 시설의 `boarding_capacity`는 1회 탑승 정원이다. 아트란티스는 보트 1대 8명, 혜성특급은 열차 1편성 26명, 나머지는 1회차 정원이다.
 
-`geometry.queue_rules`는 `minimum_boarding_multiple: 2.5`, `layout_scale: 1.15`, `person_radius_m: 0.345`, `spacing_m: 0.92`, `end_clearance_m: 0.92`이다. `layout_scale`은 통로 폭, 회전부, 이탈 통로에 적용하며 생략하면 1을 사용한다. 반경, 자리 간격과 줄 끝 여백은 지도상의 미터 단위다. 진입 통로·회전 구간을 제외하고 직선 줄의 양 끝 여백을 남겨 자리를 만든다. 자리 몸체의 구획 포함, 기둥·벨트 간섭, 전체 자리 간격과 `ceil(boarding_capacity × minimum_boarding_multiple)` 이상 수용을 검증한다. 부족하면 설정을 거절한다. `/api/meta`의 `queue_report`는 시설별 정원, `slots`, `rails`, `railPaths`, `boarding_exit`, `boarding_target`, `reverse_rows`와 보행용 `points`, `withdrawal`, `slot_indices`, `withdrawal_slot_indices`를 제공한다. 화면의 배치·수용 수치를 서버 결과와 대조한다.
+`geometry.queue_rules`는 `minimum_boarding_multiple: 2.5`, `layout_scale: 1.15`, `person_radius_m: 0.345`, `spacing_m: 0.92`, `end_clearance_m: 0.92`이다. `layout_scale`은 통로 폭, 회전부, 이탈 통로에 적용하며 생략하면 1을 사용한다. 반경, 최소 자리 간격과 줄 끝 여백은 지도상의 미터 단위다. 진입 통로를 비워 두고 직선 양 끝의 여백과 회전부의 최소 간격을 확보한다. 자리 몸체의 구획 포함, 기둥·벨트 간섭, 전체 자리 간격과 `ceil(boarding_capacity × minimum_boarding_multiple)` 이상 수용을 검증한다. 부족하면 설정을 거절한다. `/api/meta`의 `queue_report`는 시설별 정원, `slots`, `rails`, `railPaths`, `boarding_exit`, `boarding_target`, `reverse_rows`와 보행용 `points`, `withdrawal`, `slot_indices`, `withdrawal_slot_indices`를 제공한다. 화면의 배치·수용 수치를 서버 결과와 대조한다.
 
-지도 바닥은 연속된 포장 면과 실제 다리 메시로 구성한다. 연결 그래프의 섬 내부 지선, 논리적 `plaza`, 정면 연결 띠는 별도 바닥으로 그리지 않는다. 성 정면·다리 축과 예약 구획·보행 가능 판정은 유지한다.
+지도 바닥은 연속된 포장 면, `castle_footprint`를 따르는 성 바닥, 실제 다리 메시로 구성한다. `plaza`와 섬 내부 참조 그래프는 광장 위치와 보행 연결을 제공하며 성 정면과 다리는 공통 축을 따른다.
+
+네 녹지 구역은 포장면과 같은 높이의 지면색으로 표시한다. 북쪽에서 동쪽으로 이어지는 해안 녹지와 아르카나라이드 바깥의 남서쪽 해안 녹지는 표시된 해안선에 닿는다. 혜성특급과 매직캐슬 동쪽의 화단은 각기 독립된 구역이다. 시설·대기열·하차 구획과 접근·복귀 동선 주변에는 포장 여유를 둔다. 자이로스윙의 진입과 하차, 아트란티스의 하차 후 연결 노드는 녹지 바깥을 지나도록 배치했다.
+
+고정 시드로 구역별 격자의 후보 좌표를 무작위로 분산해 같은 지도에서 배치를 재현한다. 나무에는 둥근 수관과 뾰족한 수관을 쓰며 `landscape_beds` 밖의 나무는 물가 가까이 둔다. 수풀은 둥근 잎 덩어리 세 개를 겹치고 전체 높이를 방문객 키의 약 40~55%로 표현한다. 성·녹지 다각형과 경로 변경에 맞춰 지도 해시, 모의 추천 경로, 계약 예제를 함께 갱신한다. 수면에는 짧은 흰 물결을 드문드문 배치한다.
 
 대기 외곽은 시설별 `queue`를 따른다. 혜성특급·자이로스핀은 13.8×32.2m, 아르카나라이드는 28.06×18.4m, 나머지는 28.06×13.8m이며 하차 합류 외곽은 8×6m다. 대기 외곽과 `queue_capacity`를 함께 검사한다. 시설 이름표와 동선 강조선은 관찰용 주석이며 물리적 점유 구획이 아니다. 모형은 정적 형상으로 운행·차량 가동 상태를 나타내지 않는다.
 
-배경 방문객과 QR 캐릭터는 같은 높이로 그린다. 배경 방문객의 표시 높이는 이전의 1.95배이고, 식재 모형은 방문객 키의 약 4.5~6배다. 화면 비율은 성인 신장과 중형 가로수 높이 범위를 참고했다. [미국 CDC 성인 신장](https://www.cdc.gov/nchs/fastats/body-measurements.htm) · [새크라멘토시 가로수 목록](https://www.cityofsacramento.gov/public-works/maintenance-services/urban-forestry/urban-forestry-tree-permits/street-treet-list-)
+배경 방문객과 QR 캐릭터는 같은 높이로 그린다. 배경 방문객의 표시 높이는 이전의 1.95배다. 기본 나무는 18~24m, 해안 나무는 시야를 덜 가리도록 10~15m 높이 범위로 배치한다. 화면 비율은 성인 신장과 가로수 높이 범위를 참고했다. [미국 CDC 성인 신장](https://www.cdc.gov/nchs/fastats/body-measurements.htm) · [새크라멘토시 가로수 목록](https://www.cityofsacramento.gov/public-works/maintenance-services/urban-forestry/urban-forestry-tree-permits/street-treet-list-)
 
 ## 3D 자원과 준비 상태
 

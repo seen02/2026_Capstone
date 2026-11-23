@@ -11,7 +11,7 @@
 | 위치 | 실행 상태 | 기본 포트 |
 | --- | --- | --- |
 | [aquarium/](aquarium/README.md) | 기존 아쿠아리움 시뮬레이션·CLI·정적 시안 | 8765 (정적 시안8766) |
-| [lotteworld/](lotteworld/README.md) | 매직아일랜드 3D 지도·설정 검증·로컬 모의 추천 서버·[QR 진입 및 선호 입력](lotteworld/README.md#qr-사용자-진입과-선호-입력) | 8767 |
+| [lotteworld/](lotteworld/README.md) | 매직아일랜드 3D 지도·설정 검증·로컬 모의 추천 서버·[QR 진입 및 선호 입력](lotteworld/README.md#qr-사용자-진입과-선호-입력) | 3000 |
 | [docs/](docs/design.md) | 매직아일랜드 명세·운영 조사·체크리스트·인계·검증 기록 | — |
 
 각 프로젝트의 코드·지도·운영·선호·테스트·실행 스크립트는 해당 폴더 안에 있다. 두 폴더는 서로의 런타임을 가져오지 않으며 각 폴더만 복사해도 실행할 수 있다. 기존 아쿠아리움 설계·재사용 기록과 `web-admin` 문서는 모두 `aquarium/` 아래에 있다.
