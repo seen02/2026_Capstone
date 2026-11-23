@@ -50,7 +50,10 @@ class ReloadTests(unittest.TestCase):
             thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
             base=f'http://127.0.0.1:{server.server_port}'
             def get(path):
-                with urlopen(base+path,timeout=3) as response:return json.load(response)
+                # 지도 변경 후 메타데이터를 다시 만들 때 보행 경로도 검증한다.
+                timeout = 15 if path == '/api/meta' else 3
+                with urlopen(base+path, timeout=timeout) as response:
+                    return json.load(response)
             try:
                 initial=get('/api/meta');version=get('/api/dev-version')
                 run_id = get('/api/state')['run_id']
