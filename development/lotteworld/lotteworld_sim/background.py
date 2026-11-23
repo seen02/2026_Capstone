@@ -1,6 +1,6 @@
 """연속 유입, 개인 체류, 대기열과 시설 운행을 진행한다."""
 from bisect import bisect_left, bisect_right
-from collections import deque
+from collections import Counter, deque
 from dataclasses import dataclass, field
 from heapq import heappop, heappush
 from itertools import count
@@ -21,6 +21,9 @@ QR_PHASES = {
     'awaiting_unload': 'unloading', 'walking_from_ride': 'unloading', 'completed': 'completed',
 }
 QR_PHASE_ORDER = tuple(dict.fromkeys(QR_PHASES.values()))
+ROAMING_RECHECK_SIM_S = (8, 14)
+ROAMING_DENSITY_INTERVAL_SIM_S = 6
+ROAMING_DENSITY_CELL_M = 16
 
 
 @dataclass(frozen=True)
@@ -86,6 +89,7 @@ class Visitor:
     facility_id: str | None = None
     motion: Motion | None = None
     slot: int | None = None
+    queue_entry_at_sim_s: float = 0
     has_waited: bool = False
     withdrawing: bool = False
     expired: bool = False
@@ -96,11 +100,24 @@ class Visitor:
     completed_rides: dict[str, int] = field(default_factory=dict)
     walking_variant: int | None = None
     public_speed_m_s: float = WALK_M_PER_S
+    roaming: bool = False
+    recent_roaming_trail: list = field(default_factory=list)
+
+    def walk_trail(self, now, lookback):
+        trail = [point for point in self.recent_roaming_trail if point[0] >= now - lookback]
+        current = self.motion.trail(now, lookback)
+        if current:
+            if trail and trail[-1][0] == current[0][0]:
+                trail.pop()
+            trail.extend(current)
+        return trail
 
     def snapshot(self, now, trail_sim_s=0):
         state = self.phase
         if state == 'in_queue':
-            if now >= self.motion.end:
+            if now < self.queue_entry_at_sim_s:
+                state = 'approaching_queue_gate'
+            elif now >= self.motion.end:
                 state = 'queued'
             else:
                 state = 'advancing_queue' if self.has_waited else 'joining_queue'
@@ -112,7 +129,11 @@ class Visitor:
             'completed_rides': dict(self.completed_rides),
         }
         if trail_sim_s and self.motion:
-            if trail := self.motion.trail(now, trail_sim_s):
+            if self.phase == 'in_queue':
+                snapshot['queue_entry_at_sim_s'] = self.queue_entry_at_sim_s
+            if state == 'walking_to_exit':
+                snapshot['exit_path'] = self.motion.path.points
+            if trail := self.walk_trail(now, trail_sim_s):
                 snapshot['walk_trail'] = trail
         return snapshot
 
@@ -154,6 +175,9 @@ class BackgroundRun:
         self.profile_random = Random(config['seed'] + 2)
         self.choice_random = Random(config['seed'] + 3)
         self.walk_random = Random(config['seed'] + 4)
+        self.roaming_random = Random(config['seed'] + 5)
+        self.roaming_density = Counter()
+        self.next_density_sample = 0
         self.profiles = preferences['profiles'] if preferences is not None else None
         self.behavior = (preferences.get('behavior', DEFAULT_PREFERENCE_BEHAVIOR)
                          if preferences is not None else DEFAULT_PREFERENCE_BEHAVIOR)
@@ -275,9 +299,8 @@ class BackgroundRun:
     def _can_enter(now, queue):
         return not queue.entrance_waiters and len(queue.members) < queue.capacity and now >= queue.next_entry
 
-    def _seek_preferred_queue(self, now, visitor, source, fraction, avoid):
-        destinations, weights = [], []
-        can_reach_queue = False
+    def _preferred_queue(self, now, visitor, source, fraction, avoid=None, *, roaming=False):
+        candidates = []
         for key, queue in self.queues.items():
             score = visitor.profile['preferences'][key]
             if not score:
@@ -286,12 +309,22 @@ class BackgroundRun:
             if self.queue_times[key][0] >= wait_limit:
                 continue
             wait = self._estimated_wait(key)
+            entrance = queue.paths.queue.points[1]
             available = (key != avoid and len(queue.members) + queue.approaching_people < queue.capacity
                          and wait < wait_limit
-                         and (source != queue.paths.approach or self._can_enter(now, queue)))
+                         and (source != entrance or self._can_enter(now, queue)))
+            if available or not roaming:
+                candidates.append((key, entrance, score, wait, available))
+
+        paths = self.routes.roaming_entrances(source, [item[0] for item in candidates]) if roaming and candidates else {}
+        destinations, weights = [], []
+        can_reach_queue = False
+        for key, entrance, score, wait, available in candidates:
             if not available and can_reach_queue:
                 continue
-            path = self._public_path(visitor, source, queue.paths.approach)
+            path = paths.get(key) if roaming else self._public_path(visitor, source, entrance)
+            if path is None:
+                continue
             origin = fraction * path.length
             pace = self._recommendation_pace(visitor, path, origin)
             walk = Motion(path, now, origin, path.length, visitor.public_speed_m_s, pace).elapsed_at(path.length - origin)
@@ -306,8 +339,14 @@ class BackgroundRun:
             weights.append(self.behavior['facility_weights'][key] * score * repeat / cost)
 
         if destinations:
-            (key, path), = self.choice_random.choices(destinations, weights)
-            self._walk_to_queue(now, visitor, key, path, fraction)
+            choice, = self.choice_random.choices(destinations, weights)
+            return choice, can_reach_queue
+        return None, can_reach_queue
+
+    def _seek_preferred_queue(self, now, visitor, source, fraction, avoid):
+        choice, can_reach_queue = self._preferred_queue(now, visitor, source, fraction, avoid)
+        if choice:
+            self._walk_to_queue(now, visitor, *choice, fraction)
             return
         visitor.facility_id = None
         if not can_reach_queue and not (isinstance(source, tuple) or source in self.routes.approach_nodes):
@@ -315,15 +354,91 @@ class BackgroundRun:
             visitor.waiting_source = source
             visitor.motion = Motion(self.routes.public_path(source, source), now, 0, 0)
             return
-        # 당장 갈 시설이 없으면 입구를 돌지 않고 열린 광장을 걷다가 다시 확인한다.
-        desired_span = 50 + visitor.visitor_id % 8 * 5
-        stop = self.routes.plaza_stop(source, desired_span)
-        if stop is not None:
-            path = self._public_path(visitor, source, stop)
-            pace = self._recommendation_pace(visitor, path, 0)
-            self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, stop, slower=pace)
+        if source == self.routes.boundary:
+            landing = self.routes.bridge_landing
+            path = self._public_path(visitor, source, landing)
+            self._walk(now, visitor, 'walking_to_queue', path, self._seek_queue, landing,
+                       origin=fraction * path.length)
             return
-        self._schedule(now + self.walk_gap, self._seek_queue, visitor, source)
+        self._start_roaming(now, visitor, source)
+
+    @staticmethod
+    def _density_cell(point):
+        x, z = point
+        return x // ROAMING_DENSITY_CELL_M, z // ROAMING_DENSITY_CELL_M
+
+    def _nearby_walkers(self, point):
+        return self.roaming_density[self._density_cell(point)]
+
+    def _sample_roaming_density(self, now):
+        if now < self.next_density_sample:
+            return
+        self.roaming_density = Counter(
+            self._density_cell(other.motion.path.point_at(other.motion.distance_at(now)))
+            for other in self.visitors.values()
+            if other.motion and other.phase in ('walking_to_queue', 'walking_to_exit')
+        )
+        self.next_density_sample = now + ROAMING_DENSITY_INTERVAL_SIM_S
+
+    def _remember_roaming_trail(self, now, visitor):
+        visitor.recent_roaming_trail = visitor.walk_trail(now, self.time_scale * 1.2)
+
+    def _start_roaming(self, now, visitor, source):
+        if visitor.roaming:
+            self._remember_roaming_trail(now, visitor)
+        self._sample_roaming_density(now)
+        path = self.routes.roaming_path(source, self.roaming_random, self._nearby_walkers)
+        if path is None:
+            point = self.routes.nodes[source] if isinstance(source, str) else source
+            path = Path([point])
+        visitor.phase = 'walking_to_queue'
+        visitor.roaming = True
+        visitor.motion = Motion(path, now, 0, path.length, visitor.public_speed_m_s)
+        self._schedule_roaming_check(now, visitor)
+
+    def _schedule_roaming_check(self, now, visitor):
+        motion = visitor.motion
+        check_at = now + self.roaming_random.uniform(*ROAMING_RECHECK_SIM_S)
+        if motion.end > now:
+            check_at = min(check_at, motion.end)
+        self._schedule(check_at, self._recheck_roaming, visitor, motion)
+
+    def _leave_roaming(self, now, visitor):
+        motion = visitor.motion
+        offset = motion.distance_at(now)
+        point = motion.path.point_at(offset)
+        path = self.routes.roaming_exit(point, visitor.walking_variant)
+        if path is None and point != motion.path.points[-1]:
+            # 중간 위치에서 바로 연결할 수 없으면 이미 검증된 산책 구간의 끝까지 이어 간다.
+            exit_path = self.routes.roaming_exit(motion.path.points[-1], visitor.walking_variant)
+            if exit_path:
+                upcoming = bisect_right(motion.path.offsets, offset)
+                path = Path([point, *motion.path.points[upcoming:-1], *exit_path.points])
+        if path is None:
+            return False
+        self._remember_roaming_trail(now, visitor)
+        visitor.roaming = False
+        self._walk(now, visitor, 'walking_to_exit', path, self._depart)
+        return True
+
+    def _recheck_roaming(self, now, visitor, motion):
+        if not visitor.roaming or visitor.motion is not motion:
+            return
+        point = motion.path.point_at(motion.distance_at(now))
+        if visitor.expired:
+            if self._leave_roaming(now, visitor):
+                return
+        else:
+            choice, _ = self._preferred_queue(now, visitor, point, 0, roaming=True)
+            if choice:
+                self._remember_roaming_trail(now, visitor)
+                visitor.roaming = False
+                self._walk_to_queue(now, visitor, *choice, 0)
+                return
+        if now >= motion.end:
+            self._start_roaming(now, visitor, point)
+        else:
+            self._schedule_roaming_check(now, visitor)
 
     @staticmethod
     def _recommendation_pace(visitor, path, origin):
@@ -346,16 +461,18 @@ class BackgroundRun:
         key = visitor.facility_id
         queue = self.queues[key]
         queue.approaching_people -= 1
+        source = queue.paths.queue.points[1] if visitor.profile is not None else queue.paths.approach
         if visitor.expired or not self._can_enter(now, queue):
-            self._seek_queue(now, visitor, queue.paths.approach, avoid=key)
+            self._seek_queue(now, visitor, source, avoid=key)
             return
-        self._join_queue(now, visitor, queue)
+        self._join_queue(now, visitor, queue, origin=queue.paths.queue.offsets[1] if visitor.profile is not None else 0)
 
     def _join_queue(self, now, visitor, queue, *, origin=0):
         queue.next_entry = now + self.walk_gap
         visitor.phase = 'in_queue'
         visitor.slot = queue.capacity - 1 - len(queue.members)
         visitor.motion = Motion(queue.paths.queue, now, origin, queue.paths.slots[visitor.slot])
+        visitor.queue_entry_at_sim_s = now + visitor.motion.elapsed_at(max(0, queue.paths.queue_gate_offset - origin))
         queue.members.append(visitor)
         if ride := self.rides.get(visitor.facility_id):
             ride.wake(now)
@@ -366,39 +483,45 @@ class BackgroundRun:
             visitor = QRVisitor(character_id, now, float('inf'), facility_id=facility_id)
             self.qr_visitors[character_id] = visitor
             # 입구를 먼저 차지한 방문객이 통과하도록 마지막 공공 보행점에서 기다린다.
-            hold = max(path.offsets[-2], path.length - .8)
+            hold = path.offsets[-2]
+            if facility_id not in self.routes.ride_access_areas:
+                hold = max(hold, path.length - .8)
             self.queues[facility_id].approaching_people += 1
             self._walk(now, visitor, 'walking_to_queue', path, self._arrive_qr, target=hold)
 
     def _arrive_qr(self, now, visitor):
         if visitor.expired:
             return
-        visitor.phase = 'waiting_at_entrance'
         queue = self.queues[visitor.facility_id]
         queue.entrance_waiters.append(visitor)
         if len(queue.entrance_waiters) == 1:
             self._admit_qr_waiter(now, queue)
+        else:
+            visitor.phase = 'waiting_at_entrance'
 
     def _admit_qr_waiter(self, now, queue):
         while queue.entrance_waiters and queue.entrance_waiters[0].expired:
             queue.entrance_waiters.popleft()
         if not queue.entrance_waiters:
             return
-        gate = queue.paths.queue.offsets[2]
-        tail_clear = (not queue.members or
-                      queue.members[-1].motion.distance_at(now) >= gate + self.routes.queue_headway_m - 1e-8)
-        if len(queue.members) >= queue.capacity or now < queue.next_entry or not tail_clear:
-            self._schedule(max(now + 1, queue.next_entry), self._admit_qr_waiter, queue)
-            return
         visitor = queue.entrance_waiters[0]
-        self._walk(now, visitor, 'waiting_at_entrance', visitor.motion.path, self._join_qr_at_gate, queue,
+        gate = queue.paths.queue_gate_offset
+        gate_travel = (visitor.motion.path.length - visitor.motion.target) / WALK_M_PER_S
+        gate_time = now + gate_travel
+        tail_clear = (not queue.members or
+                      queue.members[-1].motion.distance_at(gate_time) >= gate + self.routes.queue_headway_m - 1e-8)
+        if len(queue.members) >= queue.capacity or gate_time < queue.next_entry or not tail_clear:
+            visitor.phase = 'waiting_at_entrance'
+            self._schedule(max(now + 1, queue.next_entry - gate_travel), self._admit_qr_waiter, queue)
+            return
+        self._walk(now, visitor, visitor.phase, visitor.motion.path, self._join_qr_at_gate, queue,
                    origin=visitor.motion.target)
 
     def _join_qr_at_gate(self, now, visitor, queue):
         queue.entrance_waiters.popleft()
         if not visitor.expired:
             queue.approaching_people -= 1
-            self._join_queue(now, visitor, queue, origin=queue.paths.queue.offsets[2])
+            self._join_queue(now, visitor, queue, origin=queue.paths.queue_gate_offset)
         self._admit_qr_waiter(now, queue)
 
     def _compact(self, now, queue):
@@ -417,6 +540,8 @@ class BackgroundRun:
             self._depart(now, visitor)
         elif visitor.phase == 'waiting_to_exit':
             self._seek_queue(now, visitor, visitor.waiting_source)
+        elif visitor.roaming:
+            self._leave_roaming(now, visitor)
 
     def _try_qr_retirement(self, now, visitor):
         queue = self.queues[visitor.facility_id]
@@ -541,8 +666,13 @@ class BackgroundRun:
         if isinstance(visitor, QRVisitor):
             self._walk(now, visitor, 'walking_from_ride', paths.unloading, self._finish_qr_visit)
         elif visitor.walking_variant is not None:
-            offset, release = paths.exit_releases[visitor.walking_variant % len(paths.exit_releases)]
-            self._walk(now, visitor, 'walking_from_ride', paths.unloading, self._seek_queue, release, target=offset)
+            path, releases = paths.unloading, paths.exit_releases
+            variant = visitor.walking_variant
+            if paths.unloading_variants:
+                variant, lane = divmod(variant, len(paths.unloading_variants))
+                path, releases = paths.unloading_variants[lane]
+            offset, release = releases[variant % len(releases)]
+            self._walk(now, visitor, 'walking_from_ride', path, self._seek_queue, release, target=offset)
         else:
             self._walk(now, visitor, 'walking_from_ride', paths.unloading, self._seek_queue, paths.exit_merge)
 
@@ -556,15 +686,21 @@ class BackgroundRun:
         snap = visitor.snapshot(at, self.time_scale * 1.2)
         phase = QR_PHASES[visitor.phase]
         tick = int((at - visitor.entered_at_sim_s) * 10 / self.time_scale)
+        position = queue.members.index(visitor) + 1 if phase == 'queued' else None
+        ride = self.rides.get(visitor.facility_id)
+        wait = (ride.estimated_queue_wait(at, position, self.queue_times[visitor.facility_id][1])
+                if position is not None and ride is not None else None)
         return {
             'phase': phase,
+            'facility_id': visitor.facility_id,
             'revision_delta': tick * len(QR_PHASE_ORDER) + QR_PHASE_ORDER.index(phase),
             'position': {'point': list(snap['point']) if snap['point'] is not None else None,
                          'node_id': queue.paths.exit_merge if phase == 'completed' else None},
             'position_sim_time_s': at,
             'walk_trail': snap.get('walk_trail'),
             'map_point': list(queue.paths.queue.points[-1]) if snap['point'] is None else None,
-            'queue_position': queue.members.index(visitor) + 1 if phase == 'queued' else None,
+            'queue_position': position,
+            'queue_wait_sim_s': wait,
             'vehicle_id': visitor.vehicle_id,
         }
 
@@ -595,6 +731,8 @@ class BackgroundRun:
                     'queues': {key: {'capacity': queue.capacity, 'reserved_count': len(queue.members),
                                      'approaching_count': queue.approaching_people,
                                      'estimated_wait_sim_s': self._estimated_wait(key),
+                                     'waiting_count': sum(v.phase == 'in_queue' and not v.withdrawing
+                                                          and v.queue_entry_at_sim_s <= now for v in queue.members),
                                      'queued_count': sum(v.phase == 'in_queue' and v.motion.end <= now
                                                          for v in queue.members),
                                      'qr_reserved_count': sum(isinstance(v, QRVisitor) for v in queue.members),

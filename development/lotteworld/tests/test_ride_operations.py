@@ -64,6 +64,17 @@ class RideOperationTests(unittest.TestCase):
                     launches[key].append(ride['last_dispatch_at_sim_s'])
         self.assertTrue(all(len(times) >= 3 for times in launches.values()))
 
+    def test_qr_estimate_counts_batches_ahead_by_queue_position(self):
+        key = 'gyro-drop'
+        run = self.start((key,), initial_people=0, target_people=0)
+        queue, ride = run.queues[key], run.rides[key]
+        for visitor_id in range(ride.seats + 1):
+            run._join_queue(0, Visitor(visitor_id, 0, 10000, facility_id=key), queue)
+        _, headway = run.queue_times[key]
+        front = ride.estimated_queue_wait(0, 1, headway)
+        self.assertEqual(ride.estimated_queue_wait(0, ride.seats, headway), front)
+        self.assertAlmostEqual(ride.estimated_queue_wait(0, ride.seats + 1, headway), front + headway)
+
     def test_full_queue_serves_background_then_qr_arrivals_in_order(self):
         key = 'comet-express'
         run = self.start((key,), initial_people=0, target_people=0)

@@ -1,7 +1,9 @@
 from collections import Counter
 from dataclasses import replace
 from math import ceil, dist
+from itertools import pairwise
 import unittest
+from unittest.mock import patch
 
 from lotteworld_sim.background import BackgroundRun, Motion, Visitor
 from lotteworld_sim.map_geometry import public_walkable
@@ -44,6 +46,16 @@ class VisitorBehaviorTests(unittest.TestCase):
         return TracedRun(continuous, self.routes, clock=lambda: now[0],
                          preferences=preferences, ride_operations=operations), now
 
+    def test_qr_route_detours_around_the_signpost(self):
+        source = (124, 115)
+        entrance = self.routes.facilities['gyro-drop'].queue.points[1]
+        self.assertFalse(self.routes._public_segment_clear(source, entrance, margin=0))
+        route = self.routes.entrances_from_point(source, ['gyro-drop'])['gyro-drop']
+        self.assertEqual(route.points[0], source)
+        self.assertGreater(len(route.points), 3)
+        for a, b in pairwise(route.points[:-1]):
+            self.assertTrue(self.routes._public_segment_clear(a, b, margin=0))
+
     def test_profile_and_remaining_time_change_first_destination(self):
         for key in ('atlantis', 'arcana-ride'):
             with self.subTest(key=key):
@@ -74,35 +86,59 @@ class VisitorBehaviorTests(unittest.TestCase):
             for index, (target, variant) in enumerate(zip(targets, (0, 3)))
         ]
         run._queue_unloading(0, queue, people)
+        private_headings = []
         for index, person in enumerate(people):
             now[0] = index + paths.unloading.offsets[1] / WALK_M_PER_S
             run.advance()
             self.assertEqual(person.phase, 'walking_from_ride')
             self.assertLess(dist(person.motion.path.point_at(person.motion.distance_at(now[0])),
                                  paths.unloading.points[1]), 1e-8)
+            private_headings.append(person.motion.path.point_at(paths.unloading.offsets[1]+3.5))
 
         now[0] = paths.exit_releases[-1][0] / WALK_M_PER_S + 3
         run.advance()
         self.assertEqual(tuple(person.facility_id for person in people), targets)
-        early_headings = []
         phone_starts = []
-        for person in people:
+        for person, target in zip(people, targets):
             self.assertEqual(person.phase, 'walking_to_queue')
             path = person.motion.path
             self.assertLess(dist(path.points[0], paths.unloading.points[1]), 10)
             self.assertNotIn(paths.unloading.points[-1], path.points[:2])
+            self.assertEqual(path.points[-1], run.queues[target].paths.queue.points[1])
             self.assertTrue(all(public_walkable(self.scenario.map, path.point_at(offset), self.routes.radius)
                                 for offset in range(0, int(path.length) + 1)))
-            ahead = path.point_at(6)
-            early_headings.append(tuple(b - a for a, b in zip(path.points[0], ahead)))
             start, end, pace = person.motion.slower
             phone_starts.append(start)
             self.assertGreaterEqual(start, 6)
             self.assertLessEqual(end, path.length - 4)
             self.assertGreater(pace, 0)
             self.assertLess(pace, person.public_speed_m_s)
-        self.assertGreater(dist(*early_headings), 1)
+        self.assertGreater(dist(*private_headings), 1)
         self.assertNotEqual(*phone_starts)
+
+    def test_all_rides_fan_out_only_after_crossing_the_red_exit(self):
+        run, now = self.start(target_people=0)
+        clearance = self.routes.radius + .15
+        for key, paths in self.routes.facilities.items():
+            with self.subTest(facility=key):
+                queue = run.queues[key]
+                red = paths.unloading.points[1]
+                self.assertFalse(public_walkable(self.scenario.map, red, self.routes.radius))
+                self.assertGreaterEqual(len(paths.unloading_variants), 2)
+                locations = []
+                time = now[0]
+                for variant, (path, releases) in enumerate(paths.unloading_variants):
+                    person = Visitor(variant, time, time+1000, facility_id=key, walking_variant=variant)
+                    run._unload_visitor(time, person, queue.paths, None)
+                    self.assertIs(person.motion.path, path)
+                    self.assertEqual(path.points[:2], paths.unloading.points[:2])
+                    self.assertEqual(path.offsets[1], paths.unloading.offsets[1])
+                    locations.append(path.point_at(path.offsets[1]+3.5))
+                    for offset, release in releases:
+                        self.assertGreater(offset, path.offsets[1])
+                        point = self.routes.nodes[release] if isinstance(release, str) else release
+                        self.assertTrue(public_walkable(self.scenario.map, point, clearance), (key, point))
+                self.assertGreater(max(dist(a, b) for a in locations for b in locations), .5)
 
     def test_live_wait_is_read_before_walking_to_a_facility(self):
         key = 'comet-express'
@@ -116,12 +152,28 @@ class VisitorBehaviorTests(unittest.TestCase):
         visitor = run.visitors[1]
         self.assertIsNone(visitor.facility_id)
         self.assertIsNone(visitor.slot)
-        self.assertIn(visitor.motion.path.points[-1], [tuple(self.routes.nodes[node]) for node in self.routes.plaza_nodes])
-        self.assertGreater(visitor.motion.end, now[0])
+        self.assertEqual(visitor.motion.path.points[-1], tuple(self.routes.nodes[self.routes.bridge_landing]))
+        with patch('lotteworld_sim.background.ROAMING_RECHECK_SIM_S', (1, 1)):
+            now[0] = visitor.motion.end
+            run.advance()
+        roam = visitor.motion
+        self.assertTrue(visitor.roaming)
+        stop = roam.path.points[-1]
+        self.assertTrue(public_walkable(self.scenario.map, stop, self.routes.radius))
+        self.assertNotIn(stop, map(tuple, self.routes.nodes.values()))
         queue.members.clear()
-        now[0] = visitor.motion.end
+        now[0] += 1
+        self.assertLess(now[0], roam.end)
+        turning_point = roam.path.point_at(roam.distance_at(now[0]))
         run.advance()
         self.assertEqual(visitor.facility_id, key)
+        self.assertFalse(visitor.roaming)
+        self.assertEqual(visitor.motion.path.points[0], turning_point)
+        self.assertEqual(visitor.motion.path.points[-1], queue.paths.queue.points[1])
+        self.assertEqual(queue.approaching_people, 1)
+        trail = visitor.snapshot(now[0] + .5, 7.2)['walk_trail']
+        self.assertLess(trail[0][0], now[0])
+        self.assertIn([now[0], *turning_point], trail)
 
     def test_arrival_checks_space_and_moves_on_without_a_phone_stop(self):
         key = 'comet-express'
@@ -142,10 +194,11 @@ class VisitorBehaviorTests(unittest.TestCase):
                 if full:
                     self.assertIsNone(visitor.slot)
                     self.assertIsNone(visitor.facility_id)
-                    self.assertEqual(visitor.motion.path.points[0], tuple(self.routes.nodes[queue.paths.approach]))
+                    self.assertEqual(visitor.motion.path.points[0], queue.paths.queue.points[1])
                     self.assertGreater(visitor.motion.distance_at(now[0] + 1), 0)
-                    self.assertIn(visitor.motion.path.points[-1],
-                                  [tuple(self.routes.nodes[node]) for node in self.routes.plaza_nodes])
+                    self.assertTrue(visitor.roaming)
+                    self.assertTrue(public_walkable(self.scenario.map, visitor.motion.path.points[-1],
+                                                    self.routes.radius))
                 else:
                     self.assertIn(visitor, queue.members)
                     self.assertEqual(visitor.phase, 'in_queue')
@@ -171,6 +224,40 @@ class VisitorBehaviorTests(unittest.TestCase):
         self.assertEqual(queue.members, [first])
         self.assertEqual((after['approaching_count'], after['reserved_count'], after['estimated_wait_sim_s']),
                          (0, 1, 3))
+
+    def test_roaming_recheck_reserves_a_single_vacancy(self):
+        key = 'atlantis'
+        run, _ = self.start(only=key, automatic=False, target_people=0)
+        queue = run.queues[key]
+        queue.paths = replace(queue.paths, slots=queue.paths.slots[-1:])
+        profile = {'preferences': {facility: 5 if facility == key else 0 for facility in run.facility_ids}}
+        first, second = (Visitor(i, 0, 1000, profile=profile, wait_patience=900) for i in (1, 2))
+        run._start_roaming(0, first, 'east-south')
+        run._start_roaming(0, second, 'east-south')
+        self.assertNotEqual(first.motion.path.points[-1], second.motion.path.points[-1])
+        run._recheck_roaming(2, first, first.motion)
+        run._recheck_roaming(2, second, second.motion)
+        self.assertEqual(first.facility_id, key)
+        self.assertTrue(second.roaming)
+        self.assertIsNone(second.facility_id)
+        self.assertEqual(queue.approaching_people, 1)
+
+    def test_roaming_expiry_uses_current_position_and_ignores_old_check(self):
+        run, now = self.start(target_people=0)
+        visitor = Visitor(1, 0, 3)
+        run.visitors[1] = visitor
+        run._start_roaming(0, visitor, 'south-east')
+        roam = visitor.motion
+        now[0] = 3
+        point = roam.path.point_at(roam.distance_at(now[0]))
+        run._expire(now[0], visitor)
+        self.assertFalse(visitor.roaming)
+        self.assertEqual(visitor.phase, 'walking_to_exit')
+        self.assertEqual(visitor.motion.path.points[0], point)
+        self.assertEqual(visitor.motion.path.points[-1], tuple(self.routes.nodes[self.routes.boundary]))
+        exit_motion = visitor.motion
+        run._recheck_roaming(8, visitor, roam)
+        self.assertIs(visitor.motion, exit_motion)
 
     def test_visitor_joins_before_stay_ends_and_finishes_ride_after_it(self):
         key = 'atlantis'

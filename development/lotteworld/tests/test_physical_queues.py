@@ -2,7 +2,7 @@ from itertools import combinations, pairwise
 from math import dist
 import unittest
 
-from lotteworld_sim.background import BackgroundRun
+from lotteworld_sim.background import BackgroundRun, Visitor
 from lotteworld_sim.map_geometry import public_walkable
 from lotteworld_sim.scenario import load_inputs
 from lotteworld_sim.visitor_routes import Path, UNLOAD_GAP_S, VisitorRoutes, WALK_M_PER_S
@@ -25,6 +25,46 @@ class PhysicalQueueTests(unittest.TestCase):
     @staticmethod
     def people(run):
         return {row['visitor_id']: row for row in run.snapshot()['background']['visitors']}
+
+    def test_queue_state_starts_when_visitor_crosses_green_entrance(self):
+        run = self.start(0)
+        facility = self.scenario.map['facilities'][0]
+        queue = run.queues[facility['id']]
+        visitor = Visitor(1, 0, 1000, facility_id=facility['id'])
+        run._join_queue(0, visitor, queue)
+        crossing = visitor.queue_entry_at_sim_s
+        self.assertEqual(visitor.snapshot(crossing - .05)['state'], 'approaching_queue_gate')
+        self.now = crossing - .05
+        self.assertEqual(run.snapshot()['background']['queues'][facility['id']]['waiting_count'], 0)
+        self.now = crossing
+        self.assertEqual(run.snapshot()['background']['queues'][facility['id']]['waiting_count'], 1)
+        at_entrance = visitor.snapshot(crossing, trail_sim_s=1)
+        self.assertEqual(at_entrance['queue_entry_at_sim_s'], crossing)
+        self.assertEqual(at_entrance['state'], 'joining_queue')
+        self.assertLess(dist(at_entrance['point'], self.routes.nodes[facility['entrance']]), 1e-8)
+
+    def test_waiting_count_keeps_visitors_advancing_in_line_when_others_board(self):
+        run = self.start(0)
+        facility = 'gyro-drop'
+        queue = run.queues[facility]
+        for visitor_id in (1, 2):
+            visitor = Visitor(visitor_id, 0, 1000, facility_id=facility)
+            run.visitors[visitor_id] = visitor
+            run._join_queue(self.now, visitor, queue)
+            self.now = visitor.motion.end
+        run.entered_total = 2
+        self.assertEqual(run.snapshot()['background']['queues'][facility]['waiting_count'], 2)
+
+        self.assertEqual(run.board_next(facility, 1), (1,))
+        state = run.snapshot()['background']
+        self.assertEqual([visitor['state'] for visitor in state['visitors']], ['walking_to_board', 'advancing_queue'])
+        self.assertEqual(state['queues'][facility]['queued_count'], 0)
+        self.assertEqual(state['queues'][facility]['waiting_count'], 1)
+
+        self.now = max(visitor.motion.end for visitor in run.visitors.values())
+        self.assertEqual(run.unload(facility), (1,))
+        self.assertEqual(run.board_next(facility, 1), (2,))
+        self.assertEqual(run.snapshot()['background']['queues'][facility]['waiting_count'], 0)
 
     def test_full_queues_reroute_at_entrance_and_conserve_population(self):
         run = self.start(1500)
@@ -86,11 +126,30 @@ class PhysicalQueueTests(unittest.TestCase):
         retiring = run.snapshot(with_qr=True)
         self.assertNotIn('qr-first', retiring['qr_visits'])
         self.assertEqual(retiring['background']['queues'][facility]['reserved_count'], 2)
+        self.assertEqual(retiring['background']['queues'][facility]['waiting_count'], 1)
         self.now = first.motion.end
         run.advance()
         self.assertIsNone(first.slot)
         self.assertEqual(queue.members, [following])
         self.assertEqual(following.slot, previous_slot)
+
+    def test_qr_walks_through_clear_gate_without_waiting(self):
+        run = self.start(0)
+        facility = 'gyro-drop'
+        queue = run.queues[facility]
+        entrance = Path(queue.paths.queue.points[:3])
+        run.start_qr_visit('qr-first', facility, entrance)
+        visitor = run.qr_visitors['qr-first']
+        hold = visitor.motion.end
+        self.now = hold + .1
+        approaching = run.qr_visit_state('qr-first')
+        self.assertEqual(approaching['phase'], 'moving')
+        self.assertGreater(dist(approaching['position']['point'], entrance.points[-1]), 0)
+        self.assertEqual(visitor.motion.start, hold)
+        self.now = visitor.motion.end
+        joined = run.qr_visit_state('qr-first')
+        self.assertEqual(joined['phase'], 'queued')
+        self.assertEqual(joined['position']['point'], list(entrance.points[-1]))
 
     def test_expired_passenger_walks_to_bridge_before_being_counted_as_exited(self):
         probe = self.start(240)
@@ -113,9 +172,11 @@ class PhysicalQueueTests(unittest.TestCase):
         self.assertEqual(run.unload(facility), (visitor_id,))
         merge = self.routes.facilities[facility]
         self.now += merge.unloading.length / WALK_M_PER_S + 1
-        departing = self.people(run)[visitor_id]
+        departing = next(row for row in run.snapshot(with_motion=True)['background']['visitors']
+                         if row['visitor_id'] == visitor_id)
         self.assertEqual(departing['state'], 'walking_to_exit')
         self.assertTrue(public_walkable(self.scenario.map, departing['point'], self.routes.radius))
+        self.assertEqual(departing['exit_path'][-1], tuple(self.routes.nodes[self.routes.boundary]))
         self.now += self.routes.public_path(merge.exit_merge, self.routes.boundary).length / WALK_M_PER_S
         self.assertNotIn(visitor_id, self.people(run))
 

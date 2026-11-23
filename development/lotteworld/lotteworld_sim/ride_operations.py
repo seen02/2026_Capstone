@@ -18,6 +18,7 @@ class Vehicle:
     boarding_until: float = 0
     boarding_complete_at: float = 0
     dispatched_at: float | None = None
+    unloading_until: float = 0
     passengers: list['Visitor'] = field(default_factory=list)
 
 
@@ -137,7 +138,8 @@ class RideOperation:
         self._occupy_station(vehicle)
         vehicle.state = 'unloading'
         last_crossing = self.run._queue_unloading(now, self.queue, vehicle.passengers, vehicle.passengers.remove)
-        self.run._schedule(max(now + self.settings['unloading_seconds'], last_crossing), self._finish_unloading, vehicle)
+        vehicle.unloading_until = max(now + self.settings['unloading_seconds'], last_crossing)
+        self.run._schedule(vehicle.unloading_until, self._finish_unloading, vehicle)
 
     def _finish_unloading(self, now, vehicle):
         self._leave_station(vehicle)
@@ -145,18 +147,51 @@ class RideOperation:
         self.available.append(vehicle)
         self.wake(now)
 
+    def _station_release_estimate(self, now, vehicle):
+        if vehicle.state == 'unloading':
+            return vehicle.unloading_until
+        return max(now, vehicle.boarding_complete_at, self.next_dispatch_at, self.course_entry_at)
+
+    def _vehicle_available_estimate(self, now, vehicle):
+        if vehicle.state == 'unloading':
+            return vehicle.unloading_until
+        if vehicle.state == 'waiting_for_station':
+            arrival = now
+        elif vehicle.state == 'running':
+            arrival = vehicle.dispatched_at + self.settings['ride_seconds']
+        else:
+            arrival = self._station_release_estimate(now, vehicle) + self.settings['ride_seconds']
+        return arrival + self.settings['unloading_seconds']
+
+    def estimated_queue_wait(self, now, position, headway):
+        head_ready = max(now, self.queue.members[0].motion.end, self.queue.lateral_until)
+        open_seats = sum(self.seats - len(vehicle.passengers) for vehicle in self.station.values()
+                         if vehicle.state == 'boarding' and head_ready < vehicle.boarding_until)
+        if position <= open_seats:
+            return head_ready - now
+        station_ready = now if self._station_has_space() else min(
+            self._station_release_estimate(now, vehicle) for vehicle in self.station.values())
+        vehicle_ready = now if self.available else min(
+            self._vehicle_available_estimate(now, vehicle) for vehicle in self.vehicles)
+        batches_ahead = (position - open_seats - 1) // self.seats
+        return max(head_ready, station_ready, vehicle_ready) - now + batches_ahead * headway
+
     def _course_section(self, now, vehicle):
         if vehicle.state != 'running':
             return None
         elapsed = Fraction(now) - Fraction(vehicle.dispatched_at)
         return min(self.section_count, 1 + elapsed // self.section_seconds)
 
+    @property
+    def riding_people(self):
+        return sum(passenger.phase in ('on_ride', 'waiting_for_station')
+                   for vehicle in self.vehicles for passenger in vehicle.passengers)
+
     def snapshot(self, now):
         return {
             'vehicle_count': len(self.vehicles), 'station_capacity': self.settings['station_capacity'],
             'seats_per_vehicle': self.seats, 'dispatch_count': self.dispatch_count,
-            'riding_people': sum(p.phase in ('on_ride', 'waiting_for_station')
-                                 for v in self.vehicles for p in v.passengers),
+            'riding_people': self.riding_people,
             'last_dispatch_at_sim_s': self.last_dispatch_at, 'next_dispatch_min_at_sim_s': self.next_dispatch_at,
             'course_section_count': self.section_count, 'course_entry_available_at_sim_s': self.course_entry_at,
             'vehicles': [
