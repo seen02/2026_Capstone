@@ -1,14 +1,18 @@
 """지도 그래프와 대기줄 중심선에서 방문객의 보행 경로를 만든다."""
-from bisect import bisect_right
+from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
-from itertools import accumulate, pairwise
-from math import dist
+from functools import cached_property
+from heapq import heappop, heappush
+from itertools import accumulate, combinations, pairwise
+from math import cos, dist, sin, tau
 
-from .map_geometry import (distance_to_segment, point_in_polygon, public_walkable,
-                           segment_distance, segment_rect_distance, walking_route)
+from .map_geometry import (distance_to_segment, obstacle_bounds, point_in_polygon,
+                           public_walkable, segment_distance, segment_obstacle_distance,
+                           walk_reservations, walking_route)
 
 WALK_M_PER_S = 1.4
 UNLOAD_GAP_S = 1.0
+UNLOAD_SPREAD_M = (1.25, -1.25, 2.5, -2.5)
 PUBLIC_WALK_VARIANTS = 13
 
 
@@ -25,11 +29,13 @@ class Path:
         fraction = (distance - self.offsets[i]) / (self.offsets[i+1] - self.offsets[i])
         return tuple(a + (b - a) * fraction for a, b in zip(self.points[i], self.points[i+1]))
 
-    def keeps_spacing(self, headway, minimum):
+    def keeps_spacing(self, headway, minimum, follower=None):
         # 두 사람이 같은 속도로 움직이면 두 위치의 차는 경유점 사이에서 선형이다.
-        breaks = sorted(set(self.offsets) | {d + headway for d in self.offsets})
-        differences = [tuple(a - b for a, b in zip(self.point_at(d), self.point_at(d - headway)))
-                       for d in breaks if headway <= d <= self.length]
+        follower = self if follower is None else follower
+        last = min(self.length, follower.length + headway)
+        breaks = sorted({headway, last, *self.offsets, *(d + headway for d in follower.offsets)})
+        differences = [tuple(a - b for a, b in zip(self.point_at(d), follower.point_at(d - headway)))
+                       for d in breaks if headway <= d <= last]
         if len(differences) == 1:
             return dist((0, 0), differences[0]) >= minimum - 1e-8
         return all(distance_to_segment((0, 0), a, b) >= minimum - 1e-8 for a, b in pairwise(differences))
@@ -47,6 +53,12 @@ class FacilityPaths:
     exit_merge: str
     exit_releases: tuple
     boarding_capacity: int
+    unloading_variants: tuple = ()
+
+    @property
+    def queue_gate_offset(self):
+        # 공공 보행 연결점과 입구 바깥점을 지난 뒤 초록색 입구를 밟는다.
+        return self.queue.offsets[2]
 
 
 class VisitorRoutes:
@@ -56,6 +68,7 @@ class VisitorRoutes:
         self.boundary = geometry['boundary']
         self.map = map_data
         self.cache = {}
+        self._visible_paths = {}
         self.public_kinds = {'main', 'bridge', 'branch'}
         self.portals = {facility[key] for facility in map_data['facilities'] for key in ('entrance', 'exit')}
         public_nodes = {edge[key] for edge in geometry['edges'] if edge['kind'] in self.public_kinds
@@ -65,11 +78,19 @@ class VisitorRoutes:
         rules = geometry['queue_rules']
         self.radius = rules['person_radius_m']
         self.queue_scale = rules.get('layout_scale', 1)
-        self.shore = tuple(pairwise([*geometry['island_outline'], geometry['island_outline'][0]]))
-        self.reservations = (geometry['castle'], *geometry['scenery_buildings'], *geometry['landscape_beds'],
-                             *(facility[key] for facility in map_data['facilities']
-                               for key in ('bounds', 'queue', 'exit_area')))
-        self.bridge_width = next(edge['width'] for edge in geometry['edges'] if edge['kind'] == 'bridge')
+        self.outline = geometry['island_outline']
+        self.shore = tuple(pairwise([*self.outline, self.outline[0]]))
+        self.shore_bounds = tuple((a, b, min(a[0], b[0]), max(a[0], b[0]), min(a[1], b[1]), max(a[1], b[1]))
+                                  for a, b in self.shore)
+        self.ride_access_areas = {area['facility_id']: area for area in geometry.get('ride_access_areas', [])}
+        self.fixed_reservations = tuple(walk_reservations(geometry))
+        reservations = (*self.fixed_reservations,
+                        *(facility[key] for facility in map_data['facilities']
+                          for key in ('bounds', 'queue', 'exit_area')))
+        self.reservation_bounds = tuple((obstacle, obstacle_bounds(obstacle)) for obstacle in reservations)
+        bridge = next(edge for edge in geometry['edges'] if edge['kind'] == 'bridge')
+        self.bridge_width = bridge['width']
+        self.bridge_landing = bridge['target'] if bridge['source'] == self.boundary else bridge['source']
         self.public_variants = {}
         # 줄 입구의 직각 구간에서도 이동 중인 두 사람의 몸체가 닿지 않도록 거리를 둔다.
         self.queue_headway_m = max(self.queue_scale, rules['spacing_m'])
@@ -81,22 +102,6 @@ class VisitorRoutes:
         self.facilities = {facility['id']: self._facility_paths(facility, reports[facility['id']], public_nodes)
                            for facility in map_data['facilities']}
         self.approach_nodes = {paths.approach for paths in self.facilities.values()}
-        main_nodes = {edge[end] for edge in geometry['edges'] if edge['kind'] == 'main'
-                      for end in ('source', 'target')}
-        self.plaza_nodes = tuple(node for node in self.land_nodes
-                                 if node in main_nodes and node not in self.approach_nodes and node != 'bridge-island')
-        self.plaza_stops = {}
-
-    def plaza_stop(self, source, desired_span):
-        key = (source, desired_span)
-        if key not in self.plaza_stops:
-            point = source if isinstance(source, tuple) else tuple(self.nodes[source])
-            self.plaza_stops[key] = min(
-                (node for node in self.plaza_nodes if tuple(self.nodes[node]) != point),
-                key=lambda node: abs(dist(point, self.nodes[node]) - desired_span),
-                default=None,
-            )
-        return self.plaza_stops[key]
 
     def public_path(self, source, target):
         key = (source, target)
@@ -118,11 +123,14 @@ class VisitorRoutes:
         return path if source == path.points[0] else Path([source, *path.points])
 
     def visitor_path(self, source, target, variant):
-        if variant is None or source == target:
+        if source == target or (variant is None and isinstance(source, str) and isinstance(target, str)):
             return self.public_path(source, target)
         key = (source, target, variant)
         if key not in self.public_variants:
-            self.public_variants[key] = self._spread_path(source, target, variant)
+            points = self._open_path(source, target)
+            if points is None:
+                return None
+            self.public_variants[key] = Path(points) if variant is None else self._spread_path(source, points, variant)
         return self.public_variants[key]
 
     @staticmethod
@@ -130,6 +138,162 @@ class VisitorRoutes:
         dx, dz = b[0] - a[0], b[1] - a[1]
         length = dist(a, b)
         return a[0] + dx * portion - dz / length * side_m, a[1] + dz * portion + dx / length * side_m
+
+    @cached_property
+    def _public_visibility(self):
+        points = {tuple(self.nodes[node]) for node in self.land_nodes}
+        points.update(paths.queue.points[1] for paths in self.facilities.values())
+        clearance = self.radius + .01
+        for _, (x, z, width, depth) in self.reservation_bounds:
+            # 예약 구획 모서리의 바깥쪽도 경유 후보로 두어 기존 보행 노드까지 우회할 필요를 줄인다.
+            for corner_x in (x - clearance, x + width + clearance):
+                for corner_z in (z - clearance, z + depth + clearance):
+                    points.add((corner_x, corner_z))
+        graph = {point: [] for point in sorted(points)
+                 if point_in_polygon(point, self.map['geometry']['island_outline'])
+                 and public_walkable(self.map, point, self.radius)}
+        for a, b in combinations(graph, 2):
+            if self._public_segment_clear(a, b, margin=0):
+                length = dist(a, b)
+                graph[a].append((length, b))
+                graph[b].append((length, a))
+        return graph
+
+    def _visible_paths_from(self, start):
+        if start in self._visible_paths:
+            return self._visible_paths[start]
+        if (not point_in_polygon(start, self.map['geometry']['island_outline'])
+                or not public_walkable(self.map, start, self.radius)):
+            return {}
+        graph = self._public_visibility
+        if start not in graph:
+            graph = {**graph, start: [(dist(start, point), point) for point in graph
+                                      if self._public_segment_clear(start, point, margin=0)]}
+        pending = [(0.0, (start,))]
+        distances = {start: 0.0}
+        reached = {}
+        while pending:
+            distance, path = heappop(pending)
+            point = path[-1]
+            if point in reached:
+                continue
+            reached[point] = path
+            for length, neighbor in graph[point]:
+                total = distance + length
+                if total < distances.get(neighbor, float('inf')):
+                    distances[neighbor] = total
+                    heappush(pending, (total, (*path, neighbor)))
+        self._visible_paths[start] = reached
+        return reached
+
+    def _open_path(self, source, target):
+        start = self.bridge_landing if source == self.boundary else source
+        end = self.bridge_landing if target == self.boundary else target
+        start = start if isinstance(start, tuple) else tuple(self.nodes[start])
+        end = end if isinstance(end, tuple) else tuple(self.nodes[end])
+        path = self._visible_paths_from(start).get(end)
+        if path is None:
+            return None
+        if source == self.boundary:
+            path = (tuple(self.nodes[source]), *path)
+        if target == self.boundary:
+            path = (*path, tuple(self.nodes[target]))
+        return path
+
+    @cached_property
+    def _roaming_network(self):
+        return self._visible_paths_from(tuple(self.nodes[self.bridge_landing]))
+
+    def _roaming_links(self, point, count):
+        links = []
+        for anchor in sorted(self._roaming_network, key=lambda position: dist(point, position)):
+            if anchor == point or self._public_segment_clear(point, anchor, margin=0):
+                links.append(anchor)
+                if len(links) == count:
+                    break
+        return links
+
+    def roaming_path(self, source, rng, crowd_density):
+        """현재 위치에서 도달할 수 있는 포장 위 임의 좌표로 짧게 걷는다."""
+        start = tuple(self.nodes[source]) if isinstance(source, str) else tuple(source)
+        if not point_in_polygon(start, self.outline):
+            return None
+
+        def local_target(origin, near, far, tries):
+            connected = origin in self._roaming_network
+            points = []
+            for _ in range(tries):
+                angle = rng.uniform(0, tau)
+                distance = rng.uniform(near, far)
+                point = origin[0] + distance * cos(angle), origin[1] + distance * sin(angle)
+                if self._public_segment_clear(origin, point, margin=0):
+                    points.append(point)
+                    if len(points) == 5:
+                        break
+            # 좁은 길도 가끔 이용할 수 있게 혼잡도는 후보 확률에만 반영한다.
+            while points:
+                weights = [1 / (1 + .04 * min(crowd_density(point), 40)) for point in points]
+                index, = rng.choices(range(len(points)), weights)
+                point = points.pop(index)
+                if connected or self._roaming_links(point, 1):
+                    return point
+            return None
+
+        target = local_target(start, 14, 55, 12) or local_target(start, 5, 18, 8)
+        if target is not None:
+            return Path([start, target])
+        for anchor in self._roaming_links(start, 3):
+            if anchor == start:
+                continue
+            target = local_target(anchor, 9, 32, 10)
+            if target is not None:
+                return Path([start, anchor, target])
+        return None
+
+    def _roaming_paths_to(self, start, targets):
+        if not point_in_polygon(start, self.outline):
+            return {}
+        paths = {}
+        links = None
+        for key, target in targets.items():
+            if start == target:
+                paths[key] = Path([start])
+                continue
+            if self._public_segment_clear(start, target, margin=0):
+                paths[key] = Path([start, target])
+                continue
+            # 고정 도착점에서 계산한 경로를 뒤집어 사용하고 무작위 출발점은 캐시에 남기지 않는다.
+            reached = self._visible_paths_from(target)
+            if start in reached:
+                paths[key] = Path(reversed(reached[start]))
+                continue
+            if links is None:
+                links = self._roaming_links(start, 6)
+            options = [Path([start, *reversed(reached[anchor])]) for anchor in links if anchor in reached]
+            if options:
+                paths[key] = min(options, key=lambda path: path.length)
+        return paths
+
+    def roaming_entrances(self, source, facility_ids):
+        """공용 보행면의 현재 좌표부터 대기열 바로 바깥까지 연결한다."""
+        targets = {key: self.facilities[key].queue.points[1] for key in facility_ids}
+        return self._roaming_paths_to(tuple(source), targets)
+
+    def roaming_exit(self, source, variant=None):
+        """섬의 현재 좌표에서 진입 다리까지 연결하고 퇴장 방향 차선을 이용한다."""
+        landing, boundary = (tuple(self.nodes[node]) for node in (self.bridge_landing, self.boundary))
+        path = self._roaming_paths_to(tuple(source), {'landing': landing}).get('landing')
+        if path is None:
+            return None
+        bridge = (landing, boundary) if variant is None else self._spread_path(landing, [landing, boundary], variant).points
+        return Path([*path.points, *bridge[1:]])
+
+    def entrances_from_point(self, source, facility_ids):
+        """현재 좌표에서 대기열 입구까지 연결 가능한 최단 보행 경로를 반환한다."""
+        reached = self._visible_paths_from(tuple(source))
+        entrances = {facility: self.facilities[facility].queue.points[1:3] for facility in facility_ids}
+        return {facility: path for facility, (outside, gate) in entrances.items()
+                if outside in reached and (path := self.entrance_path(facility, [*reached[outside], gate]))}
 
     def entrance_path(self, facility_id, points):
         facility = next(f for f in self.map['facilities'] if f['id'] == facility_id)
@@ -139,26 +303,32 @@ class VisitorRoutes:
             return None
         x, z, width, depth = queue
         a, b = points[-2:]
+        if facility_id in self.ride_access_areas:
+            outside = self.facilities[facility_id].queue.points[1]
+            if dist(a, outside) > 1e-8:
+                return None
         approaches_gate = ((b[0] == x and a[0] < x) or (b[0] == x + width and a[0] > x + width)
                            or (b[1] == z and a[1] < z) or (b[1] == z + depth and a[1] > z + depth))
-        if (approaches_gate and self._public_segment_clear(a, b, margin=0, entrance_queue=queue)
+        if (approaches_gate and self._public_segment_clear(
+                a, b, margin=0, entrance_queue=queue, ignore_ride_access=facility_id)
                 and all(self._public_segment_clear(a, b, margin=0) for a, b in pairwise(points[:-1]))):
             return Path(points)
         return None
 
-    def _public_segment_clear(self, a, b, *, margin=.15, entrance_queue=None):
+    def _public_segment_clear(self, a, b, *, margin=.15, entrance_queue=None, ignore_ride_access=None):
         radius = self.radius + margin
+        access_area = self.ride_access_areas.get(ignore_ride_access)
         left, right = min(a[0], b[0]) - radius, max(a[0], b[0]) + radius
         top, bottom = min(a[1], b[1]) - radius, max(a[1], b[1]) + radius
-        return (all(segment_rect_distance(a, b, rect) >= radius
-                    for rect in self.reservations if rect is not entrance_queue and left <= rect[0] + rect[2] and rect[0] <= right
-                    and top <= rect[1] + rect[3] and rect[1] <= bottom)
-                and all(segment_distance(a, b, c, d) >= radius for c, d in self.shore
-                        if left <= max(c[0], d[0]) and min(c[0], d[0]) <= right
-                        and top <= max(c[1], d[1]) and min(c[1], d[1]) <= bottom))
+        return (all(segment_obstacle_distance(a, b, obstacle, limit=radius) >= radius
+                    for obstacle, (x, z, width, depth) in self.reservation_bounds
+                    if obstacle is not entrance_queue and obstacle is not access_area and left <= x + width and x <= right
+                    and top <= z + depth and z <= bottom)
+                and all(segment_distance(a, b, c, d) >= radius
+                        for c, d, x_min, x_max, z_min, z_max in self.shore_bounds
+                        if left <= x_max and x_min <= right and top <= z_max and z_min <= bottom))
 
-    def _spread_path(self, source, target, variant):
-        baseline = self.public_path(source, target).points
+    def _spread_path(self, source, baseline, variant):
         boundary = tuple(self.nodes[self.boundary])
         points = [baseline[0]]
         join_points = set()
@@ -184,7 +354,7 @@ class VisitorRoutes:
                     if self._public_segment_clear(a, candidate) and self._public_segment_clear(candidate, b):
                         points.append(candidate)
                         break
-                if b != baseline[-1] and b != tuple(self.nodes['bridge-island']):
+                if b != baseline[-1] and b != tuple(self.nodes[self.bridge_landing]):
                     join_points.add(b)
             points.append(b)
         # 안전하게 이어지는 코너에서 중심 연결점 통과를 생략한다.
@@ -196,15 +366,16 @@ class VisitorRoutes:
     def _facility_paths(self, facility, report, public_nodes):
         geometry = self.map['geometry']
         outline = geometry['island_outline']
-        shore = list(pairwise([*outline, outline[0]]))
-        obstacles = [geometry['castle'], *geometry['scenery_buildings'], *geometry['landscape_beds']]
+        obstacles = walk_reservations(geometry, ignore_ride_access=facility['id'])
         obstacles += [other[key] for other in self.map['facilities'] if other != facility
                       for key in ('bounds', 'queue', 'exit_area')]
+        clearance = self.radius - 1e-8
 
         def clear(a, b, reservations):
-            return (all(segment_rect_distance(a, b, rect) >= self.radius - 1e-8 for rect in reservations)
+            return (all(segment_obstacle_distance(a, b, obstacle, limit=clearance) >= clearance
+                        for obstacle in reservations)
                     and point_in_polygon(a, outline) and point_in_polygon(b, outline)
-                    and all(segment_distance(a, b, c, d) >= self.radius - 1e-8 for c, d in shore))
+                    and all(segment_distance(a, b, c, d) >= clearance for c, d in self.shore))
 
         def outside_gate(gate, inside):
             distance = .8 * self.queue_scale / dist(gate, inside)
@@ -213,6 +384,9 @@ class VisitorRoutes:
         entry_id = facility['entrance']
         entry = self.nodes[entry_id]
         entry_outside = outside_gate(entry, report['points'][1])
+        if facility['id'] in self.ride_access_areas and not public_walkable(
+                self.map, entry_outside, self.radius + .1):
+            raise ValueError(f"대기열 입구 바로 바깥의 공공 보행 공간을 확보해야 합니다: {facility['id']}")
         entry_obstacles = [*obstacles, facility['bounds'], facility['exit_area']]
         entry_neighbors = {edge[key] for edge in geometry['edges'] if edge['kind'] == 'branch'
                            and entry_id in (edge['source'], edge['target'])
@@ -254,7 +428,8 @@ class VisitorRoutes:
             raise ValueError(f"대기열에서 탑승 지점으로 연결할 수 없습니다: {facility['id']}")
         queue = Path([self.nodes[approach], entry_outside, *report['points'], report['boarding_target']])
         unload = Path([unloading_start, *(self.nodes[node] for node in exit_nodes)])
-        releases = self._public_exit_releases(unload, exit_merge)
+        restricted = facility['id'] in self.ride_access_areas
+        releases = self._public_exit_releases(unload, exit_merge, clear_tail=restricted)
         if not all(path.keeps_spacing(self.queue_headway_m, self.radius * 2) for path in (queue, withdrawal)):
             raise ValueError(f"대기열 진입·이탈 보행 중 방문객이 서로 겹칩니다: {facility['id']}")
         boarding = Path(queue.points[report['slot_indices'][0]+2:])
@@ -262,18 +437,75 @@ class VisitorRoutes:
             raise ValueError(f"탑승 지점으로 이동하는 방문객이 서로 겹칩니다: {facility['id']}")
         if not unload.keeps_spacing(WALK_M_PER_S * UNLOAD_GAP_S, self.radius * 2):
             raise ValueError(f"하차 보행 간격에서 방문객이 서로 겹칩니다: {facility['id']}")
+        variants = ()
+        if restricted:
+            exit_obstacles = [*obstacles, facility['bounds'], facility['queue']]
+            variants = self._unloading_variants(unload, exit_merge, lambda a, b: clear(a, b, exit_obstacles))
         self._validate_queue_walk(facility['id'], report, queue, withdrawal)
         return FacilityPaths(approach, queue,
                              tuple(queue.offsets[i+2] for i in report['slot_indices']), withdrawal,
                              tuple(withdrawal.offsets[i+2] for i in report['withdrawal_slot_indices']),
-                             withdrawal_merge, unload, exit_merge, releases, report['boarding_capacity'])
+                             withdrawal_merge, unload, exit_merge, releases, report['boarding_capacity'], variants)
 
-    def _public_exit_releases(self, path, merge):
+    def _unloading_variants(self, baseline, merge, clear):
+        # 빨간 하차점까지 같은 시각에 도착하고, 그 뒤에서 좌우로 나뉜다.
+        variants = []
+        active_paths = []
+        gap = WALK_M_PER_S * UNLOAD_GAP_S
+
+        def spaced(leader, follower):
+            return all(leader.keeps_spacing(gap * order, self.radius * 2, follower)
+                       for order in range(1, int(leader.length / gap) + 1))
+
+        def active_path(path, releases):
+            offset = releases[-1][0]
+            if offset >= path.length:
+                return path
+            return Path([*path.points[:bisect_left(path.offsets, offset)], path.point_at(offset)])
+
+        def shifted_path(side):
+            points = list(baseline.points[:2])
+            for a, b in pairwise(baseline.points[1:]):
+                length = dist(a, b)
+                if length >= 2 and side:
+                    ramp = min(3.5 / length, .5)
+                    offset = min(length * .22, abs(side)) * (1 if side > 0 else -1)
+                    for scale in (1, .65, .35):
+                        shifted = [self._edge_point(a, b, part, offset * scale)
+                                   for part in sorted({ramp, .7})]
+                        if all(clear(c, d) for c, d in pairwise((a, *shifted, b))):
+                            points.extend(shifted)
+                            break
+                points.append(b)
+            return Path(points)
+
+        spread_checkpoint = min(baseline.length, baseline.offsets[1] + 3.5)
+        for side in (0, *UNLOAD_SPREAD_M):
+            for scale in (1, .65, .35):
+                path = shifted_path(side * scale)
+                if any(dist(path.point_at(spread_checkpoint), other.point_at(spread_checkpoint)) < .3
+                       for other, _ in variants):
+                    continue
+                releases = self._public_exit_releases(path, merge, clear_tail=True)
+                active = active_path(path, releases)
+                if spaced(active, active) and all(spaced(active, other) and spaced(other, active)
+                                                 for other in active_paths):
+                    variants.append((path, releases))
+                    active_paths.append(active)
+                    break
+        return tuple(variants)
+
+    def _public_exit_releases(self, path, merge, *, clear_tail=False):
         releases = []
         offset = path.offsets[1] + .5
         while offset < path.length and len(releases) < 4:
             point = path.point_at(offset)
             if public_walkable(self.map, point, self.radius + .15):
+                next_index = bisect_right(path.offsets, offset)
+                if clear_tail and any(not self._public_segment_clear(a, b)
+                                      for a, b in pairwise((point, *path.points[next_index:]))):
+                    offset += .5
+                    continue
                 anchors = tuple(node for node in self.land_nodes
                                 if self._public_segment_clear(point, self.nodes[node]))
                 if anchors:

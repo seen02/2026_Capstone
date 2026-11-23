@@ -2,7 +2,10 @@ from copy import deepcopy
 import math
 import unittest
 from lotteworld_sim.scenario import load_inputs, validate
-from lotteworld_sim.map_geometry import walking_route, segment_rect_distance, point_in_polygon, public_walkable
+from lotteworld_sim.map_geometry import (
+    distance_to_segment, obstacle_bounds, point_in_polygon, point_obstacle_distance, public_walkable,
+    segment_obstacle_distance, segment_rect_distance, walk_reservations, walking_route,
+)
 
 
 class MapTests(unittest.TestCase):
@@ -57,6 +60,12 @@ class MapTests(unittest.TestCase):
             (['geometry','public_space'],'thin-paths-only'),
             (['geometry','landscape_beds'],[[141,130,14,14]]),
             (['geometry','landscape_trees'],[[143,145]]),
+            (['geometry','castle_footprint'],[[0,0],[10,0],[10,10],[0,10]]),
+            (['geometry','landscape_areas'],[{'id':'crossed','outline':[[50,50],[60,60],[50,60],[60,50]]}]),
+            (['geometry','landscape_areas'],[{'id':'open-hole','outline':[[50,50],[60,50],[60,60],[50,60]],
+                                            'holes':[[[50,50],[55,52],[52,55]]]}]),
+            (['geometry','ride_access_areas'],[{'facility_id':'unknown','outline':[[50,50],[60,50],[60,60]]}]),
+            (['geometry','ride_access_areas'],[{'facility_id':'gyro-drop','outline':[[50,50],[60,60],[50,60],[60,50]]}]),
             (['geometry','island_outline'],[[0,0],[10,0],[10,float('nan')],[5,10],[0,10]]),
             (['geometry','island_outline'],[[0,0],[100,100],[0,100],[100,0],[150,50]]),
             (['geometry','island_outline'],[[0,0],[50,0],[50,50],[0,50],[0,0]]),
@@ -98,6 +107,30 @@ class MapTests(unittest.TestCase):
         self.assertEqual(segment_rect_distance([0,12],[20,12],[5,0,5,10]),2)
         self.assertAlmostEqual(segment_rect_distance([0,0],[1,1],[2,2,2,2]),math.sqrt(2))
 
+    def test_polygon_clearance_with_hole_and_tangency(self):
+        area = {'outline': [[0, 0], [10, 0], [10, 10], [0, 10]],
+                'holes': [[[3, 3], [7, 3], [7, 7], [3, 7]]]}
+        self.assertEqual(obstacle_bounds(area), (0, 0, 10, 10))
+        self.assertEqual(point_obstacle_distance([5, 5], area), 2)
+        self.assertEqual(point_obstacle_distance([3, 5], area), 0)
+        self.assertEqual(segment_obstacle_distance([4, 5], [6, 5], area), 1)
+        self.assertEqual(segment_obstacle_distance([4, 5], [8, 5], area), 0)
+        self.assertEqual(segment_obstacle_distance([-1, -1], [0, 0], area), 0)
+        self.assertEqual(segment_obstacle_distance([-3, 3], [-1, 7], area, limit=.75), .75)
+
+    def test_walk_reservations_fall_back_to_legacy_rectangles(self):
+        data = deepcopy(self.scenario.map)
+        geometry = data['geometry']
+        geometry.pop('castle_footprint')
+        geometry.pop('landscape_areas')
+        geometry.pop('signposts')
+        geometry.pop('ride_access_areas', None)
+        self.assertEqual(walk_reservations(geometry),
+                         [geometry['castle'], *geometry['scenery_buildings'], *geometry['landscape_beds']])
+        self.assertFalse(public_walkable(data, [160, 150], .25))
+        geometry['landscape_areas'] = []
+        self.assertEqual(walk_reservations(geometry), [geometry['castle'], *geometry['scenery_buildings']])
+
     def test_island_outline_and_guide_relative_positions(self):
         data=self.scenario.map
         outline=data['geometry']['island_outline']
@@ -127,19 +160,17 @@ class MapTests(unittest.TestCase):
 
     def test_broad_public_plazas_and_reserved_areas(self):
         data=self.scenario.map
-        # 이전 녹지였던 길 바깥 공간도 이제 포장 광장으로 이동할 수 있다.
-        for p in ([137,130],[200,205],[84,120],[258,252.5]):
+        # 이전 성 예약 사각형의 모서리와 그래프 밖 포장도 지나갈 수 있다.
+        for p in ([160,150],[170,130],[155.9,140],[137,130],[200,196],[84,120],[258,252.5]):
             self.assertTrue(public_walkable(data,p,.25),p)
         reserved=[f[key] for f in data['facilities'] for key in ('bounds','queue','exit_area')]
         for p in ([180,145],[33,151],[0,0],[314,320],*[[x+w/2,z+d/2] for x,z,w,d in reserved]):
             self.assertFalse(public_walkable(data,p,.25),p)
-        self.assertTrue(public_walkable(data,[137,130],.25))
-        self.assertFalse(public_walkable(data,[155.9,140],.25))
         points=[(x,y) for x in range(5,365,5) for y in range(5,325,5) if point_in_polygon((x,y),data['geometry']['island_outline'])]
         share=sum(public_walkable(data,p) for p in points)/len(points)
-        self.assertGreater(share,.7)
+        self.assertGreater(share,.3)
         # 다리에서 기존 녹지였던 광장까지 실제 보행 영역을 통해 접근 가능하다.
-        # 8m 폭 다리의 꺾임도 표본화할 수 있도록 2m 격자를 사용한다.
+        # 다리와 남쪽 우회 구간을 표본화할 수 있도록 2m 격자를 사용한다.
         public={(x,y) for x in range(4,370,2) for y in range(4,330,2) if public_walkable(data,(x,y),.25)}
         self.assertIn((300,302),public)
         reached={(300,302)}
@@ -149,7 +180,7 @@ class MapTests(unittest.TestCase):
             for other in ((x-2,y),(x+2,y),(x,y-2),(x,y+2)):
                 if other in public and other not in reached:
                     reached.add(other);pending.append(other)
-        for p in ((134,130),(200,204),(84,120)):
+        for p in ((134,130),(160,150),(170,130),(200,196),(84,120)):
             self.assertIn(p,reached)
         with self.assertRaises(ValueError): public_walkable(data,[float('nan'),10])
         with self.assertRaises(ValueError): public_walkable(data,[10,10],-1)
@@ -157,6 +188,80 @@ class MapTests(unittest.TestCase):
         data['geometry']['scenery_buildings']=[[345,285,10,10]]
         with self.assertRaises(ValueError):
             validate(data,self.scenario.config,self.scenario.preferences)
+
+    def test_landscape_reserves_rendered_areas_and_clears_full_graph_width(self):
+        data = self.scenario.map
+        geometry = data['geometry']
+        areas = {area['id']: area for area in geometry['landscape_areas']}
+        samples = {'north-and-east-coast': [180, 69], 'southwest-coast': [153, 299],
+                   'comet-plaza': [104, 117], 'castle-east-plaza': [206, 126]}
+        self.assertEqual(areas.keys(), samples.keys())
+        without_landscape = deepcopy(data)
+        without_landscape['geometry']['landscape_areas'] = []
+        without_landscape['geometry'].pop('ride_access_areas', None)
+        for name, point in samples.items():
+            with self.subTest(area=name):
+                self.assertEqual(point_obstacle_distance(point, areas[name]), 0)
+                self.assertFalse(public_walkable(data, point))
+                self.assertTrue(public_walkable(without_landscape, point))
+        points = {node['id']: node['point'] for node in geometry['nodes']}
+        for edge in geometry['edges']:
+            a, b = points[edge['source']], points[edge['target']]
+            half_width = edge['width']/2
+            for name, area in areas.items():
+                with self.subTest(edge=edge['id'], area=name):
+                    self.assertGreaterEqual(segment_obstacle_distance(a, b, area, limit=half_width),
+                                            half_width-1e-8)
+        a, b = (points[geometry['edges'][0][key]] for key in ('source', 'target'))
+        x, z = [(first+last)/2 for first, last in zip(a, b)]
+        changed = deepcopy(data)
+        changed['geometry']['landscape_areas'].append({
+            'id': 'on-walkway', 'outline': [[x-1, z-1], [x+1, z-1], [x+1, z+1], [x-1, z+1]],
+        })
+        with self.assertRaisesRegex(ValueError, '보행로 유효 폭'):
+            validate(changed, self.scenario.config, self.scenario.preferences)
+
+    def test_ride_access_areas_reserve_open_pavement_for_their_facilities(self):
+        data = self.scenario.map
+        geometry = data['geometry']
+        access_areas = geometry['ride_access_areas']
+        self.assertEqual({area['facility_id'] for area in access_areas}, {f['id'] for f in data['facilities']})
+        unrestricted = deepcopy(data)
+        unrestricted['geometry'].pop('ride_access_areas')
+        for area in access_areas:
+            facility_id = area['facility_id']
+            with self.subTest(facility=facility_id):
+                left, top, width, depth = obstacle_bounds(area)
+                candidates = ((x, z) for z in range(math.ceil(top), math.floor(top + depth), 2)
+                              for x in range(math.ceil(left), math.floor(left + width), 2))
+                sample = next((p for p in candidates if point_in_polygon(p, area['outline'])
+                               and public_walkable(unrestricted, p, .25)), None)
+                self.assertIsNotNone(sample, '기존 예약과 별도로 새 전용 구역에서 제한하는 포장면이 필요합니다.')
+                self.assertFalse(public_walkable(data, sample, .25))
+                self.assertTrue(public_walkable(data, sample, .25, ignore_ride_access=facility_id))
+                for other in access_areas:
+                    if other is not area:
+                        self.assertFalse(public_walkable(data, sample, .25, ignore_ride_access=other['facility_id']))
+
+    def test_ride_access_areas_cannot_reserve_another_ride_or_a_public_route(self):
+        data = deepcopy(self.scenario.map)
+        geometry = data['geometry']
+        owner, other = data['facilities'][:2]
+        x, z, w, d = other['bounds']
+        geometry['ride_access_areas'] = [{
+            'facility_id': owner['id'], 'outline': [[x, z], [x + w, z], [x + w, z + d], [x, z + d]],
+        }]
+        with self.assertRaisesRegex(ValueError, '구획이 겹칩니다'):
+            validate(data, self.scenario.config, self.scenario.preferences)
+
+        edge = next(edge for edge in geometry['edges'] if edge['kind'] == 'main')
+        points = {node['id']: node['point'] for node in geometry['nodes']}
+        a, b = points[edge['source']], points[edge['target']]
+        x, z = ((start + end) / 2 for start, end in zip(a, b))
+        geometry['ride_access_areas'][0]['outline'] = [[x - 1, z - 1], [x + 1, z - 1],
+                                                       [x + 1, z + 1], [x - 1, z + 1]]
+        with self.assertRaisesRegex(ValueError, '보행로 유효 폭'):
+            validate(data, self.scenario.config, self.scenario.preferences)
 
     def test_guide_bridge_and_water_inlets(self):
         data=self.scenario.map
@@ -171,9 +276,57 @@ class MapTests(unittest.TestCase):
         dx,dy=data['geometry']['castle_forward']
         for x,y in (start,end):self.assertAlmostEqual((x-cx)*dy-(y-cy)*dx,0)
         self.assertTrue(public_walkable(data,[(start[0]+end[0])/2,(start[1]+end[1])/2],.25))
-        for water in ([215,250],[300,240]):
+        for water in ([200,204],[200,205],[215,250],[300,240]):
             self.assertFalse(public_walkable(data,water),water)
-        self.assertTrue(point_in_polygon([150,280],data['geometry']['island_outline']))
+        outline = data['geometry']['island_outline']
+        self.assertFalse(point_in_polygon([200,205], outline))
+        self.assertTrue(point_in_polygon([150,280], outline))
+
+        length = math.dist(start, end)
+        axis = [(b - a) / length for a, b in zip(start, end)]
+        normal = [-axis[1], axis[0]]
+        contact = [p + 4.8 * direction for p, direction in zip(start, axis)]
+        shore_segments = list(zip(outline, outline[1:] + outline[:1]))
+        contact_segment = min(shore_segments, key=lambda segment: distance_to_segment(contact, *segment))
+        half_width = bridges[0]['width'] / 2
+
+        # 데크 양 끝이 같은 해안 선분에 닿으면 그 사이 전폭도 해안에 닿는다.
+        for offset in (-half_width, half_width):
+            corner = [p + offset * direction for p, direction in zip(contact, normal)]
+            self.assertAlmostEqual(distance_to_segment(corner, *contact_segment), 0, places=6)
+            landward = [p - .1 * direction for p, direction in zip(corner, axis)]
+            waterward = [p + .1 * direction for p, direction in zip(corner, axis)]
+            self.assertTrue(point_in_polygon(landward, outline))
+            self.assertFalse(point_in_polygon(waterward, outline))
+
+        # 접합부 위쪽에서 데크 바깥으로 이어지는 양쪽 굴곡을 다리 축에 투영해 대조한다.
+        inlet_offsets = []
+        for point in outline:
+            delta = [p - origin for p, origin in zip(point, contact)]
+            along = sum(a * b for a, b in zip(delta, axis))
+            lateral = sum(a * b for a, b in zip(delta, normal))
+            if -16 <= along <= 1 and half_width <= abs(lateral) <= 26:
+                inlet_offsets.append(lateral)
+                reflected = [p - 2 * lateral * direction for p, direction in zip(point, normal)]
+                distance = min(distance_to_segment(reflected, *segment) for segment in shore_segments)
+                self.assertAlmostEqual(distance, 0, places=6)
+        self.assertGreaterEqual(sum(offset < 0 for offset in inlet_offsets), 3)
+        self.assertGreaterEqual(sum(offset > 0 for offset in inlet_offsets), 3)
+
+        edges = {(edge['source'], edge['target']): edge for edge in data['geometry']['edges']}
+        detour = ('south-east', 'south-east-bend', 'east-south', 'bridge-island')
+        for source, target in zip(detour, detour[1:]):
+            with self.subTest(detour=(source, target)):
+                edge = edges[source, target]
+                self.assertEqual((edge['kind'], edge['width']), ('main', 8))
+                a, b = points[source], points[target]
+                segment_length = math.dist(a, b)
+                normal = [-(b[1] - a[1]) / segment_length, (b[0] - a[0]) / segment_length]
+                for position in (0, .5, 1):
+                    for offset in (-edge['width'] / 2, edge['width'] / 2):
+                        sample = [start + position * (end - start) + offset * direction
+                                  for start, end, direction in zip(a, b, normal)]
+                        self.assertTrue(public_walkable(data, sample, .25), sample)
 
 
 if __name__=='__main__': unittest.main()

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {CrowdMovement, VisitorTimeline} from '../web/live-state.mjs';
+import {createNavigator} from '../web/navigation.mjs';
 
 const clock = time => ({sim_time_s: time, time_scale: 6});
 const visitor = (point, walk_trail) => ({visitor_id: 1, state: 'walking_to_queue', point, walk_trail});
@@ -25,6 +26,17 @@ assert.equal(unloading.x, 2);
 assert.ok(Math.abs(unloading.z - .25) < 1e-8);
 assert.equal(unloading.aboard, false);
 console.log('보행 경유점 보간, 차량 표식과 하차 위치 전환, 갱신 지연 뒤 복구 검사 통과');
+
+timeline.clear();
+timeline.push([{...visitor([0, 0]), state: 'approaching_queue_gate'}], clock(0), 0);
+timeline.push([{
+  ...visitor([2, 0], [[0, 0, 0], [1.2, 1, 0], [2.4, 2, 0]]),
+  state: 'joining_queue', queue_entry_at_sim_s: 1.2,
+}], clock(2.4), 400);
+assert.equal(timeline.sample(699).people[0].state, 'approaching_queue_gate');
+const [atGate] = timeline.sample(700).people;
+assert.equal(atGate.state, 'joining_queue');
+assert.deepEqual([atGate.x, atGate.z], [1, 0]);
 
 timeline.clear();
 timeline.push([{...visitor([0, 0]), state: 'walking_to_board'}], clock(0), 0);
@@ -99,3 +111,60 @@ for (let now = 0; now <= 12000; now += 40) {
 }
 assert.ok(rejoined.x > 10, '건물 너머의 경로로 돌아갈 때 포장면을 따라 우회한다.');
 console.log('양방향 보행 간격, 좁은 길 대기, QR 우선, 대기줄 위치와 동시 합류 검사 통과');
+
+const crowdedGate = new CrowdMovement({walkable: ([x]) => x >= 0 && x < .5}, .345);
+crowdedGate.update([walker(1, 0)], [], 0, 1);
+const crowdedAtStart = crowdedGate.update([walker(1, 0), walker(2, 0)], [], 40, 1);
+assert.equal(crowdedAtStart.length, 2, '빈자리를 못 찾은 보행자도 화면에 남긴다.');
+const separating = crowdedGate.update([walker(1, .4), walker(2, 0)], [], 80, 1);
+assert.ok(separating[0].x > separating[1].x, '겹친 상태에서도 거리를 벌리는 걸음은 허용한다.');
+
+const exitPath = [[1, 0], [1, -3], [7, -3], [11, 0]];
+const exitTimeline = new VisitorTimeline();
+const exiting = new CrowdMovement(aroundBuilding.navigator, .345);
+exitTimeline.push([{...visitor([0, 0]), state: 'walking_to_exit', exit_path: exitPath}], clock(0), 0);
+const sampleExit = now => exiting.update(exitTimeline.sample(now).people, [], now, 1);
+let [lastVisible] = sampleExit(0);
+exitTimeline.push([], clock(20), 4000);
+let finished = false;
+for (let now = 4000; now <= 20000; now += 40) {
+  const [person] = sampleExit(now);
+  if (!person) {
+    assert.ok(distance(lastVisible, {x: 11, z: 0}) <= .55, '서버 퇴장 이후에도 경계까지 걸어간다.');
+    assert.equal(exiting.departuresPending, false);
+    finished = true;
+    break;
+  }
+  assert.ok(outsideBuilding([person.x, person.z]), '남은 퇴장 동선은 건물을 우회한다.');
+  assert.ok(distance(lastVisible, person) <= .75 + 1e-8, '조회가 오래 끊겨도 모형을 순간 이동시키지 않는다.');
+  assert.equal(exiting.departuresPending, true);
+  lastVisible = person;
+}
+assert.ok(finished, '화면에 남은 방문객도 퇴장을 마친다.');
+
+const protectedMap = {facilities: [], geometry: {
+  bounds: [0, 0, 60, 60], island_outline: [[0, 0], [60, 0], [60, 60], [0, 60]],
+  castle: [53, 53, 4, 4], scenery_buildings: [], landscape_beds: [], nodes: [], edges: [],
+  ride_access_areas: [{facility_id: 'ride', outline: [[26, 8], [46, 8], [46, 42], [26, 42]]}],
+}};
+const protectedNav = createNavigator(protectedMap, {radius: .345});
+const protectedCrowd = new CrowdMovement(protectedNav, .345);
+let [previousPublic] = protectedCrowd.update([walker(1, 24, 22)], [], 0, 1);
+for (let now = 40; now < 3600; now += 40) {
+  const [publicPose] = protectedCrowd.update([walker(1, 29, 22)], [], now, 1);
+  assert.ok(protectedNav.clearOfPolygons([previousPublic.x, previousPublic.z], [publicPose.x, publicPose.z]));
+  previousPublic = publicPose;
+}
+timeline.clear();
+timeline.push([{...visitor([24, 22]), facility_id: 'ride'}], clock(0), 0);
+timeline.push([{
+  ...visitor([27, 22], [[0, 24, 22], [2.4, 27, 22]]),
+  state: 'approaching_queue_gate', facility_id: 'ride', queue_entry_at_sim_s: 4,
+}], clock(2.4), 400);
+const [switching] = timeline.sample(850).people;
+assert.ok(switching.x > 26);
+const [allowed] = protectedCrowd.update([switching], [], 3600, 1);
+assert.equal(allowed.x, switching.x, '아직 다음 조회 전이어도 자기 시설 입구 접근은 보간 위치를 따른다.');
+const wrongFacility = {...switching, state: 'approaching_queue_gate', gateFacility: 'other'};
+assert.equal(protectedCrowd.update([wrongFacility], [], 3640, 1).length, 0);
+console.log('공용 보행 전용 구역 회피와 자기 시설 입구 접근 검사 통과');

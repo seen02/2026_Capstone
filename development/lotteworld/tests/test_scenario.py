@@ -148,6 +148,15 @@ class ScenarioTests(unittest.TestCase):
             self.assertEqual(data["continuous"], load_inputs().continuous)
             self.assertIn("continuous", data["hashes"])
             self.assertNotIn("personas", data)
+            self.assertEqual(data["signs"], [{
+                "sign_id": "magic-island-west", "name": "서쪽 안내판", "map_hash": data["hashes"]["map"],
+                "position": {"point": [123, 111], "node_id": None},
+                "facility_ids": ["gyro-spin", "comet-express", "gyro-drop"],
+            }, {
+                "sign_id": "magic-island-east", "name": "동쪽 안내판", "map_hash": data["hashes"]["map"],
+                "position": {"point": [226, 176], "node_id": None},
+                "facility_ids": ["gyro-swing", "atlantis", "arcana-ride"],
+            }])
             operations = data["ride_operations"]["facilities"]
             expected = {
                 "atlantis": (120, 20, 40, 30, 8, 2),
@@ -161,7 +170,7 @@ class ScenarioTests(unittest.TestCase):
                       "dispatch_interval_seconds", "vehicle_count", "station_capacity")
             self.assertEqual({key: tuple(value[field] for field in fields) for key, value in operations.items()}, expected)
             with urlopen(base) as response:
-                self.assertIn("<h1>매직아일랜드</h1>", response.read().decode())
+                self.assertRegex(response.read().decode(), r"<h1(?:\s[^>]*)?>매직아일랜드</h1>")
             self.assertEqual(data['map_view'], 'guide-map-3d')
             with urlopen(base + "/api/state") as response:
                 state = json.load(response)

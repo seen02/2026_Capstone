@@ -30,21 +30,38 @@ export function queueLayout(bounds, entrance, rules, boardingCapacity, rideBound
   const capacity=queueCapacity??maxPerRow*rows.length;
   const perRow=Math.floor(capacity/rows.length),extra=capacity%rows.length;
   const slotIndices=[];
+  const turnRadius = 1.2;
+  const arc = Array.from({length:13}, (_, k) => [
+    turnRadius * Math.sin(k * Math.PI / 12), turnRadius * (1 - Math.cos(k * Math.PI / 12)),
+  ]);
+  const bendSlots = [[3, 6, 9], [4, 8], [6]].find(indices => {
+    const chain = [[-clearance, 0], ...indices.map(k => arc[k]), [-clearance, 2 * turnRadius]];
+    return chain.slice(1).every(([u, v], i) => Math.hypot(u - chain[i][0], v - chain[i][1]) >= spacing);
+  }) ?? [];
+  const addSlot = point => {
+    add(point);
+    slots.push(transform(point));
+    slotIndices.push(points.length-1);
+  };
   rows.forEach((v,i)=>{
     const start=[i%2?far:near,v],end=[i%2?near:far,v];
     arrows.push([transform(start),transform(end)]);
-    const count=perRow+Number(i<extra),direction=end[0]>start[0]?1:-1;
+    const rowCount=perRow+Number(i<extra),direction=end[0]>start[0]?1:-1;
+    const bend = i < rows.length-1 && rowCount > bendSlots.length ? bendSlots : [];
+    const count = rowCount - bend.length;
+    const step = count > 1 ? usable / (count-1) : 0;
     for(let j=0;j<count;j++) {
-      const slot=[start[0]+direction*(clearance+j*spacing),v];
-      slots.push(transform(slot));add(slot);slotIndices.push(points.length-1);
+      addSlot([start[0]+direction*(clearance+j*step),v]);
     }
     if(rideBounds&&i===rows.length-1) {
       const bevel=Math.min(.45,clearance*.8,(breadth-v)*.5);
       add([end[0]-direction*bevel,v]);add([end[0],v+bevel]);
     } else add(end);
     if(i<rows.length-1)for(let k=1;k<=12;k++) {
-      const theta=-Math.PI/2+k*Math.PI/12;
-      add([end[0]+(i%2?-1:1)*1.2*Math.cos(theta),v+1.2+1.2*Math.sin(theta)]);
+      const [u, offsetV] = arc[k];
+      const point = [end[0]+direction*u,v+offsetV];
+      if (bend.includes(k)) addSlot(point);
+      else add(point);
     }
   });
   if(rideBounds)add([endU,breadth]);

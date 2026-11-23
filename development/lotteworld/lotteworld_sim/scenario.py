@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RIDE_OPERATIONS_PATH = Path("configs/ride-operations.json")
 CONTINUOUS_PATH = Path("configs/continuous.json")
 SCENARIO_ID = "magic-island"
+QR_SIGN_ID = "magic-island-west"
 FACILITIES = {"atlantis", "gyro-drop", "gyro-swing", "gyro-spin", "comet-express", "arcana-ride"}
 MAP_READY = "매직아일랜드 설정 검증을 마쳤습니다. 연속 유입을 실행하려면 서버를 시작하세요."
 DEFAULT_PREFERENCE_BEHAVIOR = {
@@ -172,11 +173,20 @@ class Scenario:
 
 def load_inputs(root=ROOT, config_path=None, *, continuous=None):
     root = Path(root)
-    scenario = Scenario(read_json(root / "configs/map.json"),
+    map_data = read_json(root / "configs/map.json")
+    geometry = map_data.get("geometry")
+    if isinstance(geometry, dict) and "signposts" not in geometry:
+        legacy = geometry.pop("signpost", {"point": [123, 111], "clearance_radius_m": .3})
+        require(isinstance(legacy, dict), "이전 지도 안내판 설정이 올바르지 않습니다.")
+        geometry["signposts"] = {QR_SIGN_ID: {**legacy, "name": "서쪽 안내판",
+                                             "facility_ids": ["gyro-spin", "comet-express", "gyro-drop"]}}
+    scenario = Scenario(map_data,
                         read_json(config_path or root / "configs/day.json"),
                         read_json(root / "configs/preferences.json"),
                         read_json(root / RIDE_OPERATIONS_PATH),
                         load_continuous(root) if continuous is None else continuous)
     validate(scenario.map, scenario.config, scenario.preferences)
+    qr_sign = scenario.map["geometry"]["signposts"].get(QR_SIGN_ID)
+    require(qr_sign is not None and len(qr_sign["facility_ids"]) == 3, "QR 진입 안내판에는 시설 세 곳이 필요합니다.")
     validate_ride_operations(scenario.ride_operations, {facility["id"] for facility in scenario.map["facilities"]})
     return scenario

@@ -1,5 +1,6 @@
-"""직선 대기 자리의 정적 배치 검증. 회전·진입 구간에는 자리를 두지 않는다."""
+"""직선 줄과 반원 회전부의 대기 자리를 배치하고 검증한다."""
 import math
+from itertools import chain, pairwise
 
 
 def queue_layout(bounds, entrance, rules, boarding_capacity, ride_bounds=None, queue_capacity=None):
@@ -45,23 +46,42 @@ def queue_layout(bounds, entrance, rules, boarding_capacity, ride_bounds=None, q
         raise ValueError(f'지정한 대기 정원은 실제 배치 가능한 {max_capacity}자리 이내의 양의 정수여야 합니다.')
     per_row,extra=divmod(max_capacity if queue_capacity is None else queue_capacity,len(rows))
     slot_indices=[]
+    turn_radius = 1.2
+    arc = [(turn_radius * math.sin(k * math.pi / 12), turn_radius * (1 - math.cos(k * math.pi / 12)))
+           for k in range(13)]
+    bend_slots = next((
+        indices for indices in ((3, 6, 9), (4, 8), (6,))
+        if all(math.dist(a, b) >= spacing for a, b in zip(
+            [(-clearance, 0), *(arc[k] for k in indices)],
+            [*(arc[k] for k in indices), (-clearance, 2 * turn_radius)]))
+    ), ())
+
+    def add_slot(point):
+        add(point)
+        slots.append(transform(*point))
+        slot_indices.append(len(points)-1)
+
     for i,v in enumerate(rows):
         start,end=(far,near) if i%2 else (near,far)
         count=per_row+(i<extra)
         direction=1 if end>start else -1
+        bend = bend_slots if i < len(rows)-1 and count > len(bend_slots) else ()
+        count -= len(bend)
+        step = usable / (count-1) if count > 1 else 0
         for j in range(count):
-            u=start+direction*(clearance+j*spacing)
-            slots.append(transform(u,v))
-            add([u,v]);slot_indices.append(len(points)-1)
+            add_slot([start+direction*(clearance+j*step),v])
         if ride_bounds and i==len(rows)-1:
             bevel=min(.45,clearance*.8,(breadth-v)*.5)
             add([end-direction*bevel,v]);add([end,v+bevel])
         else:
             add([end,v])
         if i<len(rows)-1:
-            for k in range(1,13):
-                theta=-math.pi/2+k*math.pi/12
-                add([end+(-1 if i%2 else 1)*1.2*math.cos(theta),v+1.2+1.2*math.sin(theta)])
+            for k,(u,offset_v) in enumerate(arc[1:],1):
+                point = [end+direction*u,v+offset_v]
+                if k in bend:
+                    add_slot(point)
+                else:
+                    add(point)
     if ride_bounds: add([end_u,breadth])
     boarding_exit=transform(*points[-1]) if ride_bounds else None
     boarding_target=[max(ride_bounds[0],min(boarding_exit[0],ride_bounds[0]+ride_bounds[2])),max(ride_bounds[1],min(boarding_exit[1],ride_bounds[1]+ride_bounds[3]))] if ride_bounds else None
@@ -104,8 +124,10 @@ def queue_report(map_data):
 
 
 def validate_queue_capacity(map_data, require, number):
-    from .map_geometry import distance_to_segment, segment_rect_distance
-    rules=map_data['geometry']['queue_rules']
+    from .map_geometry import (distance_to_segment, obstacle_bounds, segment_obstacle_distance,
+                               walk_reservations)
+    geometry = map_data['geometry']
+    rules=geometry['queue_rules']
     scale=rules.get('layout_scale',1)
     require(number(scale,1,2),'대기줄 배치 확대 비율이 올바르지 않습니다.')
     require(number(rules['person_radius_m'],.23,.5),'대기 자리 반경이 올바르지 않습니다.')
@@ -123,12 +145,30 @@ def validate_queue_capacity(map_data, require, number):
         require(all(x-1e-8<=px<=x+w+1e-8 and z-1e-8<=pz<=z+d+1e-8
                     for px,pz in [*report['points'], *report['withdrawal'], *(p for path in report['railPaths'] for p in path)]),
                 '대기 보행이나 벨트가 대기 구획 밖으로 나갑니다.')
-        entry=next(n['point'] for n in map_data['geometry']['nodes'] if n['id']==facility['entrance'])
+        entry=next(n['point'] for n in geometry['nodes'] if n['id']==facility['entrance'])
         boarding=report['boarding_exit'];target=report['boarding_target']
         require(math.dist(boarding,target)<math.hypot(max(facility['bounds'][0]-entry[0],0,entry[0]-facility['bounds'][0]-facility['bounds'][2]),max(facility['bounds'][1]-entry[1],0,entry[1]-facility['bounds'][1]-facility['bounds'][3])),'대기줄 입구보다 탑승 진입점이 놀이기구에 가까워야 합니다.')
-        obstacles=[map_data['geometry']['castle'],*map_data['geometry']['scenery_buildings'],*map_data['geometry']['landscape_beds']]
-        obstacles += [f[k] for f in map_data['facilities'] for k in ('bounds','queue','exit_area') if f['id']!=facility['id'] or k=='exit_area']
-        require(all(segment_rect_distance(boarding,target,r)>=radius for r in obstacles),'탑승 진입 연결이 다른 구획을 침범합니다.')
+        reservations = walk_reservations(geometry, ignore_ride_access=facility['id'])
+        obstacles = [*reservations, *(other[key] for other in map_data['facilities']
+                                      for key in ('bounds', 'queue', 'exit_area')
+                                      if other is not facility or key == 'exit_area')]
+        require(all(segment_obstacle_distance(boarding, target, obstacle, limit=radius) >= radius
+                    for obstacle in obstacles),
+                '탑승 진입 연결이 다른 구획을 침범합니다.')
+        nearby = []
+        for obstacle in obstacles:
+            left, top, width, depth = obstacle_bounds(obstacle)
+            if (left <= x + w + radius and left + width >= x - radius
+                    and top <= z + d + radius and top + depth >= z - radius):
+                nearby.append(obstacle)
+        if nearby:
+            withdrawal_steps = ((slot, report['withdrawal'][index])
+                                for slot, index in zip(report['slots'], report['withdrawal_slot_indices']))
+            queue_segments = chain(pairwise(report['points']), pairwise(report['withdrawal']), withdrawal_steps)
+            clearance = radius - 1e-8
+            require(all(segment_obstacle_distance(a, b, obstacle, limit=clearance) >= clearance
+                        for a, b in queue_segments for obstacle in nearby),
+                    f"대기열·이탈 통로에서 다른 구획을 침범합니다: {facility['id']}")
         require(report['meets_minimum'],f"{facility['name']} 대기 자리가 1회 탑승 정원의 2.5배보다 적습니다.")
         for i,point in enumerate(report['slots']):
             require(x+radius<=point[0]<=x+w-radius and z+radius<=point[1]<=z+d-radius,'대기 자리 몸체가 구획 밖으로 나갑니다.')

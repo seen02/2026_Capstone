@@ -17,13 +17,23 @@ if (metadata.scenario_id !== 'magic-island' || !/^[0-9a-f]{64}$/.test(hashes?.ma
 // 선분을 일정 간격으로 검사할 때 코너에서 몸체 여유를 확보한다.
 const navigator = createNavigator(map, {radius: map.geometry.queue_rules.person_radius_m + .1});
 const nodes = new Map(map.geometry.nodes.map(({ id, point }) => [id, point]));
+const restrictedFacilities = new Set(map.geometry.ride_access_areas?.map(area => area.facility_id));
+function toQueue(nodeId, facility) {
+  if (!restrictedFacilities.has(facility.id)) return navigator.route(nodeId, facility.entrance).points;
+  const [gate, first] = metadata.queue_report[facility.id].points;
+  const dx = gate[0] - first[0], dz = gate[1] - first[1];
+  const scale = .8 * (map.geometry.queue_rules.layout_scale ?? 1) / Math.hypot(dx, dz);
+  const outside = [gate[0] + dx * scale, gate[1] + dz * scale];
+  return [...navigator.between(nodes.get(nodeId), outside), gate]
+    .filter((point, index, points) => !index || point.some((coord, axis) => coord !== points[index - 1][axis]));
+}
 const routes = Object.entries(mock.node_routes).map(([nodeId]) => {
   const point = nodes.get(nodeId);
   if (!point || !navigator.walkable(point)) {
     throw new Error(`공공 보행 구역의 출발 노드가 필요합니다. ${nodeId}`);
   }
-  return [nodeId, Object.fromEntries(map.facilities.map(({ id, entrance }) => [
-    id, navigator.route(nodeId, entrance).points,
+  return [nodeId, Object.fromEntries(map.facilities.map(facility => [
+    facility.id, toQueue(nodeId, facility),
   ]))];
 });
 
