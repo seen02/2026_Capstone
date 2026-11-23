@@ -1,0 +1,71 @@
+.workspace-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px clamp(12px, 2vw, 28px);
+  min-height: 62px;
+  padding: 8px clamp(12px, 2vw, 28px);
+  border-bottom: 1px solid #e6bd774a;
+  background: var(--magic-night);
+  color: var(--magic-light-ink);
+}
+.workspace-brand { display: flex; align-items: center; gap: 10px; }
+.workspace-ticket {
+  --notch: 2px;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 25px;
+  height: 17px;
+  border-radius: 3px;
+  background: var(--magic-gold);
+  transform: rotate(-8deg);
+}
+.workspace-ticket::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: var(--magic-night);
+  clip-path: var(--magic-ticket-star);
+}
+.workspace-wordmark {
+  font: 400 32px/1 var(--magic-wordmark);
+  white-space: nowrap;
+  /* 필기체 획의 시각적 중심을 상단 바의 행 중앙에 맞춘다. */
+  transform: translateY(var(--magic-wordmark-shift));
+}
+.workspace-name {
+  margin: 0;
+  padding-left: 11px;
+  border-left: 1px solid #e3d5f451;
+  color: #e3d5f4;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.workspace-links {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid #f2dcaf3b;
+  border-radius: 11px;
+  background: #fff6e60a;
+}
+.workspace-links button {
+  padding: 7px 14px;
+  color: inherit;
+}
+.workspace-links button:hover { background: #fff6e61a; }
+.workspace-links button[aria-selected="true"] { background: var(--magic-gold); color: var(--magic-night); }
+.workspace-bar button:focus-visible { outline-color: var(--magic-gold); }
+.workspace-content { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; }
+@media (min-width: 581px) and (max-width: 820px) {
+  .workspace-wordmark { font-size: 28px; }
+  .workspace-name { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+}
+@media (max-width: 580px) {
+  .workspace-bar { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+  .workspace-wordmark { font-size: 28px; }
+  .workspace-brand { gap: 7px; }
+  .workspace-links { grid-column: 1 / -1; grid-row: 2; }
+  .workspace-links button { flex: 1; min-height: 32px; padding: 5px 9px; }
+}

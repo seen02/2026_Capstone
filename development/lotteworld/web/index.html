@@ -3,35 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>매직아일랜드 시뮬레이션</title>
+  <meta name="theme-color" content="#20143b">
+  <title>매직아일랜드</title>
   <link rel="icon" href="data:,">
+  <link rel="preload" href="/vendor/fonts/great-vibes.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/magic-pass.css">
   <link rel="stylesheet" href="/map-viewport.css">
   <link rel="stylesheet" href="/map.css">
+  <link rel="stylesheet" href="/workspace.css">
+  <link rel="stylesheet" href="/operator.css">
   <script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
   <script type="module" src="/map.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="identity">
-      <span class="app-name">공간 시뮬레이션</span>
-      <h1>매직아일랜드</h1>
+  <header class="workspace-bar simulation-workspace-bar">
+    <div class="workspace-brand">
+      <span class="workspace-ticket" aria-hidden="true"></span>
+      <span class="workspace-wordmark" lang="en">Magic Pass</span>
+      <h1 class="workspace-name">매직아일랜드</h1>
     </div>
-    <div class="header-actions">
-      <p id="map-status" class="map-status" role="status">지도 불러오는 중</p>
-      <button type="button" id="fullscreen" aria-label="전체 화면" aria-pressed="false" hidden>
-        <span class="fullscreen-icon" aria-hidden="true"></span><span class="fullscreen-label">전체 화면</span>
-      </button>
+    <div class="workspace-links" role="tablist" aria-label="매직아일랜드 화면">
+      <button type="button" id="simulation-tab" role="tab" aria-controls="simulation-panel" aria-selected="true" data-path="/">시뮬레이션</button>
+      <button type="button" id="operator-tab" role="tab" aria-controls="operator-panel" aria-selected="false" data-path="/operator" tabindex="-1">운영자 대시보드</button>
     </div>
+    <button type="button" id="fullscreen" aria-label="전체 화면" aria-pressed="false" hidden>
+      <span class="fullscreen-icon" aria-hidden="true"></span><span class="fullscreen-label">전체 화면</span>
+    </button>
   </header>
-  <main class="map-shell" aria-label="매직아일랜드 3D 지도">
+  <main class="workspace-content">
+  <section id="simulation-panel" class="map-shell" role="tabpanel" aria-labelledby="simulation-tab" tabindex="0" hidden>
+    <p id="map-status" class="visually-hidden" role="status">지도 불러오는 중</p>
     <div id="scene" class="viewport">
       <div id="loading" role="status">3D 지도를 불러오는 중…</div>
       <div class="labels"></div>
     </div>
-    <dl id="population" class="population overlay" aria-label="배경 방문객 집계" hidden>
-      <div><dt>총유입</dt><dd id="entered"></dd></div>
-      <div><dt>체류</dt><dd id="present"></dd></div>
-      <div><dt>총퇴장</dt><dd id="exited"></dd></div>
+    <dl id="population" class="population overlay" aria-label="방문객 집계" hidden>
+      <div><dt>현재 체류</dt><dd id="present"></dd></div>
       <div><dt><label for="qr-characters">QR 참여</label></dt><dd>
         <select id="qr-characters" aria-label="QR 캐릭터 찾기"></select>
       </dd></div>
@@ -40,10 +47,6 @@
       <div class="tool-group" role="group" aria-label="지도 도구">
         <button type="button" id="reset">전체 보기</button>
         <button type="button" id="top-view">위에서 보기</button>
-        <span class="tool-divider" aria-hidden="true"></span>
-        <button type="button" id="facility-list" aria-expanded="false" aria-controls="facility-picker">
-          시설 찾기<span class="picker-chevron" aria-hidden="true"></span>
-        </button>
       </div>
     </div>
     <div class="zoom-tools tool-group" role="group" aria-label="확대와 축소">
@@ -51,56 +54,120 @@
       <span id="scale" aria-label="지도 확대 배율">100%</span>
       <button type="button" id="zoom-in" aria-label="지도 확대">+</button>
     </div>
-    <div class="legend" role="group" aria-label="시설 동선 범례">
-      <span><i class="entry" aria-hidden="true"></i>대기 입구</span>
-      <span><i class="boarding" aria-hidden="true"></i>탑승 진입</span>
-      <span><i class="exit" aria-hidden="true"></i>이용 후 퇴장</span>
+    <div class="legend" role="group" aria-label="방문객 상태 범례">
       <span><i class="walker" aria-hidden="true"></i>보행</span>
-      <span><i class="queued" aria-hidden="true"></i>대기열</span>
+      <span><i class="queued" aria-hidden="true"></i>대기</span>
     </div>
-    <section id="facility-picker" class="overlay menu" aria-labelledby="picker-title" hidden>
-      <h2 id="picker-title">시설 선택</h2>
-      <div id="facilities" aria-labelledby="picker-title"></div>
-    </section>
     <aside id="facility-panel" class="overlay facility-panel" aria-labelledby="facility-title" hidden>
-      <button type="button" id="close-panel" aria-label="시설 상세 닫기">×</button>
       <div id="detail">
-        <h2 id="facility-title" tabindex="-1"></h2>
-        <p id="facility-description"></p>
+        <header class="map-panel-heading">
+          <h2 id="facility-title" tabindex="-1"></h2>
+          <button type="button" data-action="focus" aria-label="시설 가까이 보기" title="시설 가까이 보기">
+            <svg class="map-focus-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 8V3h5m8 0h5v5m0 8v5h-5m-8 0H3v-5"/>
+              <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+          <button type="button" id="close-panel" aria-label="시설 상세 닫기" title="시설 상세 닫기">
+            <span class="map-close-icon" aria-hidden="true"></span>
+          </button>
+        </header>
         <div id="ride-metrics" hidden>
-          <dl class="route-distances">
+          <dl class="ride-metrics-list">
             <div><dt>운행 상태</dt><dd id="ride-status"></dd></div>
-            <div><dt>누적 회차</dt><dd id="ride-dispatches"></dd></div>
             <div><dt>대기 인원</dt><dd id="ride-queue"></dd></div>
-            <div><dt>합류 전 인원</dt><dd id="ride-approaching"></dd></div>
             <div><dt>예상 대기</dt><dd id="ride-estimated-wait"></dd></div>
             <div><dt>탑승 인원</dt><dd id="ride-passengers"></dd></div>
           </dl>
-          <details>
-            <summary>차량별 상태</summary>
-            <ul id="ride-vehicles"></ul>
-          </details>
         </div>
-        <div class="detail-actions">
-          <button type="button" id="show-routes" aria-pressed="false">동선 보기</button>
-          <button type="button" data-action="focus">시설 가까이 보기</button>
-        </div>
-        <dl id="route-distances" class="route-distances" hidden>
-          <div><dt>다리 → 대기 입구</dt><dd id="entry-distance"></dd></div>
-          <div><dt>이용 후 퇴장 → 다리</dt><dd id="exit-distance"></dd></div>
-        </dl>
       </div>
     </aside>
     <aside id="qr-panel" class="overlay facility-panel" aria-labelledby="qr-title" hidden>
-      <button type="button" id="close-qr" aria-label="QR 캐릭터 상세 닫기">×</button>
-      <h2 id="qr-title" tabindex="-1"></h2>
-      <p id="qr-phase"></p>
-      <p id="qr-progress" hidden></p>
-      <p id="qr-destination"></p>
-      <button type="button" id="focus-qr">캐릭터 가까이 보기</button>
+      <header class="map-panel-heading">
+        <h2 id="qr-title" tabindex="-1"></h2>
+        <button type="button" id="focus-qr" aria-label="캐릭터 확대 및 따라가기" aria-pressed="false" title="캐릭터 확대 및 따라가기">
+          <svg class="map-focus-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 8V3h5m8 0h5v5m0 8v5h-5m-8 0H3v-5"/>
+            <g class="map-focus-person">
+              <circle cx="12" cy="8.75" r="2.25"/>
+              <path d="M8 17v-.5a4 4 0 0 1 8 0v.5Z"/>
+            </g>
+          </svg>
+        </button>
+        <button type="button" id="close-qr" aria-label="QR 캐릭터 상세 닫기" title="QR 캐릭터 상세 닫기">
+          <span class="map-close-icon" aria-hidden="true"></span>
+        </button>
+      </header>
+      <div class="qr-detail">
+        <p id="qr-phase"></p>
+        <p id="qr-progress" hidden></p>
+        <p id="qr-destination"></p>
+      </div>
     </aside>
     <p id="error" class="map-error" role="alert" hidden></p>
-    <p id="screen-message" class="screen-message" role="status" hidden></p>
+  </section>
+  <section id="operator-panel" class="operator-layout" role="tabpanel" aria-labelledby="operator-tab" tabindex="0" hidden>
+    <div class="operator-main">
+      <dl class="metric-grid">
+        <div class="panel"><dt>현재 체류 인원</dt><dd id="operator-present">—</dd></div>
+        <div class="panel"><dt>전체 대기 인원</dt><dd id="operator-waiting">—</dd></div>
+        <div class="panel"><dt>최장 예상 대기</dt><dd class="longest-wait"><span id="operator-longest-wait">—</span> <span id="operator-longest-facility" hidden></span></dd></div>
+        <div class="panel"><dt>혼잡 시설 수</dt><dd id="operator-busy">—</dd></div>
+      </dl>
+      <section class="panel" id="operator-facilities" aria-labelledby="operator-facilities-title">
+        <h2 id="operator-facilities-title">시설별 운영 현황</h2>
+        <div id="operator-facility-map" class="operator-map operator-card-content" role="group" aria-label="매직아일랜드 시설과 안내판 배치">
+          <div id="operator-facility-positions" class="operator-facility-positions"></div>
+        </div>
+      </section>
+      <section class="panel" id="traffic">
+        <h2>방문객 흐름</h2>
+        <figure class="traffic-figure">
+          <ul class="traffic-legend" aria-label="방문객 흐름 그래프 범례">
+            <li><i class="traffic-entered" aria-hidden="true"></i>누적 입장</li>
+            <li><i class="traffic-exited" aria-hidden="true"></i>누적 퇴장</li>
+            <li><i class="traffic-present" aria-hidden="true"></i>현재 체류</li>
+          </ul>
+          <div class="traffic-plot">
+            <canvas id="operator-traffic-chart" role="img" aria-label="방문객 흐름 그래프"></canvas>
+            <p id="operator-traffic-empty" class="operator-note">방문객 기록을 기다리는 중</p>
+          </div>
+          <figcaption>시뮬레이션 경과 시간 (시:분) · 최근 2시간 · 인원 (명)</figcaption>
+        </figure>
+      </section>
+      <section class="panel" id="operator-detail" aria-labelledby="operator-detail-title" tabindex="0">
+        <h2 id="operator-detail-title">시설 상세</h2>
+        <div class="operator-card-content">
+          <dl class="detail-list">
+            <div><dt>대기 인원</dt><dd id="operator-ride-queue">—</dd></div>
+            <div><dt>예상 대기</dt><dd id="operator-ride-estimated-wait">—</dd></div>
+            <div><dt>운행 상태</dt><dd id="operator-ride-status">—</dd></div>
+            <div><dt>누적 회차</dt><dd id="operator-ride-dispatches">—</dd></div>
+            <div><dt>합류 전 인원</dt><dd id="operator-ride-approaching">—</dd></div>
+            <div><dt>탑승 인원</dt><dd id="operator-ride-passengers">—</dd></div>
+          </dl>
+          <section id="operator-vehicle-details" class="operator-vehicles" aria-labelledby="operator-vehicles-title" hidden>
+            <h3 id="operator-vehicles-title">차량별 상태</h3>
+            <ul id="operator-ride-vehicles" role="list"></ul>
+          </section>
+        </div>
+      </section>
+      <section class="panel" id="signs" aria-labelledby="operator-signs-title">
+        <div class="operator-sign-heading">
+          <h2 id="operator-signs-title">안내판 현황</h2>
+          <span id="operator-sign-name" hidden></span>
+        </div>
+        <dl id="operator-sign-detail" class="operator-sign-detail" hidden>
+          <dt>안내 대상</dt><dd id="operator-sign-facilities"></dd>
+        </dl>
+        <div class="operator-sign-feed">
+          <video id="operator-sign-video" controls playsinline preload="metadata" hidden></video>
+          <p id="operator-sign-video-status" role="status">안내판 정보를 불러오는 중</p>
+        </div>
+      </section>
+    </div>
+  </section>
   </main>
+  <p id="screen-message" class="screen-message" role="status" hidden></p>
 </body>
 </html>

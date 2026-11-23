@@ -21,6 +21,8 @@ QR_PHASES = {
     'awaiting_unload': 'unloading', 'walking_from_ride': 'unloading', 'completed': 'completed',
 }
 QR_PHASE_ORDER = tuple(dict.fromkeys(QR_PHASES.values()))
+VISITOR_FLOW_INTERVAL_SIM_S = 60
+VISITOR_FLOW_POINTS = 121
 ROAMING_RECHECK_SIM_S = (8, 14)
 ROAMING_DENSITY_INTERVAL_SIM_S = 6
 ROAMING_DENSITY_CELL_M = 16
@@ -194,6 +196,7 @@ class BackgroundRun:
         self.event_order = count()
         self.entered_total = 0
         self.exited_total = 0
+        self.visitor_flow = deque(maxlen=VISITOR_FLOW_POINTS)
         self.admission_pending = False
         self.rides = {key: RideOperation(self, self.queues[key], settings)
                       for key, settings in (ride_operations or {}).items()}
@@ -201,6 +204,7 @@ class BackgroundRun:
         for _ in range(config['initial_people']):
             self._admit(0, initial_ages.random())
         self._schedule_admission(0)
+        self._sample_visitor_flow(0)
         self.started = self.clock()
 
     def _schedule(self, when, action, *args, priority=0):
@@ -587,6 +591,16 @@ class BackgroundRun:
         self.exited_total += 1
         self._schedule_admission(now)
 
+    def _sample_visitor_flow(self, now):
+        self.visitor_flow.append({
+            'sim_time_s': now,
+            'entered_total': self.entered_total,
+            'exited_total': self.exited_total,
+            'present_people': len(self.visitors),
+        })
+        # 같은 시각의 입장·퇴장과 시설 운행을 처리한 뒤 집계한다.
+        self._schedule(now + VISITOR_FLOW_INTERVAL_SIM_S, self._sample_visitor_flow, priority=4)
+
     def current_sim_time(self):
         return (self.clock() - self.started) * self.time_scale
 
@@ -745,6 +759,7 @@ class BackgroundRun:
                     'entered_total': self.entered_total,
                     'present_people': len(self.visitors),
                     'exited_total': self.exited_total,
+                    'visitor_flow': [point.copy() for point in self.visitor_flow],
                     'visitors': [visitor.snapshot(now, self.time_scale * 1.2 if with_motion else 0)
                                  for visitor in self.visitors.values()],
                     'queues': {key: {'capacity': queue.capacity, 'reserved_count': len(queue.members),

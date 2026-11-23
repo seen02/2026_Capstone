@@ -60,6 +60,30 @@ class BackgroundTests(unittest.TestCase):
         self.assertGreater(exited, target * 100)
         self.assertEqual(jumped.snapshot()["background"], people)
 
+    def test_visitor_flow_samples_after_events_and_keeps_two_simulation_hours(self):
+        real_time = 0
+        config = {**load_inputs().continuous, "target_people": 2, "initial_people": 0,
+                  "admission_interval_sim_s": 60, "stay_sim_s": [60, 60], "time_scale": 6}
+        run = BackgroundRun(config, clock=lambda: real_time)
+        # 첫 조회에서 지난 3분의 경계별 집계가 모두 있어야 한다.
+        real_time = 30
+        history = run.snapshot()["background"]["visitor_flow"]
+        self.assertEqual(history, [
+            {"sim_time_s": 0, "entered_total": 0, "exited_total": 0, "present_people": 0},
+            {"sim_time_s": 60, "entered_total": 1, "exited_total": 0, "present_people": 1},
+            {"sim_time_s": 120, "entered_total": 2, "exited_total": 1, "present_people": 1},
+            {"sim_time_s": 180, "entered_total": 3, "exited_total": 2, "present_people": 1},
+        ])
+
+        real_time = 1250
+        history = run.snapshot()["background"]["visitor_flow"]
+        self.assertEqual([point["sim_time_s"] for point in history], list(range(300, 7501, 60)))
+        self.assertTrue(all(point["entered_total"] == point["exited_total"] + point["present_people"]
+                            for point in history))
+        restarted = BackgroundRun(config, clock=lambda: real_time)
+        self.assertNotEqual(restarted.run_id, run.run_id)
+        self.assertEqual(len(restarted.snapshot()["background"]["visitor_flow"]), 1)
+
     def test_default_1500_people_stay_near_target_for_two_accelerated_hours(self):
         real_time = 0
         config = load_inputs().continuous

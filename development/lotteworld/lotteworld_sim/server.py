@@ -21,6 +21,7 @@ from .user_sessions import SESSION_IDLE_TIMEOUT, UserSessions, sign_position_met
 from .visitor_routes import VisitorRoutes
 
 WEB = Path(__file__).resolve().parents[1] / "web"
+DEFAULT_PORT = 3000
 UNAVAILABLE = "연속 시연에서 이 API는 아직 지원하지 않습니다."
 BACKGROUND_RUNNING = "배경 방문객의 유입·체류·퇴장과 놀이시설 순환 운행이 실행 중입니다."
 RECOMMENDATION_ERRORS = {
@@ -36,13 +37,16 @@ RECOMMENDATION_ERRORS = {
 SESSION_COOKIE = "magic_island_session"
 ASSETS = {
     "/": ("index.html", "text/html"),
+    "/operator": ("index.html", "text/html"),
     "/magic-pass.css": ("magic-pass.css", "text/css"),
+    "/workspace.css": ("workspace.css", "text/css"),
+    "/operator.css": ("operator.css", "text/css"),
     "/user": ("user.html", "text/html"),
     "/user.css": ("user.css", "text/css"),
     "/map.css": ("map.css", "text/css"),
     "/map-viewport.css": ("map-viewport.css", "text/css"),
     **{f"/{name}": (name, "text/javascript") for name in (
-        "map.js", "map3d.js", "geometry.mjs", "rides.mjs", "route.mjs", "navigation.mjs", "queue.mjs",
+        "map.js", "operator.js", "operator-visuals.js", "map3d.js", "geometry.mjs", "rides.mjs", "route.mjs", "navigation.mjs", "queue.mjs",
         "user.js", "live-state.mjs",
         "vendor/three/three.module.js", "vendor/three/three.core.js", "vendor/three/OrbitControls.js")},
     "/vendor/three/LICENSE": ("vendor/three/LICENSE", "text/plain"),
@@ -246,7 +250,7 @@ class Handler(BaseHTTPRequestHandler):
         self.respond({"error": "없는 API입니다."}, 404)
 
 
-def make_server(port=8767, config_path=None, root=ROOT, web_root=None, *, host="127.0.0.1", mock_data=None, clock=monotonic):
+def make_server(port=DEFAULT_PORT, config_path=None, root=ROOT, web_root=None, *, host="127.0.0.1", mock_data=None, clock=monotonic):
     store=ScenarioStore(root,config_path)
     mock = MockRecommendation(store, mock_data or Path(root) / "configs" / MOCK_FILENAME)
     background = BackgroundRun(store.continuous, store.routes, map_hash=store.value['hashes']['map'],
@@ -265,7 +269,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="매직아일랜드 연속 유입·지도·QR 사용자 진입·모의 추천 서버")
     parser.add_argument("--host", default="127.0.0.1", help="서버가 요청을 받을 주소")
-    parser.add_argument("--port", type=int, default=8767)
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--config", type=Path, help="매직아일랜드 운영 설정 JSON")
     parser.add_argument("--mock-data", type=Path, help="모의 시설 현황과 경로를 저장한 JSON 경로")
     parser.add_argument("--validate-only", action="store_true", help="설정만 검증하고 종료")

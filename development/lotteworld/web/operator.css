@@ -1,0 +1,260 @@
+.operator-layout {
+  min-height: 0;
+  overflow: hidden;
+  color: var(--magic-night);
+  background: var(--magic-paper);
+  font-size: var(--magic-body-size);
+  line-height: 1.45;
+  --title-weight: 700;
+  --value-weight: 600;
+  --label-weight: 500;
+  --muted: var(--magic-muted);
+  --border: var(--magic-border);
+  --congested-badge: #f4dfd7;
+  --congested-ink: #783e28;
+  --traffic-entered: #186862;
+  --traffic-exited: #605099;
+  --traffic-present: #a45a10;
+}
+.operator-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 13fr) minmax(0, 42fr) minmax(0, 45fr);
+  gap: 14px 12px;
+  width: min(100%, 1340px);
+  height: 100%;
+  margin-inline: auto;
+  padding: 16px clamp(14px, 2.5vw, 32px) 24px;
+}
+.operator-layout h2 { margin: 0 0 8px; font-size: var(--magic-heading-size); font-weight: var(--title-weight); line-height: 1.35; }
+.metric-grid {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.18fr) minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+}
+.metric-grid .panel { display: flex; flex-direction: column; justify-content: center; }
+.operator-main > .panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+#operator-facilities, #operator-detail { overflow-y: auto; }
+#operator-facilities { container: facility-map / size; }
+.operator-card-content { flex: none; margin-block: auto; }
+.panel {
+  padding: 12px 16px;
+  background: var(--magic-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--magic-card-radius);
+  box-shadow: 0 3px 10px #20143b0a;
+}
+.operator-layout dt, .operator-vehicles h3, .operator-vehicle-number {
+  color: var(--muted);
+  font-size: var(--magic-label-size);
+  font-weight: var(--label-weight);
+}
+.operator-layout dd, #operator-longest-facility, .operator-vehicle-state {
+  font-size: var(--magic-body-size);
+  font-weight: var(--value-weight);
+  font-variant-numeric: tabular-nums;
+}
+.operator-layout dd { margin: 0; }
+.metric-grid dd { margin-top: 4px; font-size: 1.625rem; font-weight: var(--title-weight); line-height: 1.25; }
+#operator-longest-wait { color: #000; }
+.longest-wait { display: flex; align-items: baseline; gap: 8px; }
+.longest-wait span { white-space: nowrap; }
+#operator-longest-facility {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--magic-night);
+  text-overflow: ellipsis;
+}
+.operator-note, .traffic-legend, .traffic-plot canvas,
+.traffic-figure figcaption, .operator-sign-feed p, .operator-vehicle-place {
+  font-size: var(--magic-label-size);
+  font-weight: 400;
+}
+.operator-note { margin: 0; color: var(--muted); }
+.operator-sign-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+#operator-sign-name, .operator-sign-marker, .operator-map .operator-map-marker {
+  font-size: var(--magic-body-size);
+  font-weight: var(--title-weight);
+}
+#operator-sign-name { color: var(--magic-action); }
+.operator-sign-detail { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px; margin: 0 0 8px; }
+.operator-sign-detail dd { word-break: keep-all; }
+.operator-sign-feed {
+  display: grid;
+  position: relative;
+  flex: 1 1 12rem;
+  min-height: 0;
+  place-items: center;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--magic-paper);
+  color: var(--muted);
+}
+.operator-sign-feed:has(video:not([hidden])) {
+  background: var(--magic-night);
+  border-color: var(--magic-night);
+}
+.operator-sign-feed p { margin: 0; text-align: center; }
+.operator-sign-feed video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.operator-facility-positions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px clamp(60px, 13vw, 156px);
+}
+.operator-map-signs { display: flex; grid-column: 1 / -1; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.operator-sign-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid #d6c4a2;
+  border-radius: 8px;
+  background: #faf2e3;
+  color: var(--magic-action);
+}
+.operator-sign-marker:hover, .operator-sign-marker[aria-pressed="true"] { border-color: var(--magic-action); background: var(--magic-selection); }
+.operator-sign-marker[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--magic-action); }
+.operator-sign-icon { position: relative; width: 16px; height: 15px; }
+.operator-sign-icon::before { content: ""; position: absolute; inset: 0 auto 0 5px; width: 2px; background: currentColor; }
+.operator-sign-icon::after {
+  content: "";
+  position: absolute;
+  inset: 2px 0 auto;
+  height: 7px;
+  background: currentColor;
+  clip-path: polygon(0 0, 75% 0, 100% 50%, 75% 100%, 0 100%);
+}
+.operator-map .operator-map-marker {
+  display: flex;
+  gap: 4px;
+  width: min(100%, 230px);
+  min-height: 50px;
+  justify-self: center;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--magic-panel);
+  color: var(--magic-night);
+  text-align: left;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.operator-map .operator-map-marker:is(:hover, [aria-pressed="true"]) { background: var(--magic-hover); }
+.operator-map .operator-map-marker[aria-pressed="true"] {
+  border-color: var(--magic-action);
+  box-shadow: inset 0 0 0 1px var(--magic-action);
+}
+.operator-map-marker:focus-visible, .operator-sign-marker:focus-visible { outline-color: var(--magic-action); }
+.operator-map-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.operator-map-queue {
+  display: inline-flex;
+  flex: none;
+  gap: 5px;
+  align-items: center;
+  font-size: var(--magic-label-size);
+  font-weight: var(--value-weight);
+  font-variant-numeric: tabular-nums;
+}
+.operator-congestion-label {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--congested-badge);
+  color: var(--congested-ink);
+  font-size: .75rem;
+  font-weight: var(--value-weight);
+}
+.operator-map-marker:not([data-load="congested"]) .operator-congestion-label { display: none; }
+.traffic-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+  padding: 0;
+  color: var(--muted);
+  list-style: none;
+}
+.traffic-legend li { display: inline-flex; align-items: center; gap: 5px; }
+.detail-list { margin: 0; }
+.detail-list div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.detail-list dd { text-align: right; }
+.detail-list:has(+ .operator-vehicles:not([hidden])), .operator-vehicles ul {
+  display: grid;
+  column-gap: 1rem;
+}
+.detail-list:has(+ .operator-vehicles:not([hidden])) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(9.5rem, calc((100% - 2rem) / 3))), 1fr));
+}
+.operator-vehicles { margin-top: 8px; }
+.operator-vehicles h3 { margin: 0 0 4px; }
+.operator-vehicles ul {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+  margin: 0;
+  padding: 0;
+  line-height: 1.35;
+  list-style: none;
+}
+#operator-detail[data-facility-id="atlantis"] :is(.detail-list, .operator-vehicles ul) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1rem;
+}
+.operator-vehicles li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 5px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border);
+}
+.operator-vehicles li span { white-space: nowrap; }
+.operator-vehicle-place { margin-inline-start: auto; color: var(--muted); }
+.traffic-figure { display: flex; flex: 1; flex-direction: column; min-height: 0; margin: 0; }
+.traffic-legend i { width: 20px; height: 0; border-top: 2px solid; }
+.traffic-legend .traffic-entered { border-color: var(--traffic-entered); }
+.traffic-legend .traffic-exited { border-color: var(--traffic-exited); border-top-style: dashed; }
+.traffic-legend .traffic-present { border-color: var(--traffic-present); border-top-style: dotted; }
+.traffic-plot { position: relative; flex: 1 1 12rem; min-height: 0; }
+.traffic-plot canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.traffic-plot .operator-note { position: absolute; inset: 0; display: grid; place-items: center; }
+.traffic-figure figcaption { margin-top: 6px; color: var(--muted); text-align: center; }
+@media (max-height: 740px) {
+  .operator-main { padding-block: 8px; }
+  .operator-main, .metric-grid { gap: 10px; }
+  .panel { padding-block: 8px; }
+  .metric-grid .panel { padding-block: 6px; }
+  .operator-layout h2 { margin-bottom: 6px; }
+  .detail-list div { padding-block: 4px; }
+  #operator-detail[data-facility-id="atlantis"] { padding-block: 6px; }
+  #operator-detail[data-facility-id="atlantis"] .detail-list div { padding-block: 3px; }
+  #operator-detail[data-facility-id="atlantis"] .operator-vehicles { margin-top: 6px; }
+  #operator-detail[data-facility-id="atlantis"] .operator-vehicles h3 { margin-bottom: 3px; }
+  #operator-detail[data-facility-id="atlantis"] .operator-vehicles li { padding-block: 1px; }
+  .traffic-legend { margin-bottom: 6px; }
+  .traffic-figure figcaption { margin-top: 4px; }
+}
+@media (min-width: 900px) {
+  .operator-facility-positions { column-gap: clamp(132px, 13vw, 156px); }
+  .operator-map-signs:has(.operator-sign-marker:only-child) { height: 12px; align-content: center; }
+
+  @container facility-map (max-height: 279px) {
+    .operator-facility-positions { row-gap: 7px; }
+    .operator-map-signs:has(.operator-sign-marker:only-child) { height: 0; }
+    .operator-map .operator-map-marker { min-height: 46px; padding-block: 2px; }
+  }
+  @container facility-map (max-height: 224px) {
+    .operator-facility-positions { row-gap: 3px; }
+  }
+}
+@media (max-width: 560px) {
+  .operator-layout { overflow: auto; }
+  .operator-main { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #operator-facilities { container-type: normal; }
+}
