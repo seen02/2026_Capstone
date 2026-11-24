@@ -74,7 +74,7 @@
 }
 .operator-note { margin: 0; color: var(--muted); }
 .operator-sign-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-#operator-sign-name, .operator-sign-marker, .operator-map .operator-map-marker {
+#operator-sign-name, .operator-map :is(.operator-map-marker, .operator-sign-marker) {
   font-size: var(--magic-body-size);
   font-weight: var(--title-weight);
 }
@@ -106,19 +106,25 @@
   gap: 12px clamp(60px, 13vw, 156px);
 }
 .operator-map-signs { display: flex; grid-column: 1 / -1; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.operator-map :is(.operator-map-marker, .operator-sign-marker) {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--magic-panel);
+  color: var(--magic-night);
+}
+.operator-map :is(.operator-map-marker, .operator-sign-marker):hover { background: var(--magic-hover); }
+.operator-map :is(.operator-map-marker, .operator-sign-marker)[aria-pressed="true"] {
+  border-color: var(--magic-action);
+  box-shadow: inset 0 0 0 1px var(--magic-action);
+}
+.operator-map :is(.operator-map-marker, .operator-sign-marker):focus-visible { outline-color: var(--magic-action); }
 .operator-sign-marker {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   min-height: 32px;
   padding: 4px 12px;
-  border: 1px solid #d6c4a2;
-  border-radius: 8px;
-  background: #faf2e3;
-  color: var(--magic-action);
 }
-.operator-sign-marker:hover, .operator-sign-marker[aria-pressed="true"] { border-color: var(--magic-action); background: var(--magic-selection); }
-.operator-sign-marker[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--magic-action); }
 .operator-sign-icon { position: relative; width: 16px; height: 15px; }
 .operator-sign-icon::before { content: ""; position: absolute; inset: 0 auto 0 5px; width: 2px; background: currentColor; }
 .operator-sign-icon::after {
@@ -138,20 +144,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 4px 8px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--magic-panel);
-  color: var(--magic-night);
   text-align: left;
   line-height: 1.3;
   white-space: nowrap;
 }
-.operator-map .operator-map-marker:is(:hover, [aria-pressed="true"]) { background: var(--magic-hover); }
-.operator-map .operator-map-marker[aria-pressed="true"] {
-  border-color: var(--magic-action);
-  box-shadow: inset 0 0 0 1px var(--magic-action);
-}
-.operator-map-marker:focus-visible, .operator-sign-marker:focus-visible { outline-color: var(--magic-action); }
 .operator-map-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .operator-map-queue {
   display: inline-flex;
