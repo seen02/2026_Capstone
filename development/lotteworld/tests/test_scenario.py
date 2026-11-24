@@ -202,11 +202,16 @@ class ScenarioTests(unittest.TestCase):
                 with self.assertRaises(HTTPError) as caught:
                     urlopen(base + forbidden)
                 self.assertEqual(caught.exception.code, 404)
-            for path in ("/api/signs", "/api/report", "/api/reset", "/api/advance", "/api/seek", "/configs/day.json", "/floorplan.svg"):
-                request = Request(base + path, data=b"{}") if path in ("/api/reset", "/api/advance", "/api/seek") else base + path
-                with self.subTest(path=path), self.assertRaises(HTTPError) as caught:
-                    urlopen(request)
-                self.assertEqual(caught.exception.code, 409 if path.startswith("/api/") else 404)
+            removed_get_paths = ("/api/report", "/api/recommendation/mock", "/api/signs")
+            removed_post_paths = ("/api/reset", "/api/advance", "/api/seek", "/api/recommendation")
+            missing_assets = ("/configs/continuous.json", "/floorplan.svg")
+            requests = [Request(base + path) for path in (*removed_get_paths, *missing_assets)]
+            requests.extend(Request(base + path, data=b"{}") for path in removed_post_paths)
+            for request in requests:
+                with self.subTest(method=request.get_method(), path=request.selector):
+                    with self.assertRaises(HTTPError) as caught:
+                        urlopen(request)
+                    self.assertEqual(caught.exception.code, 404)
         finally:
             server.shutdown()
             server.server_close()

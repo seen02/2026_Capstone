@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--mode", choices=("server", "cli"), default="server", help="서버 또는 CLI")
     args, extra = parser.parse_known_args()
     # 사용자 설정·결과 경로는 호출한 디렉터리 기준으로 유지한다.
-    path_options = ("--config", "--output", "--mock-data")
+    path_options = ("--config", "--output")
     for index, value in enumerate(extra):
         if value in path_options and index + 1 < len(extra):
             extra[index + 1] = str(Path(extra[index + 1]).resolve())

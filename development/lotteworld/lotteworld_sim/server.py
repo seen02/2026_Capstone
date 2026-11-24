@@ -1,4 +1,4 @@
-"""매직아일랜드 연속 유입·지도·QR 사용자 진입·모의 추천 서버."""
+"""매직아일랜드 연속 시연과 QR 실시간 추천 서버."""
 import argparse
 from functools import partial
 from http.cookies import CookieError, SimpleCookie
@@ -13,20 +13,18 @@ from pathlib import Path
 from time import monotonic
 from urllib.parse import urlparse
 from .background import BackgroundRun
-from .scenario import load_continuous, load_inputs, RIDE_OPERATIONS_PATH, ROOT, SCENARIO_ID
+from .scenario import load_continuous, load_inputs, RIDE_OPERATIONS_PATH, ROOT
 from .devserver import signatures, supervise
 from .recommendation import VERSION, RecommendationError, require
-from .recommendation_mock import MOCK_FILENAME, MockRecommendation
 from .user_sessions import SESSION_IDLE_TIMEOUT, UserSessions, sign_position_metadata
 from .visitor_routes import VisitorRoutes
 
 WEB = Path(__file__).resolve().parents[1] / "web"
 DEFAULT_PORT = 3000
-UNAVAILABLE = "연속 시연에서 이 API는 아직 지원하지 않습니다."
 BACKGROUND_RUNNING = "배경 방문객의 유입·체류·퇴장과 놀이시설 순환 운행이 실행 중입니다."
 RECOMMENDATION_ERRORS = {
     "context_mismatch": 409, "session_expired": 409, "session_not_ready": 409,
-    "snapshot_stale": 409, "position_stale": 409, "run_ended": 409, "mock_data_unavailable": 503,
+    "snapshot_stale": 409, "position_stale": 409, "run_ended": 409,
     "body_too_large": 413, "unsupported_media_type": 415,
     "session_required": 401, "unknown_sign": 404, "session_mismatch": 409, "revision_mismatch": 409,
     "placement_full": 503, "sign_unavailable": 503,
@@ -107,9 +105,8 @@ class ContinuousServer(ThreadingHTTPServer):
 
 
 class Handler(BaseHTTPRequestHandler):
-    def __init__(self, *args, store, web_root, mock_recommendation, user_sessions, **kwargs):
+    def __init__(self, *args, store, web_root, user_sessions, **kwargs):
         self.store=store;self.web_root=Path(web_root)
-        self.mock_recommendation = mock_recommendation
         self.user_sessions = user_sessions
         super().__init__(*args, **kwargs)
 
@@ -184,17 +181,14 @@ class Handler(BaseHTTPRequestHandler):
         return self.respond(result, cookie=self.user_session_cookie(token))
 
     @staticmethod
-    def user_session_cookie(token, max_age=int(SESSION_IDLE_TIMEOUT.total_seconds())):
+    def user_session_cookie(token):
+        max_age = int(SESSION_IDLE_TIMEOUT.total_seconds())
         return f"{SESSION_COOKIE}={token}; Path=/api/user/; Max-Age={max_age}; HttpOnly; SameSite=Strict"
 
     def get_user(self):
         token = self.session_token()
         result = self.user_sessions.get(token)
         return self.respond(result, cookie=self.user_session_cookie(token))
-
-    def end_user(self):
-        result = self.user_sessions.end(self.session_token(), self.request_json())
-        return self.respond(result, cookie=self.user_session_cookie("", 0))
 
     def do_GET(self):
         path = urlparse(self.path).path
@@ -212,29 +206,21 @@ class Handler(BaseHTTPRequestHandler):
         if path == '/api/dev-version':
             try:return self.respond({'version':self.store.version(),'instance':self.store.instance})
             except ValueError as error:return self.respond({'error':str(error)},422)
-        if path == "/api/recommendation/mock":
-            return self.api_response(lambda: self.respond(self.mock_recommendation.info()))
         if path == "/api/user/session":
             return self.api_response(self.get_user)
         if path == "/api/user/recommendation":
             return self.api_response(lambda: self.respond(self.user_sessions.recommend(self.session_token())))
         if path == "/api/state":
             return self.respond(self.user_sessions.engine_state())
-        if path in ("/api/signs", "/api/report"):
-            return self.respond({"error": UNAVAILABLE, "scenario_id": SCENARIO_ID, "runnable": False}, 409)
         self.respond({"error": "없는 경로입니다."}, 404)
 
     def do_POST(self):
         path = urlparse(self.path).path
-        if path == "/api/recommendation":
-            return self.api_response(lambda: self.respond(self.mock_recommendation.recommend(self.request_json())))
         if path == "/api/user/session":
             return self.api_response(self.enter_user)
         if path == "/api/user/recommendation/accept":
             return self.api_response(lambda: self.respond(
                 self.user_sessions.accept(self.session_token(), self.request_json())))
-        if path in ("/api/reset", "/api/advance", "/api/seek"):
-            return self.respond({"error": UNAVAILABLE, "runnable": False}, 409)
         self.respond({"error": "없는 API입니다."}, 404)
 
     def do_PUT(self):
@@ -244,14 +230,11 @@ class Handler(BaseHTTPRequestHandler):
         self.respond({"error": "없는 API입니다."}, 404)
 
     def do_DELETE(self):
-        if urlparse(self.path).path == "/api/user/session":
-            return self.api_response(self.end_user)
         self.respond({"error": "없는 API입니다."}, 404)
 
 
-def make_server(port=DEFAULT_PORT, config_path=None, root=ROOT, web_root=None, *, host="127.0.0.1", mock_data=None, clock=monotonic):
+def make_server(port=DEFAULT_PORT, config_path=None, root=ROOT, web_root=None, *, host="127.0.0.1", clock=monotonic):
     store=ScenarioStore(root,config_path)
-    mock = MockRecommendation(store, mock_data or Path(root) / "configs" / MOCK_FILENAME)
     background = BackgroundRun(store.continuous, store.routes, map_hash=store.value['hashes']['map'],
                                ride_operations=store.value['ride_operations']['facilities'],
                                ride_operations_hash=store.value['hashes']['ride_operations'],
@@ -259,18 +242,17 @@ def make_server(port=DEFAULT_PORT, config_path=None, root=ROOT, web_root=None, *
                                clock=clock)
     user_sessions = UserSessions(store.value, background)
     handler = partial(Handler, store=store, web_root=web_root or Path(root) / "web",
-                      mock_recommendation=mock, user_sessions=user_sessions)
+                      user_sessions=user_sessions)
     return ContinuousServer((host, port), handler, user_sessions)
 
 
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="매직아일랜드 연속 유입·지도·QR 사용자 진입·모의 추천 서버")
+    parser = argparse.ArgumentParser(description="매직아일랜드 연속 시연과 QR 실시간 추천 서버")
     parser.add_argument("--host", default="127.0.0.1", help="서버가 요청을 받을 주소")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
-    parser.add_argument("--config", type=Path, help="매직아일랜드 운영 설정 JSON")
-    parser.add_argument("--mock-data", type=Path, help="모의 시설 현황과 경로를 저장한 JSON 경로")
+    parser.add_argument("--config", type=Path, help="매직아일랜드 연속 시연 설정 JSON")
     parser.add_argument("--validate-only", action="store_true", help="설정만 검증하고 종료")
     parser.add_argument('--no-reload',action='store_true',help='Python 자동 재시작 없이 실행')
     args = parser.parse_args()
@@ -282,11 +264,11 @@ def main():
             return
         if not args.no_reload:
             load_inputs(config_path=args.config)
-            raise SystemExit(supervise(ROOT, args.port, args.config, host=args.host, mock_data=args.mock_data))
-        server = make_server(args.port, args.config, host=args.host, mock_data=args.mock_data)
+            raise SystemExit(supervise(ROOT, args.port, args.config, host=args.host))
+        server = make_server(args.port, args.config, host=args.host)
     except (ValueError, OSError) as exc:
         parser.error(str(exc))
-    print(f"매직아일랜드 지도·QR 사용자 진입·모의 추천: http://{args.host}:{server.server_port}", flush=True)
+    print(f"매직아일랜드 지도·QR 사용자 진입·실시간 추천: http://{args.host}:{server.server_port}", flush=True)
     print(BACKGROUND_RUNNING, flush=True)
     print("종료하려면 Ctrl+C를 누르세요.", flush=True)
     try:

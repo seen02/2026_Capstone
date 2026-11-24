@@ -165,19 +165,6 @@ class UserSessions:
             now = datetime.now(timezone.utc)
             return self._resume(self._get(token, now), now)
 
-    def end(self, token, request):
-        fields(request, "request", "contract_version", "session_id")
-        check_version(request["contract_version"])
-        session_id = request["session_id"]
-        identifier(session_id, "session_id")
-        with self.lock:
-            if (session := self.sessions.get(token)) is not None:
-                require(session_id == session["session_id"],
-                        "연결된 세션이 변경되었습니다. 페이지를 새로고침해 주세요.", "session_mismatch")
-                self._retire_walk(session)
-                del self.sessions[token]
-        return {"contract_version": VERSION, "status": "ended"}
-
     def save_preferences(self, token, request):
         fields(request, "request", "contract_version", "context", "session_id", "expected_revision", "preference_order")
         check_version(request["contract_version"])

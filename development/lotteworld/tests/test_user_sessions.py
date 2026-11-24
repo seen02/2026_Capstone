@@ -3,8 +3,6 @@ from datetime import datetime, timedelta, timezone
 from http.cookiejar import CookieJar
 import json
 import math
-from pathlib import Path
-import tempfile
 import threading
 import unittest
 from unittest.mock import patch
@@ -13,7 +11,6 @@ from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 from lotteworld_sim.map_geometry import distance_to_segment, public_walkable
 from lotteworld_sim.recommendation import VERSION
-from lotteworld_sim.scenario import ROOT
 from lotteworld_sim.server import make_server
 from lotteworld_sim.user_sessions import SIGN_ID
 
@@ -23,12 +20,8 @@ class UserSessionAPITests(unittest.TestCase):
         self.session_time = datetime.now(timezone.utc)
         session_clock = self.enterContext(patch("lotteworld_sim.user_sessions.datetime", wraps=datetime))
         session_clock.now.side_effect = lambda tz: self.session_time
-        recommendation_clock = self.enterContext(patch("lotteworld_sim.recommendation_mock.datetime", wraps=datetime))
-        recommendation_clock.now.side_effect = lambda tz: self.session_time
-        self.mock_path = Path(self.enterContext(tempfile.TemporaryDirectory())) / "mock.json"
-        self.mock_path.write_bytes((ROOT / "configs/recommendation-mock.json").read_bytes())
         self.background_time = 0
-        server = make_server(0, mock_data=self.mock_path, clock=lambda: self.background_time)
+        server = make_server(0, clock=lambda: self.background_time)
         self.server = server
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -94,32 +87,16 @@ class UserSessionAPITests(unittest.TestCase):
                 return session
         self.fail("시뮬레이션 이용이 제한 시간 안에 끝나지 않았습니다.")
 
-    def test_end_session_removes_character_and_allows_new_entry(self):
+    def test_removed_delete_does_not_end_an_active_session(self):
         _, entry, _ = self.enter()
-        _, ready, _ = self.save(entry, ["comet-express", "gyro-spin", "gyro-drop"])
-        self.assertEqual(self.accept(self.acceptance(ready["offer"]))[0], 200)
-        other = self.new_client()
-        _, other_entry, _ = self.enter(client=other)
-        command = {"session_id": entry["session"]["session_id"]}
         path = "/api/user/session"
-        state = self.request("/api/state")[1]
-        facility = ready["offer"]["recommendation"]["facility_id"]
-        approaching = state["background"]["queues"][facility]["approaching_count"]
-        self.assert_error(self.request(path, command, method="DELETE", client=other), 409, "session_mismatch")
-
-        status, result, headers = self.request(path, command, method="DELETE")
-        self.assertEqual((status, result["status"]), (200, "ended"))
-        self.assertIn("Max-Age=0", headers["Set-Cookie"])
-        self.assert_error(self.request(path), 401, "session_required")
-        state = self.request("/api/state")[1]
-        self.assertEqual(state["qr"]["characters"], [other_entry["character"]])
-        self.assertEqual(state["background"]["queues"][facility]["approaching_count"], approaching - 1)
-        self.assertEqual(self.request(path, command, method="DELETE")[0], 200)
-
-        _, new_entry, _ = self.enter()
-        self.assertNotEqual(new_entry["session"]["session_id"], entry["session"]["session_id"])
-        self.assert_error(self.request(path, command, method="DELETE"), 409, "session_mismatch")
-        self.assertEqual(self.request(path)[1]["session"]["session_id"], new_entry["session"]["session_id"])
+        status, _, headers = self.request(
+            path, {"session_id": entry["session"]["session_id"]}, method="DELETE",
+        )
+        self.assertEqual(status, 404)
+        self.assertIsNone(headers.get("Set-Cookie"))
+        self.assertEqual(self.request(path)[1], entry)
+        self.assertEqual(self.enter()[1], entry)
 
     def test_acceptance_shares_one_queue_ride_and_unload_with_overview(self):
         _, entry, _ = self.enter()
@@ -281,6 +258,7 @@ class UserSessionAPITests(unittest.TestCase):
         _, ready, _ = self.save(entry, ["gyro-spin", "comet-express", "gyro-drop"])
         old = self.acceptance(ready["offer"])
         self.background_time = 60
+        self.server.service_actions()
         self.assert_error(self.accept(old), 409, "recommendation_expired")
         _, offer, _ = self.request("/api/user/recommendation")
         self.assertNotEqual(offer["recommendation"]["recommendation_id"], old["recommendation_id"])
@@ -455,15 +433,13 @@ class UserSessionAPITests(unittest.TestCase):
                 else:
                     self.assertEqual(result["result"], "no_candidate")
 
-    def test_expired_session_releases_identity_and_broken_mock_keeps_live_context(self):
+    def test_expired_session_releases_identity(self):
         _, entry, _ = self.enter()
         created = datetime.fromisoformat(entry["session"]["created_at"])
         expires = datetime.fromisoformat(entry["session"]["expires_at"])
         order = [row["facility_id"] for row in entry["facilities"]]
         self.assertEqual(expires - created, timedelta(minutes=5))
 
-        self.mock_path.write_text("{}", encoding="utf-8")
-        self.assert_error(self.request("/api/recommendation/mock"), 503, "mock_data_unavailable")
         self.assertEqual(self.request("/api/user/session")[1], entry)
         code, entry, _ = self.save(entry, order)
         self.assertEqual(code, 200)
