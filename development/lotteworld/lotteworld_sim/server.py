@@ -57,22 +57,21 @@ ASSETS = {
 
 class ScenarioStore:
     def __init__(self,root=ROOT,config_path=None):
-        self.root=Path(root);self.config_path=config_path
+        self.root=Path(root)
         self.lock=threading.RLock();self.signature=None;self.error=None
         self.instance=uuid.uuid4().hex
-        self.continuous = load_continuous(self.root)
+        self.continuous = load_continuous(self.root, config_path)
         self.metadata()
 
     def metadata(self):
         with self.lock:
             paths = [self.root / 'configs/map.json',
-                     Path(self.config_path) if self.config_path else self.root / 'configs/day.json',
                      self.root / 'configs/preferences.json', self.root / RIDE_OPERATIONS_PATH]
             current=signatures(paths)
             if current!=self.signature:
                 self.signature=current
                 try:
-                    scenario = load_inputs(root=self.root, config_path=self.config_path, continuous=self.continuous)
+                    scenario = load_inputs(root=self.root, continuous=self.continuous)
                     metadata = dict(scenario.metadata(), status="continuous_running",
                                     runnable=True, message=BACKGROUND_RUNNING)
                     metadata["signs"] = [

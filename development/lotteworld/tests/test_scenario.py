@@ -16,22 +16,20 @@ from lotteworld_sim.server import make_server
 class ScenarioTests(unittest.TestCase):
     def test_defaults_and_independent_loads(self):
         scenario = load_inputs()
-        self.assertEqual(scenario.config["arrivals"]["planned_total"], 10350)
-        self.assertEqual(scenario.config["stay"]["minutes"], [120, 240])
-        self.assertEqual(scenario.config["observation"]["end"], "19:00")
-        slots = scenario.config["arrivals"]["slots"]
-        self.assertEqual(sum(s["count"] for s in slots[3:6]), 4600)
-        self.assertEqual(max(s["count"] for s in slots), 1610)
-        self.assertFalse(scenario.metadata()["runnable"])
+        metadata = scenario.metadata()
+        self.assertEqual(metadata["continuous"], load_continuous(ROOT))
+        self.assertEqual(set(metadata["hashes"]), {"map", "preferences", "ride_operations", "continuous"})
+        self.assertNotIn("config", metadata)
+        self.assertFalse(metadata["runnable"])
         self.assertEqual(scenario.map["geometry"]["units"], "m")
         self.assertEqual(scenario.metadata()["hashes"], load_inputs().metadata()["hashes"])
-        scenario.config["seed"] += 1
-        self.assertNotEqual(scenario.metadata()["hashes"], load_inputs().metadata()["hashes"])
+        scenario.continuous["seed"] += 1
+        self.assertNotEqual(scenario.metadata()["hashes"]["continuous"], metadata["hashes"]["continuous"])
 
     def test_invalid_structures_and_cross_references(self):
         scenario = load_inputs()
         def change(group, keys, value):
-            parts = [deepcopy(scenario.map), deepcopy(scenario.config), deepcopy(scenario.preferences)]
+            parts = [deepcopy(scenario.map), deepcopy(scenario.preferences)]
             node = parts[group]
             for key in keys[:-1]:
                 node = node[key]
@@ -40,26 +38,17 @@ class ScenarioTests(unittest.TestCase):
         cases = [
             (0, ["scenario_id"], "aquarium"), (0, ["facilities", 0, "id"], "atlantis"),
             (0, ["geometry"], {}), (0, ["facilities"], None),
-            (1, ["schema_version"], True), (1, ["seed"], True),
-            (1, ["observation", "end"], "25:00"), (1, ["observation", "end"], "09:00"),
-            (1, ["observation", "force_exit"], True), (1, ["stay", "clip_at_observation_end"], True),
-            (1, ["stay", "minutes"], [240, 120]), (1, ["stay", "minutes"], [0, 1]),
-            (1, ["stay", "minutes"], [120, float("nan")]), (1, ["stay", "includes_waiting"], False),
-            (1, ["arrivals", "planned_total"], 11500), (1, ["arrivals", "observation_share"], 1),
-            (1, ["arrivals", "slots", 0, "count"], -1), (1, ["arrivals", "slots", 0, "count"], True),
-            (1, ["arrivals", "slots", 0, "share"], float("inf")),
-            (1, ["arrivals", "slots", 1, "start"], "10:00"),
-            (1, ["arrivals", "slots"], []), (1, ["arrivals"], {}),
-            (2, ["tags", 0], "coast"), (2, ["profiles", 0, "preferences", "atlantis"], 6),
-            (2, ["profiles", 0, "preferences", "atlantis"], True),
-            (2, ["profiles", 0, "preferences", "atlantis"], float("nan")),
-            (2, ["profiles"], []), (2, ["profiles", 0, "preferences"], {}),
-            (2, ["behavior"], None), (2, ["behavior", "facility_weights"], {"atlantis": 1}),
-            (2, ["behavior", "facility_weights", "atlantis"], 0),
-            (2, ["behavior", "wait_patience_sim_s"], [1500, 300]),
-            (2, ["behavior", "wait_patience_sim_s"], [False, 300]),
-            (2, ["behavior", "repeat_weight"], 0), (2, ["behavior", "repeat_weight"], 1.01),
-            (2, ["behavior", "time_cost_scale_sim_s"], 0),
+            (1, ["schema_version"], True), (1, ["tags", 0], "coast"),
+            (1, ["profiles", 0, "preferences", "atlantis"], 6),
+            (1, ["profiles", 0, "preferences", "atlantis"], True),
+            (1, ["profiles", 0, "preferences", "atlantis"], float("nan")),
+            (1, ["profiles"], []), (1, ["profiles", 0, "preferences"], {}),
+            (1, ["behavior"], None), (1, ["behavior", "facility_weights"], {"atlantis": 1}),
+            (1, ["behavior", "facility_weights", "atlantis"], 0),
+            (1, ["behavior", "wait_patience_sim_s"], [1500, 300]),
+            (1, ["behavior", "wait_patience_sim_s"], [False, 300]),
+            (1, ["behavior", "repeat_weight"], 0), (1, ["behavior", "repeat_weight"], 1.01),
+            (1, ["behavior", "time_cost_scale_sim_s"], 0),
         ]
         for group, keys, value in cases:
             with self.subTest(group=group, keys=keys, value=value), self.assertRaises(ValueError):
@@ -69,20 +58,24 @@ class ScenarioTests(unittest.TestCase):
         scenario = load_inputs()
         scenario.preferences.pop('behavior')
         scenario.preferences['profiles'] = scenario.preferences['profiles'][:1]
-        validate(scenario.map, scenario.config, scenario.preferences)
+        validate(scenario.map, scenario.preferences)
 
     def test_custom_config_errors_and_hashes(self):
         scenario = load_inputs()
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "custom.json"
-            config = deepcopy(scenario.config)
+            config = deepcopy(scenario.continuous)
             config["seed"] = 12
+            config["initial_people"] = 0
+            config["target_people"] = 13
             path.write_text(json.dumps(config), encoding="utf-8")
             loaded = load_inputs(config_path=path)
-            self.assertEqual(loaded.config["seed"], 12)
+            self.assertEqual(loaded.continuous, config)
             self.assertEqual(loaded.metadata()["hashes"]["map"], scenario.metadata()["hashes"]["map"])
             self.assertEqual(loaded.ride_operations, scenario.ride_operations)
-            self.assertNotEqual(loaded.metadata()["hashes"]["config"], scenario.metadata()["hashes"]["config"])
+            self.assertNotEqual(loaded.metadata()["hashes"]["continuous"], scenario.metadata()["hashes"]["continuous"])
+            with make_server(0, config_path=path) as server:
+                self.assertEqual(server.background.snapshot()["background"]["target_people"], 13)
             for invalid in ('[]', '{', '{"scenario_id":"aquarium","schema_version":1}'):
                 path.write_text(invalid, encoding="utf-8")
                 with self.assertRaises(ValueError):

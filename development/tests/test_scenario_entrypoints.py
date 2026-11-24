@@ -29,7 +29,7 @@ class EntrypointTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
 
     def test_cross_scenario_config_rejected(self):
-        for scenario, config in (("aquarium", "lotteworld/configs/day.json"), ("magic-island", "aquarium/configs/day.json")):
+        for scenario, config in (("aquarium", "lotteworld/configs/continuous.json"), ("magic-island", "aquarium/configs/day.json")):
             for mode in ("server", "cli"):
                 result = self.run_process("run.py", "--scenario", scenario, "--mode", mode, "--config", config, "--validate-only")
                 self.assertNotEqual(result.returncode, 0)
@@ -37,13 +37,13 @@ class EntrypointTests(unittest.TestCase):
 
     def test_relative_custom_paths_and_output(self):
         with tempfile.TemporaryDirectory() as directory:
-            config = json.loads((ROOT / "lotteworld/configs/day.json").read_text(encoding="utf-8"))
+            config = json.loads((ROOT / "lotteworld/configs/continuous.json").read_text(encoding="utf-8"))
             config["seed"] = 77
             (Path(directory) / "custom.json").write_text(json.dumps(config), encoding="utf-8")
             for config_args in (("--config", "custom.json"), ("--config=custom.json",)):
                 result = self.run_process(str(ROOT / "run.py"), "--scenario", "magic-island", "--mode", "cli", "--validate-only", *config_args, "--output=result.json", cwd=directory)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(json.loads((Path(directory) / "result.json").read_text(encoding="utf-8"))["config"]["seed"], 77)
+                self.assertEqual(json.loads((Path(directory) / "result.json").read_text(encoding="utf-8"))["continuous"]["seed"], 77)
 
     def test_each_folder_runs_without_sibling(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -75,7 +75,7 @@ class EntrypointTests(unittest.TestCase):
             self.assertTrue(magic["runnable"])
             self.assertEqual(magic["status"], "continuous_running")
             self.assertEqual(aquarium["config"]["daily_visitors"], 1000)
-            self.assertEqual(magic["config"]["arrivals"]["planned_total"], 10350)
+            self.assertNotIn("config", magic)
             with get(0, "/api/state") as response:
                 self.assertEqual(json.load(response)["metrics"]["inside"], 0)
             with get(0, "/") as response:
@@ -84,6 +84,7 @@ class EntrypointTests(unittest.TestCase):
                 state = json.load(response)
                 self.assertEqual(state["scenario_id"], magic["scenario_id"])
                 self.assertEqual(state["map_hash"], magic["hashes"]["map"])
+                self.assertEqual(state["background"]["target_people"], magic["continuous"]["target_people"])
                 self.assertEqual(set(state["background"]["queues"]), set(magic["queue_report"]))
         finally:
             for server in servers:

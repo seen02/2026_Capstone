@@ -6,7 +6,6 @@ const {spawn} = require('node:child_process');
 const {chromium} = require('playwright');
 let base = process.env.MAGIC_MAP_URL;
 let server;
-let reloadConfig;
 const output = path.resolve(__dirname, '../output/map3d-verification');
 const features = {
   'gyro-drop': 'vertical-tower', 'gyro-swing': 'pendulum', atlantis: 'water-channel',
@@ -281,9 +280,7 @@ async function verifyModelJoins(page, map) {
   fs.mkdirSync(output, {recursive: true});
   if (!base) {
     const bundled = 'C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe';
-    reloadConfig=path.join(output,`reload-day-${process.pid}.json`);
-    fs.copyFileSync(path.resolve(__dirname,'../configs/day.json'),reloadConfig);
-    server = spawn(process.env.PYTHON || (fs.existsSync(bundled) ? bundled : 'python'), ['-m', 'lotteworld_sim.server', '--port', '0','--no-reload','--config',reloadConfig], {
+    server = spawn(process.env.PYTHON || (fs.existsSync(bundled) ? bundled : 'python'), ['-m', 'lotteworld_sim.server', '--port', '0', '--no-reload'], {
       cwd: path.resolve(__dirname, '..'), env: {...process.env, PYTHONUTF8: '1'}, windowsHide: true
     });
     base = await new Promise((resolve, reject) => {
@@ -309,14 +306,6 @@ async function verifyModelJoins(page, map) {
       await page.goto(base);
       await page.waitForFunction(() => window.inspectMagicMap, null, {timeout: 30000});
       const meta = await (await page.request.get(base + '/api/meta')).json();
-      if(width===1920&&reloadConfig){
-        const before=await (await page.request.get(base+'/api/dev-version')).json();
-        const next=JSON.parse(fs.readFileSync(reloadConfig,'utf8'));next.seed+=1;fs.writeFileSync(reloadConfig,JSON.stringify(next));
-        await page.reload();await page.waitForFunction(()=>window.inspectMagicMap);
-        const refreshed=await (await page.request.get(base+'/api/meta')).json();
-        const after=await (await page.request.get(base+'/api/dev-version')).json();
-        assert.equal(refreshed.config.seed,next.seed);assert.equal(after.instance,before.instance);assert.notEqual(after.version,before.version);
-      }
       assert.equal(meta.runnable, true); assert.equal(meta.status, 'continuous_running'); assert.equal(meta.map_view, 'guide-map-3d');
       if (width === 1920) await verifyModelJoins(page, meta.map);
       const panel = page.locator('#facility-panel');
@@ -731,5 +720,5 @@ async function verifyModelJoins(page, map) {
     assert.equal(await errorPage.locator('#facility-panel').isVisible(), false);
     console.log('지도 요청 실패 시 오류 표시 검사 통과');
     await errorPage.close();
-  } finally { await browser.close(); server?.kill(); if(reloadConfig&&fs.existsSync(reloadConfig))fs.unlinkSync(reloadConfig); }
-})().catch(error => { server?.kill(); if(reloadConfig&&fs.existsSync(reloadConfig))fs.unlinkSync(reloadConfig); console.error(error); process.exitCode = 1; });
+  } finally { await browser.close(); server?.kill(); }
+})().catch(error => { server?.kill(); console.error(error); process.exitCode = 1; });

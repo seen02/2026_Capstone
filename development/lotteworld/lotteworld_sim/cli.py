@@ -11,7 +11,7 @@ def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="매직아일랜드 설정 검증")
-    parser.add_argument("--config", type=Path, help="매직아일랜드 운영 설정 JSON")
+    parser.add_argument("--config", type=Path, help="매직아일랜드 연속 시연 설정 JSON")
     parser.add_argument("--validate-only", action="store_true", help="설정 검증 및 메타데이터 출력")
     parser.add_argument("--output", type=Path, help="검증된 설정 메타데이터 JSON 저장 위치")
     args = parser.parse_args()

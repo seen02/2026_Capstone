@@ -85,13 +85,13 @@ class MapTests(unittest.TestCase):
             for key in keys[:-1]: node=node[key]
             node[keys[-1]]=value
             with self.subTest(keys=keys),self.assertRaises(ValueError):
-                validate(data,self.scenario.config,self.scenario.preferences)
+                validate(data, self.scenario.preferences)
         # 양방향 경로가 실제로 단절된 입력.
         for port in ('bridge-boundary','gyro-drop-entry','gyro-swing-exit'):
             data=deepcopy(self.scenario.map)
             data['geometry']['edges']=[e for e in data['geometry']['edges'] if port not in (e['source'],e['target'])]
             with self.subTest(disconnected=port),self.assertRaises(ValueError):
-                validate(data,self.scenario.config,self.scenario.preferences)
+                validate(data, self.scenario.preferences)
 
     def test_main_loop_survives_one_main_edge_removal(self):
         data=self.scenario.map
@@ -156,7 +156,7 @@ class MapTests(unittest.TestCase):
         node=next(n for n in data['geometry']['nodes'] if n['id']=='west-castle')
         node['point']=[5,80]
         with self.assertRaises(ValueError):
-            validate(data,self.scenario.config,self.scenario.preferences)
+            validate(data, self.scenario.preferences)
 
     def test_broad_public_plazas_and_reserved_areas(self):
         data=self.scenario.map
@@ -187,7 +187,7 @@ class MapTests(unittest.TestCase):
         data=deepcopy(self.scenario.map)
         data['geometry']['scenery_buildings']=[[345,285,10,10]]
         with self.assertRaises(ValueError):
-            validate(data,self.scenario.config,self.scenario.preferences)
+            validate(data, self.scenario.preferences)
 
     def test_landscape_reserves_rendered_areas_and_clears_full_graph_width(self):
         data = self.scenario.map
@@ -219,7 +219,7 @@ class MapTests(unittest.TestCase):
             'id': 'on-walkway', 'outline': [[x-1, z-1], [x+1, z-1], [x+1, z+1], [x-1, z+1]],
         })
         with self.assertRaisesRegex(ValueError, '보행로 유효 폭'):
-            validate(changed, self.scenario.config, self.scenario.preferences)
+            validate(changed, self.scenario.preferences)
 
     def test_ride_access_areas_reserve_open_pavement_for_their_facilities(self):
         data = self.scenario.map
@@ -252,7 +252,7 @@ class MapTests(unittest.TestCase):
             'facility_id': owner['id'], 'outline': [[x, z], [x + w, z], [x + w, z + d], [x, z + d]],
         }]
         with self.assertRaisesRegex(ValueError, '구획이 겹칩니다'):
-            validate(data, self.scenario.config, self.scenario.preferences)
+            validate(data, self.scenario.preferences)
 
         edge = next(edge for edge in geometry['edges'] if edge['kind'] == 'main')
         points = {node['id']: node['point'] for node in geometry['nodes']}
@@ -261,7 +261,7 @@ class MapTests(unittest.TestCase):
         geometry['ride_access_areas'][0]['outline'] = [[x - 1, z - 1], [x + 1, z - 1],
                                                        [x + 1, z + 1], [x - 1, z + 1]]
         with self.assertRaisesRegex(ValueError, '보행로 유효 폭'):
-            validate(data, self.scenario.config, self.scenario.preferences)
+            validate(data, self.scenario.preferences)
 
     def test_guide_bridge_and_water_inlets(self):
         data=self.scenario.map

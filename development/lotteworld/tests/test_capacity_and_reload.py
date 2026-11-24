@@ -37,7 +37,7 @@ class QueueCapacityTests(unittest.TestCase):
             data=deepcopy(scenario.map)
             if key in ('boarding_capacity','queue_capacity'):data['facilities'][0][key]=value
             else:data['geometry']['queue_rules'][key]=value
-            with self.subTest(key=key),self.assertRaises(ValueError):validate(data,scenario.config,scenario.preferences)
+            with self.subTest(key=key),self.assertRaises(ValueError):validate(data,scenario.preferences)
 
 
 class ReloadTests(unittest.TestCase):
@@ -57,15 +57,12 @@ class ReloadTests(unittest.TestCase):
             try:
                 initial=get('/api/meta');version=get('/api/dev-version')
                 run_id = get('/api/state')['run_id']
-                path=root/'configs/day.json';data=json.loads(path.read_text(encoding='utf-8'));data['seed']+=1;path.write_text(json.dumps(data),encoding='utf-8')
-                self.assertEqual(get('/api/meta')['config']['seed'],initial['config']['seed']+1)
-                self.assertEqual(get('/api/dev-version')['instance'],version['instance'])
-                self.assertNotEqual(get('/api/dev-version')['version'],version['version'])
                 continuous_path = root / CONTINUOUS_PATH
                 continuous = {**initial['continuous'], 'initial_people': 0, 'target_people': 1}
                 continuous_path.write_text(json.dumps(continuous), encoding='utf-8')
                 self.assertEqual(load_inputs(root=root).continuous, continuous)
                 self.assertEqual(get('/api/meta')['continuous'], initial['continuous'])
+                self.assertEqual(get('/api/dev-version'), version)
                 state = get('/api/state')
                 self.assertEqual(state['run_id'], run_id)
                 self.assertEqual(state['background']['target_people'], initial['continuous']['target_people'])
@@ -105,6 +102,9 @@ class ReloadTests(unittest.TestCase):
                 preferences_path.write_text(json.dumps(preferences), encoding='utf-8')
                 updated_hash = get('/api/meta')['hashes']['preferences']
                 self.assertNotEqual(updated_hash, initial['hashes']['preferences'])
+                updated_version = get('/api/dev-version')
+                self.assertEqual(updated_version['instance'], version['instance'])
+                self.assertNotEqual(updated_version['version'], version['version'])
                 self.assertEqual(get('/api/state')['preferences_hash'], initial['hashes']['preferences'])
                 self.assertEqual(server.background.behavior['repeat_weight'], 0.25)
                 with make_server(0, root=root) as restarted:
