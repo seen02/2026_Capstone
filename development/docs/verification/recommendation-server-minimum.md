@@ -1,6 +1,6 @@
-# 로컬 모의 추천 서버 검증
+# 로컬 모의 추천 서버 검증 기록
 
-검증일은 2026-11-18이다. [추천 API 실행과 호출 예시](../../lotteworld/README.md#로컬-추천-api)를 사용했다. 계산에는 [공통 데이터 계약 v1](../contracts/recommendation-v1.md)의 개발용 `baseline-v1` 정책을 적용했다.
+2026-11-18에 당시의 모의 추천 서버를 검증한 기록이다. 모의 추천 경로와 생성기는 이후 삭제했다. 현재 시연은 [QR 실시간 추천 API](../../lotteworld/README.md#qr-사용자-진입과-선호-입력)를 사용한다. 계산에는 [공통 데이터 계약 v1](../contracts/recommendation-v1.md)의 개발용 `baseline-v1` 정책을 적용했다.
 
 기본 QR 시연의 최신 설정은 자이로스핀·혜성특급·자이로드롭 모두 정상 운행이다. 각 시설의 추천 결과는 [QR 진입 검증 기록](qr-user-entry-and-preferences.md)에 있다.
 

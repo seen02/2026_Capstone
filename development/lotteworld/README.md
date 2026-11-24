@@ -32,7 +32,7 @@ $state.rides.atlantis.vehicles
 $state.qr.characters
 ```
 
-`configs/continuous.json`을 수정하고 서버를 재시작하면 연속 시연 인원·체류·배속을 바꿀 수 있다. 발표 중에는 `--no-reload`로 실행해 Python 저장에 따른 자동 재시작을 끌 수 있다. `--config 경로`는 이전 일일 시간표 검증용 입력을 지정한다. CLI의 `--validate-only`는 설정 메타데이터를 출력한다. [설정과 상태 계약](docs/configuration.md#연속-시연-설정과-상태)
+`configs/continuous.json`을 수정하고 서버를 재시작하면 연속 시연 인원·체류·배속을 바꿀 수 있다. 서버와 CLI에서 `--config 경로`로 별도 연속 시연 설정을 지정할 수 있다. 발표 중에는 `--no-reload`로 Python 저장에 따른 자동 재시작을 끈다. CLI의 `--validate-only`는 설정 메타데이터를 출력한다. [설정과 상태 계약](docs/configuration.md#연속-시연-설정과-상태)
 
 ## QR 사용자 진입과 선호 입력
 
@@ -54,7 +54,6 @@ QR을 열면 **Magic Pass** 로딩 화면이 나타난 뒤 선호 순위, 추천
 | --- | --- |
 | `POST /api/user/session` | JSON으로 `contract_version: "recommendation.v1"`과 `sign_id: "magic-island-west"`를 전달한다. 유효한 쿠키가 있으면 기존 세션을 복구하고 5분 만료를 갱신한다. 새 세션도 5분 유효한 `HttpOnly`, `SameSite=Strict` 쿠키를 발급한다. |
 | `GET /api/user/session` | 발급된 쿠키로 세션을 조회하고 만료 시각과 쿠키를 갱신한다. 진입·조회·선호 저장의 응답은 `context`, `session`, `character`, `sign`, `facilities`, `offer`, `time_scale`을 제공한다. 공개 캐릭터의 `queued` 상태에는 `queue_position`과 `queue_wait_sim_s`가 포함된다. `offer`는 수락 가능한 추천이다. |
-| `DELETE /api/user/session` | 쿠키와 JSON의 `contract_version`, `session_id`로 현재 참여를 종료한다. `status: "ended"`를 반환하고 세션 쿠키를 지운다. |
 | `PUT /api/user/preferences` | 쿠키와 JSON의 `contract_version`, `context`, `session_id`, `expected_revision`, `preference_order`를 보낸다. 안내 대상 세 시설 ID를 각각 한 번씩 순위에 넣는다. 첫 유효 저장은 phase를 `ready`로, revision을 0에서 1로 바꾼다. 이후 순위를 바꾸면 revision이 증가한다. 동일 저장 재시도는 한 번만 반영된다. |
 | `GET /api/user/recommendation` | 쿠키로 확인한 세션의 위치와 선호를 사용한다. `completed`에서 호출하면 하차 후 위치로 `ready`를 시작한다. `sign-baseline-v1`은 표지판의 세 시설을 평가한다. 응답의 `source.kind`는 `simulation`이다. |
 | `POST /api/user/recommendation/accept` | 쿠키와 현재 추천의 실행 문맥·세션 및 추천 ID·revision·snapshot 번호·요청 ID를 확인하고 서버에 저장된 경로로 출발한다. 한 세션에는 동시에 이용 한 건만 연결하며, 같은 요청을 다시 보내면 같은 수락 결과를 반환한다. |
@@ -63,64 +62,13 @@ QR을 열면 **Magic Pass** 로딩 화면이 나타난 뒤 선호 순위, 추천
 
 첫 추천과 다음 추천은 요청 시점의 시뮬레이션 대기열로 계산한다. 시설별 예상 대기는 `/api/state`의 `estimated_wait_sim_s`와 같은 방식으로 추정하며, 대기열이 가득 찼거나 운행하지 않는 시설은 추천에서 제외한다.
 
-표지판은 서쪽 화단 북동쪽 가상 보행로의 `[123, 111]`m에 있다. 서버는 표지판에서 걸어갈 수 있는 반경 12m 이내의 공공 보행 위치를 2m 간격으로 배정한다. 사용자 추천은 캐릭터의 현재 좌표를 출발점으로 시설 입구까지의 최단 보행 경로를 계산한다. 추천 점수, 지도, 수락 후 이동에 그 경로를 사용한다.
+서쪽 안내판은 가상 보행로의 `[123, 111]`m에 있다. 새 QR 캐릭터는 안내판에서 입구 다리 쪽으로 향하는 앞부분에 배치된다. 반경 12m의 2m 격자에서 공공 보행 여유 0.75m와 안내판까지의 보행 연결을 확인한 뒤 빈 위치를 배정한다. 사용자 추천은 캐릭터 현재 위치에서 시설 입구까지의 경로를 추천 점수, 지도 표시와 수락 후 이동에 사용한다.
 
-마지막 QR 진입 또는 사용자 웹의 세션 조회로부터 실제 시간 5분 동안 접속 신호가 없으면 참여가 종료된다. 같은 브라우저에서 5분 안에 다시 열면 기존 캐릭터와 대기 순서를 이어간다. 자리를 비운 동안에도 시설 운행과 대기줄은 계속 진행한다. 만료된 캐릭터는 전체 지도의 다음 상태 갱신에서 사라지며 대기 자리는 이탈 통로를 통해 정리한다. 세션은 연속 실행과 같은 `run_id`를 사용한다. 서버 재시작 후 QR 주소에서 새 세션을 받고, 모의 추천 파일을 갱신하는 동안에는 기존 실행과 세션을 유지한다. [상태 계약](docs/configuration.md#연속-시연-설정과-상태)
-
-## 로컬 추천 API
-
-이 폴더에서 주소·포트·모의 데이터 파일을 지정해 서버를 실행한다. 예제에 사용한 값은 기본값과 같다. 추천 계산과 HTTP 서버는 Python 표준 라이브러리로 실행된다.
-
-```powershell
-python -m lotteworld_sim.server --host 127.0.0.1 --port 3000 --mock-data configs/recommendation-mock.json
-```
-
-다른 PowerShell 창에서 실행 문맥·시설 ID·사용 가능한 시작 위치를 조회하고 추천을 요청한다. `session_id`, `character_id`, `revision`은 개발용 참조값이다. 선호는 6개 시설의 전체 순서다.
-
-```powershell
-$base = 'http://127.0.0.1:3000'
-$mock = Invoke-RestMethod "$base/api/recommendation/mock" -ErrorAction Stop
-$position = $mock.positions | Where-Object { $_.node_id -eq 'west-center' }
-$request = @{
-    contract_version = $mock.contract_version
-    context = $mock.context
-    session_id = 'session-local-001'
-    character_id = 'character-local-001'
-    revision = 1
-    position = $position
-    preference_order = @('atlantis', 'gyro-spin', 'gyro-drop', 'arcana-ride', 'comet-express', 'gyro-swing')
-}
-$result = Invoke-RestMethod "$base/api/recommendation" -Method Post -ContentType 'application/json' -Body ($request | ConvertTo-Json -Depth 8)
-$result | ConvertTo-Json -Depth 12
-```
-
-기본 파일의 이 요청은 자이로스핀(`gyro-spin`), 선호 2순위, 예상 대기 300초, 가상 보행 경로 약 61.8m를 반환한다. 응답에는 경로·한국어 이유·제외 사유·`source.kind: mock`·`snapshot_seq`·평가 및 만료 시각이 들어 있다. 같은 모의 값과 위치·선호를 다시 요청하면 선택과 근거가 같다. 요청마다 새 모의 관측을 계산하므로 시각·스냅샷 번호·추천 ID는 새로 발행한다.
-
-| HTTP | 결과 |
-| --- | --- |
-| 200 | `recommended` 또는 `no_candidate`. 후보가 없으면 `recommendation: null`과 시설별 제외 사유를 반환한다. |
-| 400 | 필수 필드·선호 순서·좌표·JSON 오류인 `invalid_input` 또는 `unsupported_version` |
-| 409 | 현재 지도·모의 실행과 다른 `context_mismatch`. 실행 정보를 다시 조회해 요청한다. |
-| 413·415 | 64KiB를 넘는 본문 또는 `application/json` 이외의 형식 |
-| 503 | `mock_data_unavailable`. 모의 파일의 형식·경로·지도 해시를 확인한다. |
-
-기본 경로 표는 `west-center`, `west-north`, `west-spin`에서 6개 시설 입구까지의 `open-plaza-v1` 경유점을 제공한다. 경로를 조회하려면 지원하는 `node_id`와 일치하는 `point`를 보낸다. 경로 표에 등록되지 않은 공공 보행 위치나 `node_id: null`인 유효 좌표는 `route_unavailable`로 제외한다. 위치가 지도 밖이나 전용 구역에 있으면 입력 오류를 반환한다. 이 개발용 API는 테스트용 세션 사본과 시설 현황을 요청마다 생성한다. QR 세션의 추천 연동은 `GET /api/user/recommendation`을 사용한다.
-
-`--mock-data`는 시설별 운영·대기 상태와 경로 표를 읽을 JSON을 지정한다. 파일이나 시나리오 설정이 바뀌면 새 `run_id`를 발급한다. 지도 변경 또는 출발 노드 추가 시 `node_routes`의 키를 확인한 뒤 다음 명령으로 지도 해시와 경로 표를 함께 갱신한다. `--check`를 마지막에 붙이면 파일을 쓰지 않고 일치 여부를 검사한다.
-
-```powershell
-python -m lotteworld_sim.cli --validate-only --output output/scenario-metadata.json | Out-Null
-node scripts/generate_mock_routes.mjs output/scenario-metadata.json configs/recommendation-mock.json
-```
-
-`GET /api/recommendation/mock`에서 지도 해시 불일치가 나오면 위 명령으로 모의 경로를 갱신한 뒤 GET을 다시 호출한다. 성공 응답의 `contract_version`, `context`, `positions`를 사용해 POST 본문을 새로 만든다.
-
-[공통 데이터 계약 v1](../docs/contracts/recommendation-v1.md)과 [로컬 추천 검증 기록](../docs/verification/recommendation-server-minimum.md)을 참고한다.
+마지막 QR 진입 또는 사용자 웹의 세션 조회로부터 실제 시간 5분 동안 접속 신호가 없으면 참여가 종료된다. 같은 브라우저에서 5분 안에 다시 열면 기존 캐릭터와 대기 순서를 이어간다. 자리를 비운 동안에도 시설 운행과 대기줄은 계속 진행한다. 만료된 캐릭터는 전체 지도의 다음 상태 갱신에서 사라지며 대기 자리는 이탈 통로를 통해 정리한다. 세션은 연속 실행과 같은 `run_id`를 사용한다. 서버를 재시작한 뒤에는 QR 주소에서 새 세션을 받는다. [상태 계약](docs/configuration.md#연속-시연-설정과-상태)
 
 ## 설정과 개발 범위
 
 - `configs/map.json`: 6개 시설의 독립 ID·1회 탑승 정원, 가상 좌표·구획·연결 그래프·대기 자리 배치 규칙. 1회 정원의 2.5배 이상을 몸체·간격·회전 여백까지 검사하며 이 배치를 런타임 예약에도 사용한다.
-- `configs/day.json`은 이전 시간표 계획의 10–19시 관측·계획 진입 10,350명·개인 예정 체류 120–240분과 출처를 보존한다. 서버는 이 값의 일관성을 검증한다.
 - `configs/continuous.json`은 연속 시연에 적용할 초기·목표 인원, 보충 간격, 개인 체류 범위와 배속을 정의한다.
 - `configs/preferences.json`은 시설별 가중치와 0–5의 유형별 선호 점수, 대기 허용 시간 범위, 재탑승 감점을 설정한다. [행동 설정과 상태 필드](docs/configuration.md#방문객-선호와-반복-이용)
 

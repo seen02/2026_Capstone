@@ -1,28 +1,23 @@
 # 매직아일랜드 설정 계약
 
-설정·지도와 로컬 모의 추천 서버의 연결은 [추천·시뮬레이션 공통 데이터 계약 v1](../../docs/contracts/recommendation-v1.md)을 따른다. `hashes.map`을 지도 버전으로 사용하고 QR 사용자의 선호 순위는 기존 0–5 프로필과 구분한다. 모의 파일 설정과 추천 HTTP 호출 형식은 [로컬 추천 API](../README.md#로컬-추천-api)를 참고한다.
+설정·지도와 QR 실시간 추천의 연결은 [추천·시뮬레이션 공통 데이터 계약 v1](../../docs/contracts/recommendation-v1.md)을 따른다. `hashes.map`을 지도 버전으로 사용하고 QR 사용자의 선호 순위는 기존 0–5 프로필과 구분한다. [QR 실행 및 API 안내](../README.md#qr-사용자-진입과-선호-입력)
 
-연속 시연의 유입·체류·퇴장은 `configs/continuous.json`으로 설정한다. 이전 시간표는 입력 호환과 실험 기록을 위해 검증한다. 현재 우선순위는 [체크리스트](../../docs/implementation-checklist.md)를 따른다.
+연속 시연의 유입·체류·퇴장은 기본 `configs/continuous.json` 또는 서버·CLI의 `--config 경로`로 지정한 연속 설정을 사용한다. 현재 우선순위는 [체크리스트](../../docs/implementation-checklist.md)를 따른다.
 
-아래 다섯 JSON은 `schema_version: 1`, `scenario_id: magic-island`와 `provenance`를 포함한다. `lotteworld_sim/scenario.py`의 `load_inputs`는 자료형·범위·파일 간 참조를 검사한다.
+아래 네 JSON은 `schema_version: 1`, `scenario_id: magic-island`와 `provenance`를 포함한다. `lotteworld_sim/scenario.py`의 `load_inputs`는 자료형·범위·파일 간 참조를 검사한다.
 
 | 파일 | 현재 계약 |
 | --- | --- |
 | `configs/map.json` | 6개 고유 시설 ID·이름, `map_ready` 상태, 미터 좌표·구획·양방향 보행 그래프 |
-| `configs/day.json` | 음수가 아닌 정수 시드, 관측 시작·종료와 월드 오브 라이트 종료 이벤트, 강제 퇴장 금지, 실제 진입부터 대기 포함 균등 체류, 관측 종료로 체류 자르기 금지 |
 | `configs/preferences.json` | 지도 시설과 일치하는 태그 6개, 선호 유형과 시설별 0–5 점수, 시설 가중치와 대기·재탑승 정책, `provisional` 상태 |
 | `configs/ride-operations.json` | 지도 시설 6개별 운행·하차·승차 확인·출발 간격, 차량 수·동시 승하차 대수·가상 코스 구간 수 |
 | `configs/continuous.json` | 수동 종료까지 반복하는 배경 방문객 유입·체류·퇴장 설정 |
 
-운영 설정의 `arrivals`는 하루 기준 인원·관측 비중·관측 계획 합계와 `slots`를 분리한다. 한 시간 단위의 시작 포함·끝 제외 구간은 관측 시작부터 종료까지 빈틈·중복 없이 이어져야 한다. 각 행의 `count = daily_baseline × share`, 전체 `planned_total = daily_baseline × observation_share`, 행별 인원·비중의 합계를 검증한다. 이 계약으로 관측 구간에 19시 이후 몫을 몰아넣거나 구간을 중복하는 입력을 검출한다.
-
-이전 시간표의 기본값 검증은 9구간 합 10,350명, 13–16시 4,600명, 피크 14–15시 1,610명을 확인한다. 근거와 지도·시설 명세는 [설계 문서](../../docs/design.md)에 남긴다.
-
-`--validate-only` 출력은 `status: map_ready`, `runnable: false`이고 실행 중 `GET /api/meta`는 `status: continuous_running`, `runnable: true`다. 양쪽 모두 `map_ready: true`, `map_view: guide-map-3d`와 다섯 설정·해시를 제공한다. 정렬된 JSON의 UTF-8 바이트를 SHA-256으로 계산하며 `day.json`은 `hashes.config`, 시설 운행은 `hashes.ride_operations`, 연속 시연은 `hashes.continuous`에 대응한다.
+`--validate-only` 출력은 `status: map_ready`, `runnable: false`이고 실행 중 `GET /api/meta`는 `status: continuous_running`, `runnable: true`다. 양쪽 모두 `map_ready: true`, `map_view: guide-map-3d`와 `map`, `preferences`, `ride_operations`, `continuous`를 제공한다. 각 항목의 `hashes` 값은 정렬된 JSON의 UTF-8 바이트에서 계산한 SHA-256이다.
 
 실행 중 `GET /api/meta`의 `signs`는 가상 안내판의 `sign_id`, `name`, `map_hash`, `position`, `facility_ids`를 제공한다. `position.point`는 3D 지도와 같은 미터 좌표 `[x, z]`이며, QR 세션의 `sign.position`과 같은 값을 사용한다.
 
-서버의 기본 바인딩 주소는 `127.0.0.1`이다. `/`는 지도 화면을 제공하며 정적 자원 요청은 허용 목록을 사용한다. `GET /api/state`는 연속 시연 상태를 제공한다. 안내판·보고서·수동 진행·되감기·초기화 API는 HTTP 409, 없는 경로는 HTTP 404를 반환한다.
+서버의 기본 바인딩 주소는 `127.0.0.1`이다. `/`는 지도 화면을 제공하며 정적 자원 요청은 허용 목록을 사용한다. `GET /api/state`는 연속 시연 상태를 제공한다. `GET /api/meta`는 안내판을 포함한 지도 설정을 제공한다. 없는 경로는 HTTP 404를 반환한다.
 
 ## 연속 시연 설정과 상태
 
@@ -41,7 +36,7 @@
 
 `background.visitor_flow`는 배경 방문객의 `sim_time_s`, `entered_total`, `exited_total`, `present_people`을 실행 시작과 이후 시뮬레이션 60초마다 집계한다. 기록은 시각 오름차순으로 최대 121개(최근 2시간)를 반환한다. 서버는 브라우저의 접속 여부와 관계없이 실행 중에 이를 기록하며, 새 `run_id`에는 새 기록이 생성된다.
 
-서버는 시작 시 검증한 연속 설정·지도 좌표·시설 운행·방문객 선호를 실행 전체에 사용한다. `/api/meta`의 지도·기존 시간표·시설 운행·선호 설정은 저장 후 다시 읽으며, 지도·운행·선호 변경은 서버 재시작 시 새 실행에 적용한다. `/api/state`의 `map_hash`·`ride_operations_hash`·`preferences_hash`로 현재 실행이 쓰는 입력을 식별한다. 지도 화면은 로드한 지도 해시가 실행과 일치할 때만 동적 상태를 합성한다. 1,500명은 혼잡 시연을 위한 동시 인원 가정이다. [연속 시연 검증 기록](../../docs/verification/magic-island-continuous-arrivals.md)
+서버는 시작 시 검증한 연속 설정·지도 좌표·시설 운행·방문객 선호를 실행 전체에 사용한다. `/api/meta`는 저장된 지도·시설 운행·선호 설정을 다시 읽는다. 엔진은 서버를 재시작할 때 네 설정을 다시 적용한다. `/api/state`의 `map_hash`·`ride_operations_hash`·`preferences_hash`로 현재 실행이 쓰는 입력을 식별한다. 지도 화면은 로드한 지도 해시가 실행과 일치할 때만 동적 상태를 합성한다. 1,500명은 혼잡 시연을 위한 동시 인원 가정이다. [연속 시연 검증 기록](../../docs/verification/magic-island-continuous-arrivals.md)
 
 `/api/state.qr`는 연속 실행의 `context`와 실제 시간 기준으로 유효한 `characters`를 제공한다. 쿠키가 필요한 `/api/user/session` 등은 동일한 형식의 행을 `character`로 제공한다. 수락한 캐릭터의 위치와 상태는 대기열·차량을 처리하는 엔진에서 함께 읽는다. 대기 순서 `queue_position`은 자리로 걸어가는 예약 인원도 포함한 1부터 시작하는 순서다. 차량 배정 시 `vehicle_id`를 제공한다. 이동 좌표가 없는 차량 이용 구간에서 `position.point`는 `null`이고 `map_point`는 화면에 표시할 탑승 기준점이다. QR은 시설의 대기 인원·탑승 인원에 포함하며 배경 방문객의 유입·체류·퇴장 보존식과 공개 명단은 별도로 유지한다.
 
@@ -97,7 +92,7 @@
 
 ## 시설별 운행 설정
 
-`GET /api/meta`와 `--validate-only` 출력의 `ride_operations.facilities`는 지도와 같은 시설 ID로 조회한다. `--config`는 유입·체류 등 기존 일일 설정을 바꾸는 옵션이며 시설별 운행 설정은 `configs/ride-operations.json`에서 읽는다.
+`GET /api/meta`와 `--validate-only` 출력의 `ride_operations.facilities`는 지도와 같은 시설 ID로 조회한다. 시설별 운행 설정은 `configs/ride-operations.json`에서 읽는다.
 
 | 필드 | 단위와 의미 |
 | --- | --- |
@@ -138,7 +133,7 @@
 
 `validate_geometry`는 좌표·자료형·범위·참조, 모든 노드의 연결성과 다리에서 입출구까지의 왕복 경로, 예약 구획의 상호 겹침과 섬 내부 배치, 연결 동선의 유효 폭과 대기 완충을 검사한다. 대기 구획과 참조 동선에는 1.5m 완충을 적용하고 해당 입구 지선·전용 하차 접속부만 예외다. 입구는 대기 구획 경계에 있고 바깥쪽에서 접근해야 하며 출구는 전용 하차 합류 구획 안에 있어야 한다. `VisitorRoutes`와 대기열 검증은 공공 보행 변형, 입구 접속, 줄 안 보행, 이탈 게이트, 승하차 연결에 방문객 반경과 장애물 경계를 적용한다. 전용 하차 경로의 분산은 빨간 점을 통과한 뒤 시작하며, 공용 구역에서 다음 경로로 연결한다.
 
-`walking_route(map_data, source, target)`와 `route.mjs`는 연결 그래프 내 최단 노드 목록과 거리를 반환하는 검사용 참조다. 실제 지도 표시 경로는 `navigation.mjs`의 `createNavigator(map).route(source,target)`를 사용한다. 결과의 `nodes`는 양 끝의 ID, `points`는 실제 표시 경로의 평면 좌표, `distance_m`은 좌표 간 거리 합, `mode`는 `open-plaza`다.
+`walking_route(map_data, source, target)`와 `route.mjs`는 연결 그래프의 거리와 노드 순서를 대조하는 검사용 참조다. 브라우저 화면은 `route.mjs`를 불러오지 않는다. 지도 화면의 탐색 경로는 `navigation.mjs`의 `createNavigator(map).route(source,target)`를 사용한다. 결과의 `nodes`는 양 끝의 ID, `points`는 표시 경로의 평면 좌표, `distance_m`은 좌표 간 거리 합, `mode`는 `open-plaza`다. QR 추천 경로는 공통 서버가 계산한다.
 
 표시 탐색은 2m 격자·반경 0.25m와 포장 면·장애물·해안·다리를 사용한다. 대각선 모서리 관통을 막고 직선 통과가 가능한 경유점을 합친다. 입출구는 전용 지선의 짧은 접속부로 공공 보행 면에 연결한다. 안내 거리는 격자 탐색과 직선화로 계산한다. 공공 광장의 일반적인 사람 사이 충돌 회피는 후속 범위다.
 
@@ -150,7 +145,7 @@
 
 네 녹지 구역은 포장면과 같은 높이의 지면색으로 표시한다. 북쪽에서 동쪽으로 이어지는 해안 녹지와 아르카나라이드 바깥의 남서쪽 해안 녹지는 표시된 해안선에 닿는다. 혜성특급과 매직캐슬 동쪽의 화단은 각기 독립된 구역이다. 시설·대기열·하차 구획과 접근·복귀 동선 주변에는 포장 여유를 둔다. 자이로스윙의 진입과 하차, 아트란티스의 하차 후 연결 노드는 녹지 바깥을 지나도록 배치했다.
 
-고정 시드로 구역별 격자의 후보 좌표를 무작위로 분산해 같은 지도에서 배치를 재현한다. 나무에는 둥근 수관과 뾰족한 수관을 쓰며 `landscape_beds` 밖의 나무는 물가 가까이 둔다. 수풀은 둥근 잎 덩어리 세 개를 겹치고 전체 높이를 방문객 키의 약 40~55%로 표현한다. 성·녹지 다각형과 경로 변경에 맞춰 지도 해시, 모의 추천 경로, 계약 예제를 함께 갱신한다. 수면에는 짧은 흰 물결을 드문드문 배치한다.
+고정 시드로 구역별 격자의 후보 좌표를 무작위로 분산해 같은 지도에서 배치를 재현한다. 나무에는 둥근 수관과 뾰족한 수관을 쓰며 `landscape_beds` 밖의 나무는 물가 가까이 둔다. 수풀은 둥근 잎 덩어리 세 개를 겹치고 전체 높이를 방문객 키의 약 40~55%로 표현한다. 성·녹지 다각형과 경로 변경에 맞춰 지도 해시와 경로를 담은 계약 예제를 함께 갱신한다. 수면에는 짧은 흰 물결을 드문드문 배치한다.
 
 대기 외곽은 시설별 `queue`를 따른다. 혜성특급·자이로스핀은 13.8×32.2m, 아르카나라이드는 28.06×18.4m, 나머지는 28.06×13.8m이며 하차 합류 외곽은 8×6m다. 대기 외곽과 `queue_capacity`를 함께 검사한다. 시설 이름표와 동선 강조선은 관찰용 주석이며 물리적 점유 구획이 아니다. 모형은 정적 형상으로 운행·차량 가동 상태를 나타내지 않는다.
 
@@ -158,7 +153,7 @@
 
 ## 3D 자원과 준비 상태
 
-고정 허용 목록으로 `/map.js`, `/map3d.js`, `/geometry.mjs`, `/rides.mjs`, `/route.mjs`, `/navigation.mjs`, `/queue.mjs`, `/map.css`, `/vendor/three/three.module.js`, `/vendor/three/three.core.js`, `/vendor/three/OrbitControls.js`, `/vendor/three/LICENSE`만 제공한다. 모듈은 JavaScript MIME을 사용한다. 임의 디렉터리·다른 프로젝트의 파일은 제공하지 않는다.
+정적 자원은 서버의 `ASSETS` 허용 목록에 따라 제공한다. `/`와 `/operator`는 같은 HTML로 시작하고 `/user`는 모바일용 HTML을 사용한다. 지도·운영자·사용자 모듈과 스타일, Three.js와 웹 폰트는 같은 서버에서 읽는다. `/api/dev-version`은 설정 갱신 검사에서 사용하며 현재 화면에서는 호출하지 않는다. 화면은 `GET /api/meta` 응답의 `signs`에서 안내판 정보를 읽는다.
 
 `map_ready: true`와 `map_view: guide-map-3d`는 지도 표시 준비를 나타낸다. 실행 서버의 `runnable`은 배경 방문객 순환의 실행 여부다. `window.inspectMagicMap()`은 브라우저 검증용 읽기 전용 장면 스냅샷이다. WebGL 미지원·그래픽 연결 오류는 화면에 안내한다.
 
