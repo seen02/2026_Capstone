@@ -82,7 +82,10 @@ function setContentVisible(visible) {
   connection.hidden = visible;
 }
 
-function disconnect(message) {
+function disconnect(error) {
+  const canReconnect = disconnectedCodes.includes(error.code) ||
+    error instanceof TypeError || error.name === 'TimeoutError';
+  const message = canReconnect ? '인터넷 연결을 확인한 뒤 다시 시도해 주세요.' : error.message;
   generation++;
   state = shown = drag = null;
   saveFailed = delayed = false;
@@ -327,7 +330,7 @@ async function saveOrder() {
     if (!canEdit(state)) syncOrder(state);
     setText(element('save-announcement'), '선호 순위를 저장했습니다.');
   } catch (error) {
-    if (disconnectedCodes.includes(error.code)) disconnect(error.message);
+    if (disconnectedCodes.includes(error.code)) disconnect(error);
     else saveFailed = true;
   } finally {
     saving = false;
@@ -356,7 +359,7 @@ async function loadRecommendation() {
     if (!editingOrder || !canEdit(data)) syncOrder(data);
     delayed = false;
   } catch (error) {
-    if (disconnectedCodes.includes(error.code)) disconnect(error.message);
+    if (disconnectedCodes.includes(error.code)) disconnect(error);
     else notice = '추천을 새로고침하지 못했어요.';
   } finally {
     refreshing = false;
@@ -392,7 +395,7 @@ acceptButton.onclick = async () => {
     requireSameSession(data);
     state = data;
   } catch (error) {
-    if (disconnectedCodes.includes(error.code)) disconnect(error.message);
+    if (disconnectedCodes.includes(error.code)) disconnect(error);
     else notice = error.message;
     if (['recommendation_expired', 'recommendation_invalidated', 'revision_mismatch', 'session_conflict'].includes(error.code)) {
       try {
@@ -403,7 +406,7 @@ acceptButton.onclick = async () => {
         syncOrder(data);
         notice = canEdit(data) ? '새 추천을 확인한 뒤 수락해 주세요.' : '';
       } catch (refreshError) {
-        if (disconnectedCodes.includes(refreshError.code)) disconnect(refreshError.message);
+        if (disconnectedCodes.includes(refreshError.code)) disconnect(refreshError);
         else {
           delayed = true;
           notice = '추천을 다시 확인하는 중입니다.';
@@ -442,7 +445,7 @@ async function connect() {
       renderState();
     }
   } catch (error) {
-    disconnect(error instanceof TypeError ? '서버에 연결할 수 없습니다. 다시 시도해 주세요.' : error.message);
+    disconnect(error);
   }
   await new Promise(resolve => setTimeout(resolve, Math.max(0, splashDuration - (performance.now() - started))));
   splash.hidden = true;
@@ -494,7 +497,7 @@ poll(async () => {
       data.character.position_sim_time_s !== before.character.position_sim_time_s ||
       data.offer?.recommendation?.recommendation_id !== before.offer?.recommendation?.recommendation_id) renderState();
 }, error => {
-  if (disconnectedCodes.includes(error.code)) disconnect(error.message);
+  if (disconnectedCodes.includes(error.code)) disconnect(error);
   else if (state) {
     delayed = true;
     renderState();

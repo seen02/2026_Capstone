@@ -311,6 +311,56 @@ li[data-dragging] .drag-handle { cursor: grabbing; }
 .notice p { margin: 0; color: #862942; }
 .text-button { border: 0; border-radius: 7px; background: transparent; color: var(--action); font-weight: 700; }
 
+main.container:has(.connection-screen:not([hidden])) {
+  display: grid;
+  grid-template: minmax(min-content, 1fr) / minmax(0, 1fr);
+  place-items: center;
+}
+
+.connection-screen {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(100%, 26rem);
+  padding: clamp(20px, 5dvh, 34px) clamp(16px, 5vw, 28px);
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  box-shadow: 0 14px 40px #20143b12;
+}
+
+.connection-emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 108px;
+  height: 86px;
+}
+
+.connection-emblem::after {
+  content: "";
+  position: absolute;
+  inset: 10px 6px auto auto;
+  width: 17px;
+  height: 17px;
+  background: #a4672f;
+  clip-path: var(--ticket-star);
+}
+
+.connection-ticket {
+  --notch: 5px;
+  --star-size: 22px;
+  width: 68px;
+  height: 42px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #ffe8b2, var(--gold) 65%, #e2a958);
+  transform: rotate(-12deg);
+}
+
+#connection-title { font-size: clamp(1.35rem, 6vw, 1.65rem); line-height: 1.25; letter-spacing: -.025em; }
+#status { margin: 0; max-width: 24ch; color: var(--muted); line-height: 1.55; }
+#retry { width: min(100%, 18rem); margin-top: 8px; white-space: nowrap; }
+
 #user-map-frame {
   --map-min-height: 182px;
   position: relative;
@@ -347,7 +397,6 @@ li[data-dragging] .drag-handle { cursor: grabbing; }
     column-gap: var(--column-gap);
   }
 
-  #connection { grid-column: 1 / -1; align-self: start; }
   #preferences { grid-column: 1; }
   #recommendation { grid-column: 1; align-self: start; }
   #user-map-frame {

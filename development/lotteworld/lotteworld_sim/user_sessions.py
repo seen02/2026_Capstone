@@ -13,6 +13,7 @@ from .scenario import QR_SIGN_ID as SIGN_ID, SCENARIO_ID
 
 PLACEMENT_RADIUS_M = 12
 PLACEMENT_SPACING_M = 2
+PLACEMENT_CLEARANCE_M = 0.75
 SESSION_IDLE_TIMEOUT = timedelta(minutes=5)
 
 
@@ -22,24 +23,30 @@ def sign_position_metadata(map_data, map_hash, sign_id):
 
 
 def initial_positions(policy):
-    sign_point = policy.map["geometry"]["signposts"][SIGN_ID]["point"]
-    require(public_walkable(policy.map, sign_point, 0.75, ignore_signpost=SIGN_ID),
+    geometry = policy.map["geometry"]
+    sign_point = geometry["signposts"][SIGN_ID]["point"]
+    require(public_walkable(policy.map, sign_point, PLACEMENT_CLEARANCE_M, ignore_signpost=SIGN_ID),
             "표지판이 현재 지도의 공공 보행 구역에 있지 않습니다.", "sign_unavailable")
 
     x, y = sign_point
+    bridge_x, bridge_y = next(node["point"] for node in geometry["nodes"] if node["id"] == "bridge-island")
+    front_x, front_y = bridge_x - x, bridge_y - y
+    # 양면 안내판의 앞쪽은 입구 다리에서 접근하는 방향을 기준으로 잡는다.
+    front_clearance = PLACEMENT_CLEARANCE_M * math.hypot(front_x, front_y)
     offsets = range(-PLACEMENT_RADIUS_M, PLACEMENT_RADIUS_M + 1, PLACEMENT_SPACING_M)
     positions = []
     for dx in offsets:
         for dy in offsets:
             offset = math.hypot(dx, dy)
-            if not PLACEMENT_SPACING_M <= offset <= PLACEMENT_RADIUS_M:
+            if (not PLACEMENT_SPACING_M <= offset <= PLACEMENT_RADIUS_M
+                    or dx * front_x + dy * front_y <= front_clearance):
                 continue
             point = [x + dx, y + dy]
             steps = math.ceil(offset / 0.5)
             # 배정 위치는 기둥을 피하고, 안내판까지 이어지는 포장 여부를 확인할 때는 기둥 자체만 제외한다.
-            if public_walkable(policy.map, point, 0.75) and all(public_walkable(policy.map, [
+            if public_walkable(policy.map, point, PLACEMENT_CLEARANCE_M) and all(public_walkable(policy.map, [
                 point[axis] + (sign_point[axis] - point[axis]) * step / steps for axis in range(2)
-            ], 0.75, ignore_signpost=SIGN_ID) for step in range(1, steps)):
+            ], PLACEMENT_CLEARANCE_M, ignore_signpost=SIGN_ID) for step in range(1, steps)):
                 positions.append((offset, point))
     require(bool(positions), "현재 지도에서 캐릭터의 초기 위치를 배치할 수 없습니다.", "sign_unavailable")
     return [point for _, point in sorted(positions)]

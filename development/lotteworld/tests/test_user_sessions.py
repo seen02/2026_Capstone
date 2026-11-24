@@ -300,6 +300,13 @@ class UserSessionAPITests(unittest.TestCase):
         self.assertFalse(public_walkable(meta["map"], origin, 0.5))
         self.assertTrue(all(public_walkable(meta["map"], point, 0.5) for point in (one, two)))
         self.assertTrue(all(2 <= math.dist(origin, point) <= 12 for point in (one, two)))
+        bridge = next(node["point"] for node in meta["map"]["geometry"]["nodes"] if node["id"] == "bridge-island")
+        # Every available slot, including those assigned after the first two sessions, stays in front.
+        front = [b - a for a, b in zip(origin, bridge)]
+        for point in self.server.user_sessions.positions:
+            with self.subTest(point=point):
+                projection = sum((p - a) * f for p, a, f in zip(point, origin, front)) / math.hypot(*front)
+                self.assertGreater(projection, 0.75)
         self.assertEqual(self.request("/api/user/session")[1], first)
         self.assertEqual(self.enter()[1], first)
         self.assertIn("Max-Age=300", self.enter()[2]["Set-Cookie"])
@@ -345,12 +352,12 @@ class UserSessionAPITests(unittest.TestCase):
         rec = result["recommendation"]
         self.assertEqual((rec["facility_id"], rec["rank"]), ("gyro-drop", 1))
         self.assertEqual(rec["route"]["origin"], ready["session"]["position"])
-        self.assertEqual(rec["route"]["points"][0], ready["session"]["position"]["point"])
+        points = rec["route"]["points"]
+        self.assertEqual(points[0], ready["session"]["position"]["point"])
         self.assertEqual(rec["route"]["method"], "public-visibility-v1")
-        self.assertNotIn([143, 145], rec["route"]["points"])
-        origin, outside, entrance = rec["route"]["points"]
-        self.assertAlmostEqual(rec["distance_m"], math.dist(origin, outside) + math.dist(outside, entrance))
-        self.assertLess(rec["distance_m"], math.dist(origin, [143, 145]) + math.dist([143, 145], entrance))
+        self.assertIsNotNone(self.server.background.routes.entrance_path(rec["facility_id"], points))
+        distance = math.fsum(math.dist(start, end) for start, end in zip(points, points[1:]))
+        self.assertAlmostEqual(rec["distance_m"], distance)
         preview = ready["character"]["route_preview"]
         self.assertEqual(preview, {"facility_id": rec["facility_id"], "route": rec["route"],
                                   "source": result["source"]})

@@ -38,9 +38,13 @@
       </div>
     </header>
     <main class="container">
-      <section class="card notice" id="connection" hidden aria-label="연결 상태">
+      <section class="card connection-screen" id="connection" hidden aria-labelledby="connection-title">
+        <div class="connection-emblem" aria-hidden="true">
+          <span class="ticket-small connection-ticket"><span class="ticket-star"></span></span>
+        </div>
+        <h2 id="connection-title">접속이 잠시 끊겼어요</h2>
         <p id="status" role="status"></p>
-        <button type="button" class="text-button" id="retry">다시 연결</button>
+        <button type="button" class="primary" id="retry">다시 연결</button>
       </section>
 
       <section class="card" id="preferences" aria-labelledby="preference-title" hidden>

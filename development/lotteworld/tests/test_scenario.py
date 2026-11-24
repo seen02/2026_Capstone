@@ -147,7 +147,7 @@ class ScenarioTests(unittest.TestCase):
                 "facility_ids": ["gyro-spin", "comet-express", "gyro-drop"],
             }, {
                 "sign_id": "magic-island-east", "name": "동쪽 안내판", "map_hash": data["hashes"]["map"],
-                "position": {"point": [226, 176], "node_id": None},
+                "position": {"point": [242.8, 163.1], "node_id": None},
                 "facility_ids": ["gyro-swing", "atlantis", "arcana-ride"],
             }])
             operations = data["ride_operations"]["facilities"]

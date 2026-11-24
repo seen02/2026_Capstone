@@ -2889,7 +2889,7 @@
       },
       "magic-island-east": {
         "name": "동쪽 안내판",
-        "point": [226, 176],
+        "point": [242.8, 163.1],
         "clearance_radius_m": 0.3,
         "facility_ids": ["gyro-swing", "atlantis", "arcana-ride"]
       }
